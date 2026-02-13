@@ -216,6 +216,15 @@ struct TodoItem {
 type NotesStore = HashMap<i64, Vec<TodoItem>>;
 type TitleStore = HashMap<i64, String>;
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct SavedContext {
+    title: String,
+    todos: Vec<TodoItem>,
+    saved_at: String, // ISO 8601
+}
+
+type ContextHistoryStore = HashMap<i64, Vec<SavedContext>>;
+
 fn default_desktop_count() -> u32 { 10 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -246,6 +255,8 @@ struct PersistData {
     settings: Settings,
     #[serde(default = "default_version")]
     version: u32,
+    #[serde(default)]
+    context_history: ContextHistoryStore,
 }
 
 struct AppState {
@@ -450,6 +461,70 @@ fn switch_desktop(display: u32, target: i64) -> bool {
         }
     }
     false
+}
+
+// ── Session commands ───────────────────────────────────────────
+
+const MAX_HISTORY_PER_DESKTOP: usize = 20;
+
+#[tauri::command]
+fn start_new_session(state: tauri::State<'_, AppState>) {
+    let mut data = state.data.lock().unwrap();
+    let now = chrono::Utc::now().to_rfc3339();
+
+    // For each desktop with data, push current context into history
+    let space_ids: Vec<i64> = data.notes.keys().chain(data.titles.keys()).copied().collect::<std::collections::HashSet<i64>>().into_iter().collect();
+
+    for sid in space_ids {
+        let title = data.titles.get(&sid).cloned().unwrap_or_default();
+        let todos = data.notes.get(&sid).cloned().unwrap_or_default();
+        if title.is_empty() && todos.is_empty() {
+            continue;
+        }
+        let entry = SavedContext {
+            title,
+            todos,
+            saved_at: now.clone(),
+        };
+        let history = data.context_history.entry(sid).or_default();
+        history.push(entry);
+        // Cap at MAX_HISTORY_PER_DESKTOP (drop oldest)
+        if history.len() > MAX_HISTORY_PER_DESKTOP {
+            let excess = history.len() - MAX_HISTORY_PER_DESKTOP;
+            history.drain(..excess);
+        }
+    }
+
+    // Clear current session
+    data.notes.clear();
+    data.titles.clear();
+
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
+fn get_context_history(state: tauri::State<'_, AppState>) -> ContextHistoryStore {
+    let data = state.data.lock().unwrap();
+    data.context_history.clone()
+}
+
+#[tauri::command]
+fn restore_context(state: tauri::State<'_, AppState>, desktop: i64, index: usize) -> bool {
+    let mut data = state.data.lock().unwrap();
+    let saved = match data.context_history.get(&desktop).and_then(|h| h.get(index)) {
+        Some(ctx) => ctx.clone(),
+        None => return false,
+    };
+    data.notes.insert(desktop, saved.todos);
+    if saved.title.is_empty() {
+        data.titles.remove(&desktop);
+    } else {
+        data.titles.insert(desktop, saved.title);
+    }
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+    true
 }
 
 // ── Settings commands ──────────────────────────────────────────
@@ -682,7 +757,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
