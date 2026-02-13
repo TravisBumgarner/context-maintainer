@@ -767,3 +767,127 @@ body {
 .setup-show-again:hover {
   color: rgba(var(--tc), 0.5);
 }
+
+/* ── Session chooser view ───────────────────────────── */
+
+.session-chooser-view {
+  padding: 16px 14px;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-chooser-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(var(--tc), 0.55);
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.session-chooser-desc {
+  font-size: 11px;
+  color: rgba(var(--tc), 0.4);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.session-chooser-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 180px;
+}
+
+.session-btn {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 600;
+  color: rgb(var(--tc-inv));
+  background: rgba(var(--tc), 0.45);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.session-btn:hover {
+  background: rgba(var(--tc), 0.6);
+}
+
+/* ── History picker view ────────────────────────────── */
+
+.history-picker-view {
+  padding: 10px 14px;
+  overflow-y: auto;
+}
+
+.history-picker-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(var(--tc), 0.55);
+  margin-bottom: 10px;
+}
+
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.history-space-group {
+  margin-bottom: 10px;
+}
+
+.history-space-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(var(--tc), 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.history-entry {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 3px;
+  border: 1px solid rgba(var(--tc), 0.1);
+  border-radius: 6px;
+  background: rgba(var(--tc), 0.03);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.history-entry:hover {
+  background: rgba(var(--tc), 0.08);
+}
+
+.history-entry-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(var(--tc), 0.65);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-entry-meta {
+  font-size: 9px;
+  color: rgba(var(--tc), 0.35);
+  margin-top: 1px;
+}
+
+.history-done-section {
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(var(--tc), 0.08);
+  display: flex;
+  justify-content: center;
+}

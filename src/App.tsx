@@ -69,6 +69,14 @@ interface SpaceInfo {
   color: string;
 }
 
+interface SavedContext {
+  title: string;
+  todos: TodoItem[];
+  saved_at: string;
+}
+
+type ContextHistory = Record<number, SavedContext[]>;
+
 interface Settings {
   custom_colors: Record<number, string>;
   setup_complete: boolean;
@@ -94,6 +102,20 @@ function textColorRgb(hex: string): string {
 
 function invertRgb(rgb: string): string {
   return rgb === "0, 0, 0" ? "255, 255, 255" : "0, 0, 0";
+}
+
+function formatRelativeTime(date: Date): string {
+  const now = Date.now();
+  const diff = now - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return date.toLocaleDateString();
 }
 
 // ── Themes ────────────────────────────────────────────────
@@ -166,7 +188,7 @@ function App() {
     return match ? parseInt(match[1], 10) : 0;
   }, []);
 
-  const [view, setView] = useState<"loading" | "setup" | "todos" | "settings" | "desktops">("loading");
+  const [view, setView] = useState<"loading" | "setup" | "session-chooser" | "todos" | "settings" | "desktops" | "history-picker">("loading");
   const [monitorName, setMonitorName] = useState(`Screen ${displayIndex + 1}`);
   const [desktop, setDesktop] = useState<DesktopInfo>({
     space_id: 0,
@@ -189,6 +211,7 @@ function App() {
   const [showAnchorOverlay, setShowAnchorOverlay] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [contextHistory, setContextHistory] = useState<ContextHistory>({});
 
   const desktopRef = useRef(desktop.space_id);
   const todosRef = useRef(todos);
@@ -203,9 +226,20 @@ function App() {
 
   // ── Load settings on mount ─────────────────────────────
   useEffect(() => {
-    invoke<Settings>("get_settings").then((s) => {
+    invoke<Settings>("get_settings").then(async (s) => {
       setDesktopCount(s.desktop_count);
-      setView(s.setup_complete ? "todos" : "setup");
+      if (!s.setup_complete) {
+        setView("setup");
+        return;
+      }
+      // Check if there's existing data to decide whether to show session chooser
+      try {
+        const desktops = await invoke<DesktopSummary[]>("list_all_desktops");
+        const hasData = desktops.some((d) => d.title || d.todo_count > 0);
+        setView(hasData ? "session-chooser" : "todos");
+      } catch {
+        setView("todos");
+      }
     }).catch(() => {
       setView("setup");
     });
@@ -555,6 +589,115 @@ function App() {
         >
           Get Started
         </button>
+      </div>
+    );
+  }
+
+  // ── Session chooser view ──────────────────────────────
+  if (view === "session-chooser") {
+    return (
+      <div className="indicator session-chooser-view" style={bgStyle("#F5E6A3")}>
+        <div className="session-chooser-title">Context Maintainer</div>
+        <p className="session-chooser-desc">You have an existing session.</p>
+        <div className="session-chooser-buttons">
+          <button
+            className="session-btn"
+            onClick={() => setView("todos")}
+          >
+            Continue Session
+          </button>
+          <button
+            className="session-btn"
+            onClick={() => {
+              invoke("start_new_session").then(() => {
+                setTodos([]);
+                setTitle("");
+                setView("todos");
+              }).catch(() => {});
+            }}
+          >
+            New Session
+          </button>
+          <button
+            className="session-btn"
+            onClick={() => {
+              Promise.all([
+                invoke<SpaceInfo[]>("list_all_spaces"),
+                invoke<ContextHistory>("get_context_history"),
+              ]).then(([spaces, history]) => {
+                setAllSpaces(spaces);
+                setContextHistory(history);
+                setView("history-picker");
+              }).catch(() => {});
+            }}
+          >
+            Pick from History
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── History picker view ──────────────────────────────
+  if (view === "history-picker") {
+    const hasHistory = Object.values(contextHistory).some((h) => h.length > 0);
+
+    return (
+      <div className="indicator history-picker-view" style={bgStyle("#F5E6A3")}>
+        <button className="settings-back" onClick={() => setView("session-chooser")}>
+          &larr; Back
+        </button>
+        <h2 className="history-picker-title">Saved Contexts</h2>
+        {!hasHistory && (
+          <div className="overview-empty">No saved history yet.</div>
+        )}
+        <div className="history-list">
+          {allSpaces.map((space) => {
+            const entries = contextHistory[space.space_id];
+            if (!entries || entries.length === 0) return null;
+            return (
+              <div key={space.space_id} className="history-space-group">
+                <div className="history-space-label">{space.title || space.name}</div>
+                {[...entries].reverse().map((ctx, revIdx) => {
+                  const originalIdx = entries.length - 1 - revIdx;
+                  const todoCount = ctx.todos.filter((t) => !t.done).length;
+                  const date = new Date(ctx.saved_at);
+                  const relative = formatRelativeTime(date);
+                  return (
+                    <button
+                      key={originalIdx}
+                      className="history-entry"
+                      onClick={() => {
+                        invoke<boolean>("restore_context", {
+                          desktop: space.space_id,
+                          index: originalIdx,
+                        }).then((ok) => {
+                          if (ok) {
+                            // Refresh history to show updated state
+                            invoke<ContextHistory>("get_context_history").then(setContextHistory).catch(() => {});
+                          }
+                        }).catch(() => {});
+                      }}
+                    >
+                      <span className="history-entry-title">{ctx.title || "Untitled"}</span>
+                      <span className="history-entry-meta">
+                        {todoCount} task{todoCount !== 1 ? "s" : ""} &middot; {relative}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+        <div className="history-done-section">
+          <button
+            className="session-btn"
+            onClick={() => setView("todos")}
+          >
+            Done
+          </button>
+        </div>
       </div>
     );
   }
