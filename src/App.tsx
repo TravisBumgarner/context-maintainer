@@ -7,6 +7,11 @@ import {
   PhysicalPosition,
   type Monitor,
 } from "@tauri-apps/api/window";
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from "@tauri-apps/plugin-notification";
 import { Reorder } from "framer-motion";
 
 const currentWindow = getCurrentWebviewWindow();
@@ -81,6 +86,9 @@ interface Settings {
   custom_colors: Record<number, string>;
   setup_complete: boolean;
   desktop_count: number;
+  timer_presets: number[];
+  notify_system: boolean;
+  notify_flash: boolean;
 }
 
 interface DisplayGroup {
@@ -188,7 +196,7 @@ function App() {
     return match ? parseInt(match[1], 10) : 0;
   }, []);
 
-  const [view, setView] = useState<"loading" | "setup" | "session-chooser" | "todos" | "settings" | "desktops" | "history-picker">("loading");
+  const [view, setView] = useState<"loading" | "setup" | "session-chooser" | "todos" | "settings" | "desktops" | "history-picker" | "timer">("loading");
   const [monitorName, setMonitorName] = useState(`Screen ${displayIndex + 1}`);
   const [desktop, setDesktop] = useState<DesktopInfo>({
     space_id: 0,
@@ -200,7 +208,7 @@ function App() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newText, setNewText] = useState("");
   const [offMonitor, setOffMonitor] = useState(false);
-  const [settingsTab, setSettingsTab] = useState<"themes" | "permissions">("themes");
+  const [settingsTab, setSettingsTab] = useState<"themes" | "permissions" | "timer">("themes");
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [displayGroups, setDisplayGroups] = useState<DisplayGroup[]>([]);
   const [monitorNames, setMonitorNames] = useState<Record<number, string>>({});
@@ -212,6 +220,17 @@ function App() {
   const [minimized, setMinimized] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [contextHistory, setContextHistory] = useState<ContextHistory>({});
+  const [timerPresets, setTimerPresets] = useState<number[]>([60, 300, 600]);
+  const [notifySystem, setNotifySystem] = useState(true);
+  const [notifyFlash, setNotifyFlash] = useState(true);
+  const [timerHours, setTimerHours] = useState(0);
+  const [timerMinutes, setTimerMinutes] = useState(0);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerRemaining, setTimerRemaining] = useState(0);
+  const [timerFlashing, setTimerFlashing] = useState(false);
+
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const desktopRef = useRef(desktop.space_id);
   const todosRef = useRef(todos);
@@ -228,6 +247,9 @@ function App() {
   useEffect(() => {
     invoke<Settings>("get_settings").then(async (s) => {
       setDesktopCount(s.desktop_count);
+      setTimerPresets(s.timer_presets ?? [60, 300, 600]);
+      setNotifySystem(s.notify_system ?? true);
+      setNotifyFlash(s.notify_flash ?? true);
       if (!s.setup_complete) {
         setView("setup");
         return;
@@ -522,6 +544,83 @@ function App() {
     [todos, scheduleSave]
   );
 
+  // ── Timer helpers ────────────────────────────────────
+  const startTimer = useCallback(() => {
+    const total = timerHours * 3600 + timerMinutes * 60 + timerSeconds;
+    if (total <= 0) return;
+    setTimerRemaining(total);
+    setTimerRunning(true);
+  }, [timerHours, timerMinutes, timerSeconds]);
+
+  const cancelTimer = useCallback(() => {
+    setTimerRunning(false);
+    setTimerRemaining(0);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const fireTimerNotification = useCallback(async () => {
+    if (notifySystem) {
+      let granted = await isPermissionGranted();
+      if (!granted) {
+        const permission = await requestPermission();
+        granted = permission === "granted";
+      }
+      if (granted) {
+        sendNotification({ title: "Timer Done", body: "Your timer has finished!" });
+      }
+    }
+    if (notifyFlash) {
+      setTimerFlashing(true);
+      setTimeout(() => setTimerFlashing(false), 1500);
+    }
+  }, [notifySystem, notifyFlash]);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    timerRef.current = setInterval(() => {
+      setTimerRemaining((prev) => {
+        if (prev <= 1) {
+          setTimerRunning(false);
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          fireTimerNotification();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [timerRunning, fireTimerNotification]);
+
+  const populateFromPreset = useCallback((seconds: number) => {
+    setTimerHours(Math.floor(seconds / 3600));
+    setTimerMinutes(Math.floor((seconds % 3600) / 60));
+    setTimerSeconds(seconds % 60);
+  }, []);
+
+  const formatPreset = (seconds: number): string => {
+    if (seconds >= 3600) return `${seconds / 3600}h`;
+    if (seconds >= 60) return `${seconds / 60}m`;
+    return `${seconds}s`;
+  };
+
+  const formatCountdown = (total: number): string => {
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
   // ── Theme / desktop count helpers ─────────────────────
   const handleApplyTheme = (colors: string[]) => {
     // Pad theme colors to cover desktopCount by cycling
@@ -702,6 +801,80 @@ function App() {
     );
   }
 
+  // ── Timer view ──────────────────────────────────────
+  if (view === "timer") {
+    return (
+      <div className={`indicator timer-view${timerFlashing ? " timer-flash" : ""}`} style={bgStyle(desktop.color)}>
+        <button className="settings-back" onClick={() => setView("todos")}>
+          &larr; Back
+        </button>
+        <h2 className="timer-title">Notify me in...</h2>
+
+        {!timerRunning ? (
+          <>
+            <div className="timer-inputs">
+              <div className="timer-field">
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={timerHours}
+                  onChange={(e) => setTimerHours(Math.max(0, parseInt(e.target.value) || 0))}
+                />
+                <span className="timer-label">HH</span>
+              </div>
+              <span className="timer-colon">:</span>
+              <div className="timer-field">
+                <input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={timerMinutes}
+                  onChange={(e) => setTimerMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                />
+                <span className="timer-label">MM</span>
+              </div>
+              <span className="timer-colon">:</span>
+              <div className="timer-field">
+                <input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={timerSeconds}
+                  onChange={(e) => setTimerSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                />
+                <span className="timer-label">SS</span>
+              </div>
+            </div>
+
+            <div className="timer-presets">
+              {timerPresets.map((p, i) => (
+                <button key={i} className="timer-preset-btn" onClick={() => populateFromPreset(p)}>
+                  {formatPreset(p)}
+                </button>
+              ))}
+            </div>
+
+            <button
+              className="timer-start-btn"
+              onClick={startTimer}
+              disabled={timerHours === 0 && timerMinutes === 0 && timerSeconds === 0}
+            >
+              Start
+            </button>
+          </>
+        ) : (
+          <div className="timer-running">
+            <div className="timer-countdown">{formatCountdown(timerRemaining)}</div>
+            <button className="timer-cancel-btn" onClick={cancelTimer}>
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // ── Settings view ─────────────────────────────────────
   if (view === "settings") {
     return (
@@ -722,6 +895,12 @@ function App() {
             onClick={() => setSettingsTab("permissions")}
           >
             Permissions
+          </button>
+          <button
+            className={`settings-tab${settingsTab === "timer" ? " active" : ""}`}
+            onClick={() => setSettingsTab("timer")}
+          >
+            Timer
           </button>
         </div>
 
@@ -876,6 +1055,69 @@ function App() {
                   </button>
                 </div>
               )}
+            </div>
+          </>
+        )}
+
+        {settingsTab === "timer" && (
+          <>
+            <div className="settings-section">
+              <h3>Presets</h3>
+              <div className="timer-presets-edit">
+                {timerPresets.map((p, i) => (
+                  <div key={i} className="timer-preset-edit-row">
+                    <span className="timer-preset-edit-label">Preset {i + 1}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      className="timer-preset-edit-input"
+                      value={p}
+                      onChange={(e) => {
+                        const val = Math.max(1, parseInt(e.target.value) || 1);
+                        setTimerPresets((prev) => prev.map((v, j) => (j === i ? val : v)));
+                      }}
+                    />
+                    <span className="timer-preset-edit-unit">sec</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                className="setup-btn-sm"
+                style={{ marginTop: 6 }}
+                onClick={() => {
+                  invoke("save_timer_presets", { presets: timerPresets }).catch(() => {});
+                }}
+              >
+                Save Presets
+              </button>
+            </div>
+
+            <div className="settings-section">
+              <h3>Notification Type</h3>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={notifySystem}
+                  onChange={(e) => {
+                    const val = e.target.checked;
+                    setNotifySystem(val);
+                    invoke("save_notify_settings", { system: val, flash: notifyFlash }).catch(() => {});
+                  }}
+                />
+                <span>System notification</span>
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={notifyFlash}
+                  onChange={(e) => {
+                    const val = e.target.checked;
+                    setNotifyFlash(val);
+                    invoke("save_notify_settings", { system: notifySystem, flash: val }).catch(() => {});
+                  }}
+                />
+                <span>In-app flash</span>
+              </label>
             </div>
           </>
         )}
@@ -1064,10 +1306,10 @@ function App() {
             </details>
           )}
 
-          {/* All desktops button */}
-          <div className="all-desktops-section">
+          {/* Footer row: All desktops, Timer, Settings */}
+          <div className="footer-row">
             <button
-              className="all-desktops-btn"
+              className="footer-btn"
               onClick={() => {
                 refreshDisplayGroups();
                 setView("desktops");
@@ -1075,16 +1317,21 @@ function App() {
             >
               All desktops
             </button>
+            <button
+              className="footer-btn"
+              onClick={() => setView("timer")}
+              title="Timer"
+            >
+              {timerRunning ? formatCountdown(timerRemaining) : "\u23F1"}
+            </button>
+            <button
+              className="footer-btn"
+              onClick={() => { setShowThemePicker(false); setView("settings"); }}
+              title="Settings"
+            >
+              {"\u2699"}
+            </button>
           </div>
-
-          {/* Settings gear — bottom right */}
-          <button
-            className="settings-btn-fixed"
-            onClick={() => { setShowThemePicker(false); setView("settings"); }}
-            title="Settings"
-          >
-            {"\u2699"}
-          </button>
         </>
       )}
 
