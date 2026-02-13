@@ -40,7 +40,8 @@ function saveAnchor(pos: AnchorPosition) {
 }
 
 interface DesktopInfo {
-  index: number;
+  space_id: number;
+  position: number;
   name: string;
   color: string;
 }
@@ -52,7 +53,8 @@ interface TodoItem {
 }
 
 interface DesktopSummary {
-  index: number;
+  space_id: number;
+  position: number;
   name: string;
   title: string;
   color: string;
@@ -60,7 +62,8 @@ interface DesktopSummary {
 }
 
 interface SpaceInfo {
-  index: number;
+  space_id: number;
+  position: number;
   name: string;
   title: string;
   color: string;
@@ -166,7 +169,8 @@ function App() {
   const [view, setView] = useState<"loading" | "setup" | "todos" | "settings" | "desktops">("loading");
   const [monitorName, setMonitorName] = useState(`Screen ${displayIndex + 1}`);
   const [desktop, setDesktop] = useState<DesktopInfo>({
-    index: 0,
+    space_id: 0,
+    position: 0,
     name: "Desktop 1",
     color: "#F5E6A3",
   });
@@ -184,8 +188,9 @@ function App() {
   const [anchorPos, setAnchorPos] = useState<AnchorPosition>(loadAnchor);
   const [showAnchorOverlay, setShowAnchorOverlay] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
-  const desktopRef = useRef(desktop.index);
+  const desktopRef = useRef(desktop.space_id);
   const todosRef = useRef(todos);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -194,7 +199,7 @@ function App() {
 
   // Keep refs in sync
   todosRef.current = todos;
-  desktopRef.current = desktop.index;
+  desktopRef.current = desktop.space_id;
 
   // ── Load settings on mount ─────────────────────────────
   useEffect(() => {
@@ -348,20 +353,20 @@ function App() {
   useEffect(() => {
     if (view !== "todos") return;
 
-    let prevIdx = desktop.index;
+    let prevId = desktop.space_id;
 
     const poll = async () => {
       try {
         const info = await invoke<DesktopInfo>("get_desktop", { display: displayIndex });
         setDesktop(info);
 
-        if (info.index !== prevIdx) {
+        if (info.space_id !== prevId) {
           if (saveTimer.current) clearTimeout(saveTimer.current);
-          saveNow(prevIdx, todosRef.current);
+          saveNow(prevId, todosRef.current);
 
-          prevIdx = info.index;
-          await loadTodos(info.index);
-          await loadTitle(info.index);
+          prevId = info.space_id;
+          await loadTodos(info.space_id);
+          await loadTitle(info.space_id);
         }
       } catch {
         // CGS API unavailable
@@ -371,8 +376,8 @@ function App() {
     };
 
     poll();
-    loadTodos(desktop.index);
-    loadTitle(desktop.index);
+    loadTodos(desktop.space_id);
+    loadTitle(desktop.space_id);
     const id = setInterval(poll, 200);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -468,7 +473,7 @@ function App() {
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
-    saveTitle(desktop.index, value);
+    saveTitle(desktop.space_id, value);
   };
 
   // ── Reorder handler ──────────────────────────────────
@@ -490,7 +495,7 @@ function App() {
     invoke("apply_theme", { colors: padded }).then(() => {
       refreshSpaces();
       // Update current desktop color immediately
-      const newColor = padded[desktop.index] ?? padded[0];
+      const newColor = padded[desktop.position] ?? padded[0];
       setDesktop((prev) => ({ ...prev, color: newColor }));
     }).catch(() => {});
   };
@@ -558,7 +563,7 @@ function App() {
   if (view === "settings") {
     return (
       <div className="indicator settings-view" style={bgStyle(desktop.color)}>
-        <button className="settings-back" onClick={() => setView("todos")}>
+        <button className="settings-back" onClick={() => { setConfirmClear(false); setView("todos"); }}>
           &larr; Back
         </button>
 
@@ -628,18 +633,18 @@ function App() {
 
             <div className="settings-section">
               {allSpaces.map((s) => (
-                <div key={s.index} className="color-row">
+                <div key={s.space_id} className="color-row">
                   <span className="color-row-name">{s.title || s.name}</span>
                   <input
                     type="color"
                     value={s.color}
                     onChange={(e) => {
                       const newColor = e.target.value;
-                      invoke("save_color", { desktop: s.index, color: newColor }).catch(() => {});
+                      invoke("save_color", { desktop: s.space_id, color: newColor }).catch(() => {});
                       setAllSpaces((prev) =>
-                        prev.map((sp) => sp.index === s.index ? { ...sp, color: newColor } : sp)
+                        prev.map((sp) => sp.space_id === s.space_id ? { ...sp, color: newColor } : sp)
                       );
-                      if (s.index === desktop.index) {
+                      if (s.space_id === desktop.space_id) {
                         setDesktop((prev) => ({ ...prev, color: newColor }));
                       }
                     }}
@@ -689,6 +694,46 @@ function App() {
             >
               Show Setup Again
             </button>
+
+            <div className="settings-section">
+              <h3>Data</h3>
+              {!confirmClear ? (
+                <button
+                  className="setup-btn-sm"
+                  style={{ marginTop: 4 }}
+                  onClick={() => setConfirmClear(true)}
+                >
+                  Clear All Data
+                </button>
+              ) : (
+                <div style={{ marginTop: 4 }}>
+                  <p style={{ margin: "0 0 6px", fontSize: 11 }}>
+                    This will delete all todos, titles, and custom colors. Are you sure?
+                  </p>
+                  <button
+                    className="setup-btn-sm"
+                    style={{ marginRight: 6 }}
+                    onClick={() => {
+                      invoke("clear_all_data").then(() => {
+                        setTodos([]);
+                        setTitle("");
+                        setDesktop((prev) => ({ ...prev, color: "#F5E6A3" }));
+                        refreshSpaces();
+                        setConfirmClear(false);
+                      }).catch(() => {});
+                    }}
+                  >
+                    Yes, clear everything
+                  </button>
+                  <button
+                    className="setup-btn-sm"
+                    onClick={() => setConfirmClear(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
@@ -718,11 +763,11 @@ function App() {
             <div className="desktop-cards">
               {group.desktops.map((d) => (
                 <button
-                  key={d.index}
-                  className={`desktop-card${d.index === desktop.index ? " active" : ""}`}
+                  key={d.space_id}
+                  className={`desktop-card${d.space_id === desktop.space_id ? " active" : ""}`}
                   style={{ backgroundColor: d.color, "--tc": textColorRgb(d.color) } as React.CSSProperties}
                   onClick={() => {
-                    invoke("switch_desktop", { display: displayIndex, target: d.index }).catch(() => {});
+                    invoke("switch_desktop", { display: displayIndex, target: d.space_id }).catch(() => {});
                     setView("todos");
                   }}
                 >
@@ -803,7 +848,7 @@ function App() {
           className="title-input"
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
-          placeholder={desktop.name}
+          placeholder="What are you working on?"
         />
       </div>
 
