@@ -58,6 +58,6 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: v__VERSION__
-          releaseName: "Context Switching v__VERSION__"
+          releaseName: "Context Maintainer v__VERSION__"
           releaseBody: "See the assets below to download and install."
           releaseDraft: true

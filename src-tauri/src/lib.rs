@@ -615,7 +615,7 @@ pub fn run() {
 
             TrayIconBuilder::new()
                 .icon(icon)
-                .tooltip("Context Switching")
+                .tooltip("Context Maintainer")
                 .on_tray_icon_event(|tray, event| {
                     if let tauri::tray::TrayIconEvent::Click { button_state, .. } = event {
                         // Only toggle on mouse-up to avoid double-firing
@@ -674,7 +674,7 @@ pub fn run() {
                         &label,
                         WebviewUrl::App("index.html".into()),
                     )
-                    .title("Context Switching")
+                    .title("Context Maintainer")
                     .inner_size(win_w, win_h)
                     .min_inner_size(180.0, 100.0)
                     .always_on_top(true)

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Context Switching",
+  "productName": "Context Maintainer",
   "version": "0.1.0",
   "identifier": "com.travisbumgarner.context-switching",
   "build": {
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Context Switching",
+        "title": "Context Maintainer",
         "width": 240,
         "height": 320,
         "minWidth": 180,

@@ -1,4 +1,4 @@
-# Context Switching
+# Context ~~Switcher~~ Maintainer
 
 **Per-desktop todo lists for macOS.** A tiny, always-on-top floating window that tracks which virtual desktop you're on and gives each one its own task list.
 
@@ -8,7 +8,7 @@ Stop losing track of what you were doing when you switch spaces.
 
 ## How it works
 
-Context Switching sits in the corner of your screen and automatically detects when you move between macOS desktops (Mission Control spaces). Each desktop gets its own todo list, title, and color — so your tasks stay tied to the context they belong to.
+Context Maintainer sits in the corner of your screen and automatically detects when you move between macOS desktops (Mission Control spaces). Each desktop gets its own todo list, title, and color — so your tasks stay tied to the context they belong to.
 
 - **Desktop 1** — "Email" — Reply to Sarah, File expense report
 - **Desktop 2** — "Development" — Fix auth bug, Review PR #42
@@ -31,7 +31,7 @@ Switch desktops and your tasks follow.
 
 ## Setup
 
-On first launch, Context Switching will walk you through two quick steps:
+On first launch, Context Maintainer will walk you through two quick steps:
 
 1. **Grant Accessibility permission** — needed to detect desktop switches
 2. **Enable keyboard shortcuts** — System Settings > Keyboard > Keyboard Shortcuts > Mission Control > enable "Switch to Desktop N" for each desktop

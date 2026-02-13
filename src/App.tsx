@@ -513,7 +513,7 @@ function App() {
   if (view === "setup") {
     return (
       <div className="indicator setup-view" style={bgStyle("#F5E6A3")}>
-        <div className="setup-title">Context Switching</div>
+        <div className="setup-title">Context Maintainer</div>
         <p className="setup-desc">
           Per-desktop task lists for macOS. Two permissions are needed:
         </p>
