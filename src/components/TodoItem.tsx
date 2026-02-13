@@ -46,8 +46,6 @@ export default function TodoItem({
           width: 13,
           height: 13,
           "& .MuiSvgIcon-root": { fontSize: 15 },
-          color: tc(0.3),
-          "&.Mui-checked": { color: tc(0.5) },
         }}
       />
       <InputBase
@@ -58,11 +56,8 @@ export default function TodoItem({
         sx={{
           flex: 1,
           minWidth: 0,
-          fontSize: 11,
-          fontFamily: "inherit",
-          color: tc(isDone ? 0.35 : 0.7),
           p: "2px 0",
-          textDecoration: isDone ? "line-through" : "none",
+          ...(isDone && { color: tc(0.35), textDecoration: "line-through" }),
           "& input::placeholder": { color: tc(0.25) },
         }}
       />
@@ -71,16 +66,13 @@ export default function TodoItem({
         onClick={() => onDelete(item.id)}
         sx={{
           flexShrink: 0,
-          background: "none",
           color: tc(0.2),
           fontSize: 12,
           p: "0 2px",
           lineHeight: 1,
           opacity: 0,
           transition: "opacity 0.15s",
-          borderRadius: 0,
-          minWidth: 0,
-          "&:hover": { color: tc(0.5), background: "none" },
+          "&:hover": { color: tc(0.5) },
         }}
       >
         ✕

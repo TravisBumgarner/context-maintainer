@@ -157,7 +157,6 @@ export default function AccordionView({
   };
 
   const sectionLabelSx = {
-    fontSize: 11,
     fontWeight: 700,
     textTransform: "uppercase",
     letterSpacing: "0.5px",
@@ -165,39 +164,12 @@ export default function AccordionView({
   } as const;
 
   const summaryPreviewSx = {
-    fontSize: 11,
     color: tc(0.35),
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
     ml: "8px",
     flex: 1,
-  } as const;
-
-  const accordionSx = {
-    background: "transparent",
-    boxShadow: "none",
-    "&:before": { display: "none" },
-    "&.Mui-expanded": { margin: 0 },
-  } as const;
-
-  const summarySx = {
-    minHeight: "28px !important",
-    px: "10px",
-    "& .MuiAccordionSummary-content": {
-      margin: "4px 0 !important",
-      alignItems: "center",
-      overflow: "hidden",
-    },
-    "& .MuiAccordionSummary-expandIconWrapper": {
-      color: tc(0.3),
-      fontSize: 16,
-    },
-  } as const;
-
-  const detailsSx = {
-    px: "10px",
-    py: "4px",
   } as const;
 
   // ── Settings helpers ──
@@ -217,12 +189,9 @@ export default function AccordionView({
     px: "10px",
     py: "3px",
     fontSize: 10,
-    fontWeight: 600,
     color: theme.custom.tcInv(),
     bgcolor: tc(0.45),
     borderRadius: "10px",
-    textTransform: "none",
-    minWidth: 0,
     "&:hover": { bgcolor: tc(0.6) },
   } as const;
 
@@ -275,7 +244,6 @@ export default function AccordionView({
             color: tc(0.55),
             letterSpacing: "-0.3px",
             textAlign: "center",
-            fontFamily: "inherit",
             "& input": { textAlign: "center", p: 0 },
             "& input::placeholder": { color: tc(0.3) },
             "&.Mui-focused input": { color: tc(0.7) },
@@ -287,16 +255,12 @@ export default function AccordionView({
               onClick={onSnap}
               title={`This window has been moved off its assigned monitor (${monitorName}). Click to snap it back.`}
               sx={{
-                background: "none",
-                border: "none",
                 p: "0 3px",
                 lineHeight: 1,
-                minWidth: 0,
-                borderRadius: 0,
                 fontSize: 16,
                 fontWeight: 700,
                 color: tc(0.6),
-                "&:hover": { color: tc(0.9), background: "none" },
+                "&:hover": { color: tc(0.9) },
               }}
             >
               !
@@ -306,16 +270,12 @@ export default function AccordionView({
             onClick={onToggleMinimize}
             title={collapsed ? "Expand" : "Collapse"}
             sx={{
-              background: "none",
-              border: "none",
               p: "0 3px",
               lineHeight: 1,
-              minWidth: 0,
-              borderRadius: 0,
               fontSize: 14,
               fontWeight: 700,
               color: tc(0.3),
-              "&:hover": { color: tc(0.6), background: "none" },
+              "&:hover": { color: tc(0.6) },
             }}
           >
             {collapsed ? "+" : "\u2014"}
@@ -323,25 +283,22 @@ export default function AccordionView({
         </Box>
       </Box>
 
-      <Divider sx={{ bgcolor: tc(0.12) }} />
+      <Divider />
 
           {/* ── Queue panel ── */}
           <Accordion
             expanded={expandedPanel === "queue"}
             onChange={(e, expanded) => handleChange(e, expanded, "queue")}
-            sx={accordionSx}
-            disableGutters
           >
             <AccordionSummary
               expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "queue" ? "\u25BE" : "\u25B8"}</Typography>}
-              sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Queue</Typography>
               {expandedPanel !== "queue" && firstUncompleted && (
                 <Typography sx={summaryPreviewSx}>{firstUncompleted}</Typography>
               )}
             </AccordionSummary>
-            <AccordionDetails sx={{ ...detailsSx, p: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <AccordionDetails sx={{ p: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
               {/* Active todos */}
               <Reorder.Group
                 axis="y"
@@ -401,9 +358,6 @@ export default function AccordionView({
                   sx={{
                     flex: 1,
                     minWidth: 0,
-                    fontSize: 11,
-                    fontFamily: "inherit",
-                    color: tc(0.7),
                     p: "2px 0",
                     "& input::placeholder": { color: tc(0.3) },
                   }}
@@ -463,19 +417,16 @@ export default function AccordionView({
           <Accordion
             expanded={expandedPanel === "timer"}
             onChange={(e, expanded) => handleChange(e, expanded, "timer")}
-            sx={accordionSx}
-            disableGutters
           >
             <AccordionSummary
               expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "timer" ? "\u25BE" : "\u25B8"}</Typography>}
-              sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Timer</Typography>
               {expandedPanel !== "timer" && timerRunning && (
                 <Typography sx={summaryPreviewSx}>{formatCountdown(timerRemaining)}</Typography>
               )}
             </AccordionSummary>
-            <AccordionDetails sx={detailsSx}>
+            <AccordionDetails>
               {!timerRunning ? (
                 <>
                   <Box
@@ -524,13 +475,7 @@ export default function AccordionView({
                         sx={{
                           px: "8px",
                           py: "2px",
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: tc(0.45),
-                          background: "none",
-                          textTransform: "none",
-                          minWidth: 0,
-                          "&:hover": { color: tc(0.7), background: "none" },
+                          "&:hover": { color: tc(0.7) },
                         }}
                       >
                         {formatPreset(p)}
@@ -547,12 +492,8 @@ export default function AccordionView({
                       px: "14px",
                       py: "4px",
                       fontSize: 12,
-                      fontWeight: 600,
                       color: tc(0.55),
-                      background: "none",
-                      textTransform: "none",
-                      minWidth: 0,
-                      "&:hover": { color: tc(0.7), background: "none" },
+                      "&:hover": { color: tc(0.7) },
                       "&:disabled": { opacity: 0.4 },
                     }}
                   >
@@ -585,13 +526,7 @@ export default function AccordionView({
                     sx={{
                       px: "14px",
                       py: "4px",
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: tc(0.45),
-                      background: "none",
-                      textTransform: "none",
-                      minWidth: 0,
-                      "&:hover": { color: tc(0.7), background: "none" },
+                      "&:hover": { color: tc(0.7) },
                     }}
                   >
                     Cancel
@@ -605,16 +540,13 @@ export default function AccordionView({
           <Accordion
             expanded={expandedPanel === "anchor"}
             onChange={(e, expanded) => handleChange(e, expanded, "anchor")}
-            sx={accordionSx}
-            disableGutters
           >
             <AccordionSummary
               expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "anchor" ? "\u25BE" : "\u25B8"}</Typography>}
-              sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Anchor</Typography>
             </AccordionSummary>
-            <AccordionDetails sx={detailsSx}>
+            <AccordionDetails>
               <Box
                 sx={{
                   display: "grid",
@@ -659,16 +591,13 @@ export default function AccordionView({
           <Accordion
             expanded={expandedPanel === "desktops"}
             onChange={(e, expanded) => handleChange(e, expanded, "desktops")}
-            sx={accordionSx}
-            disableGutters
           >
             <AccordionSummary
               expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "desktops" ? "\u25BE" : "\u25B8"}</Typography>}
-              sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Desktops</Typography>
             </AccordionSummary>
-            <AccordionDetails sx={detailsSx}>
+            <AccordionDetails>
               {sortedGroups.map((group) => (
                 <Box key={group.display_index} sx={{ mb: "12px" }}>
                   <Typography
@@ -769,41 +698,20 @@ export default function AccordionView({
           <Accordion
             expanded={expandedPanel === "settings"}
             onChange={(e, expanded) => handleChange(e, expanded, "settings")}
-            sx={accordionSx}
-            disableGutters
           >
             <AccordionSummary
               expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "settings" ? "\u25BE" : "\u25B8"}</Typography>}
-              sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Settings</Typography>
             </AccordionSummary>
-            <AccordionDetails sx={detailsSx}>
+            <AccordionDetails>
               <Tabs
                 value={settingsTab}
                 onChange={(_, v) => setSettingsTab(v)}
-                sx={{
-                  mb: "10px",
-                  minHeight: 0,
-                  "& .MuiTabs-indicator": { bgcolor: tc(0.45) },
-                  borderBottom: `1px solid ${tc(0.12)}`,
-                }}
+                sx={{ mb: "10px", borderBottom: `1px solid ${tc(0.12)}` }}
               >
                 {["Themes", "Permissions", "Timer"].map((label) => (
-                  <Tab
-                    key={label}
-                    label={label}
-                    sx={{
-                      flex: 1,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: tc(0.35),
-                      textTransform: "none",
-                      minHeight: 0,
-                      p: "5px 0",
-                      "&.Mui-selected": { color: tc(0.65) },
-                    }}
-                  />
+                  <Tab key={label} label={label} sx={{ flex: 1 }} />
                 ))}
               </Tabs>
 
@@ -817,12 +725,9 @@ export default function AccordionView({
                         sx={{
                           px: "14px",
                           py: "5px",
-                          fontSize: 11,
-                          fontWeight: 600,
                           color: theme.custom.tcInv(),
                           bgcolor: tc(0.45),
                           borderRadius: "12px",
-                          textTransform: "none",
                           "&:hover": { bgcolor: tc(0.6) },
                         }}
                       >
@@ -832,7 +737,6 @@ export default function AccordionView({
                       <>
                         <Typography
                           sx={{
-                            fontSize: 11,
                             fontWeight: 700,
                             color: tc(0.45),
                             mb: "6px",
@@ -1002,14 +906,11 @@ export default function AccordionView({
                   <Button
                     onClick={onShowSetup}
                     sx={{
-                      background: "none",
                       fontSize: 10,
                       color: tc(0.3),
                       p: "4px 0",
-                      textTransform: "none",
                       textDecoration: "underline",
-                      minWidth: 0,
-                      "&:hover": { color: tc(0.5), background: "none" },
+                      "&:hover": { color: tc(0.5) },
                     }}
                   >
                     Show Setup Again
@@ -1018,7 +919,6 @@ export default function AccordionView({
                   <Box sx={{ mb: "12px" }}>
                     <Typography
                       sx={{
-                        fontSize: 11,
                         fontWeight: 700,
                         color: tc(0.45),
                         mb: "6px",
@@ -1034,7 +934,7 @@ export default function AccordionView({
                       </Button>
                     ) : (
                       <Box sx={{ mt: "4px" }}>
-                        <Typography sx={{ m: "0 0 6px", fontSize: 11, color: tc(0.5) }}>
+                        <Typography sx={{ m: "0 0 6px", color: tc(0.5) }}>
                           This will delete all todos, titles, and custom colors. Are you sure?
                         </Typography>
                         <Button
@@ -1117,7 +1017,6 @@ export default function AccordionView({
                   <Box sx={{ mb: "12px" }}>
                     <Typography
                       sx={{
-                        fontSize: 11,
                         fontWeight: 700,
                         color: tc(0.45),
                         mb: "6px",
@@ -1145,16 +1044,8 @@ export default function AccordionView({
                           setNotifySystem(val);
                           invoke("save_notify_settings", { system: val, flash: notifyFlash }).catch(() => {});
                         }}
-                        sx={{
-                          "& .MuiSwitch-switchBase.Mui-checked": { color: tc(0.6) },
-                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                            bgcolor: tc(0.3),
-                          },
-                        }}
                       />
-                      <Typography sx={{ fontSize: 11, color: tc(0.55) }}>
-                        System notification
-                      </Typography>
+                      <Typography>System notification</Typography>
                     </Box>
                     <Box
                       sx={{
@@ -1174,14 +1065,8 @@ export default function AccordionView({
                           setNotifyFlash(val);
                           invoke("save_notify_settings", { system: notifySystem, flash: val }).catch(() => {});
                         }}
-                        sx={{
-                          "& .MuiSwitch-switchBase.Mui-checked": { color: tc(0.6) },
-                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                            bgcolor: tc(0.3),
-                          },
-                        }}
                       />
-                      <Typography sx={{ fontSize: 11, color: tc(0.55) }}>In-app flash</Typography>
+                      <Typography>In-app flash</Typography>
                     </Box>
                   </Box>
                 </>

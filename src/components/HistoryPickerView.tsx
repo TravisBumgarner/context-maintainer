@@ -31,15 +31,11 @@ export default function HistoryPickerView({
         <Button
           onClick={onBack}
           sx={{
-            background: "none",
-            fontSize: 11,
             color: tc(0.4),
             p: "2px 0",
             mb: "6px",
-            textTransform: "none",
-            minWidth: 0,
             justifyContent: "flex-start",
-            "&:hover": { color: tc(0.65), background: "none" },
+            "&:hover": { color: tc(0.65) },
           }}
         >
           &larr; Back
@@ -113,7 +109,6 @@ export default function HistoryPickerView({
                     >
                       <Typography
                         sx={{
-                          fontSize: 11,
                           fontWeight: 600,
                           color: tc(0.65),
                           overflow: "hidden",
@@ -151,12 +146,9 @@ export default function HistoryPickerView({
               maxWidth: 180,
               px: "14px",
               py: "7px",
-              fontSize: 11,
-              fontWeight: 600,
               color: theme.custom.tcInv(),
               bgcolor: tc(0.45),
               borderRadius: "12px",
-              textTransform: "none",
               textAlign: "center",
               "&:hover": { bgcolor: tc(0.6) },
             }}

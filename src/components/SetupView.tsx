@@ -64,12 +64,9 @@ export default function SetupView({
                   px: "10px",
                   py: "3px",
                   fontSize: 10,
-                  fontWeight: 600,
                   color: theme.custom.tcInv(),
                   bgcolor: tc(0.45),
                   borderRadius: "10px",
-                  textTransform: "none",
-                  minWidth: 0,
                   "&:hover": { bgcolor: tc(0.6) },
                 }}
               >
@@ -101,13 +98,9 @@ export default function SetupView({
             mt: 1,
             px: "14px",
             py: "5px",
-            fontSize: 11,
-            fontWeight: 600,
             color: theme.custom.tcInv(),
             bgcolor: tc(0.55),
             borderRadius: "12px",
-            textTransform: "none",
-            minWidth: 0,
             "&:hover": { bgcolor: tc(0.7) },
           }}
         >

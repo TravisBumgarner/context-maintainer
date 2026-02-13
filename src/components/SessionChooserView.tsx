@@ -23,12 +23,9 @@ export default function SessionChooserView({
     width: "100%",
     px: "14px",
     py: "7px",
-    fontSize: 11,
-    fontWeight: 600,
     color: theme.custom.tcInv(),
     bgcolor: tc(0.45),
     borderRadius: "12px",
-    textTransform: "none",
     textAlign: "center",
     "&:hover": { bgcolor: tc(0.6) },
   } as const;
@@ -58,7 +55,6 @@ export default function SessionChooserView({
         </Typography>
         <Typography
           sx={{
-            fontSize: 11,
             color: tc(0.4),
             mb: 2,
             textAlign: "center",

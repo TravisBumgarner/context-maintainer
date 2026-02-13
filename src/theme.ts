@@ -60,6 +60,122 @@ export function buildTheme(bgColor: string): Theme {
           },
         },
       },
+      MuiTypography: {
+        styleOverrides: {
+          root: { fontSize: 11, color: tc(0.55) },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            background: "none",
+            textTransform: "none",
+            minWidth: 0,
+            fontWeight: 600,
+            fontSize: 11,
+            color: tc(0.45),
+            boxShadow: "none",
+            "&:hover": { background: "none" },
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            background: "none",
+            borderRadius: 0,
+            "&:hover": { background: "none" },
+          },
+        },
+      },
+      MuiInputBase: {
+        styleOverrides: {
+          root: { fontSize: 11, fontFamily: "inherit", color: tc(0.7) },
+        },
+      },
+      MuiAccordion: {
+        defaultProps: { disableGutters: true },
+        styleOverrides: {
+          root: {
+            background: "transparent",
+            boxShadow: "none",
+            "&:before": { display: "none" },
+            "&.Mui-expanded": { margin: 0 },
+          },
+        },
+      },
+      MuiAccordionSummary: {
+        styleOverrides: {
+          root: {
+            minHeight: "28px !important",
+            paddingLeft: 10,
+            paddingRight: 10,
+            "& .MuiAccordionSummary-content": {
+              margin: "4px 0 !important",
+              alignItems: "center",
+              overflow: "hidden",
+            },
+            "& .MuiAccordionSummary-expandIconWrapper": {
+              color: tc(0.3),
+              fontSize: 16,
+            },
+          },
+        },
+      },
+      MuiAccordionDetails: {
+        styleOverrides: {
+          root: {
+            paddingLeft: 10,
+            paddingRight: 10,
+            paddingTop: 4,
+            paddingBottom: 4,
+          },
+        },
+      },
+      MuiTabs: {
+        styleOverrides: {
+          root: {
+            minHeight: 0,
+            "& .MuiTabs-indicator": { backgroundColor: tc(0.45) },
+          },
+        },
+      },
+      MuiTab: {
+        styleOverrides: {
+          root: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: tc(0.35),
+            textTransform: "none",
+            minHeight: 0,
+            padding: "5px 0",
+            "&.Mui-selected": { color: tc(0.65) },
+          },
+        },
+      },
+      MuiSwitch: {
+        styleOverrides: {
+          root: {
+            "& .MuiSwitch-switchBase.Mui-checked": { color: tc(0.6) },
+            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+              backgroundColor: tc(0.3),
+            },
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: { backgroundColor: tc(0.12) },
+        },
+      },
+      MuiCheckbox: {
+        styleOverrides: {
+          root: {
+            color: tc(0.3),
+            "&.Mui-checked": { color: tc(0.5) },
+          },
+        },
+      },
     },
     custom: { tc, tcInv, bg: bgColor },
   });
