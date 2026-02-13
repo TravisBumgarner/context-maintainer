@@ -2,20 +2,14 @@ import { Box, Button, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import Layout from "./AccordionView/components/Layout";
+import { useSettingsStore, useUIStore } from "../stores";
 
-interface SetupViewProps {
-  accessibilityGranted: boolean | null;
-  setAccessibilityGranted: (v: boolean) => void;
-  onComplete: () => void;
-}
-
-export default function SetupView({
-  accessibilityGranted,
-  setAccessibilityGranted,
-  onComplete,
-}: SetupViewProps) {
+export default function SetupView() {
   const theme = useTheme();
   const tc = theme.custom.tc;
+
+  const { accessibilityGranted, setAccessibilityGranted } = useSettingsStore();
+  const { setView } = useUIStore();
 
   return (
     <Layout>
@@ -91,7 +85,7 @@ export default function SetupView({
         <Button
           onClick={() => {
             invoke("complete_setup")
-              .then(onComplete)
+              .then(() => setView("todos"))
               .catch(() => { });
           }}
           sx={{

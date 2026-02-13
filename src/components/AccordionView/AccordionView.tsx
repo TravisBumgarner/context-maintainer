@@ -16,132 +16,35 @@ import DesktopsPanel from "./components/DesktopsPanel";
 import SettingsPanel from "./components/SettingsPanel";
 import { ANCHOR_POSITIONS, ANCHOR_LABELS } from "../../constants";
 import { formatCountdown } from "../../utils";
-import type {
-  TodoItem as TodoItemType,
-  AnchorPosition,
-  SpaceInfo,
-  DesktopInfo,
-  DisplayGroup,
-  AccordionPanel,
-} from "../../types";
+import { useTodoStore, useTimerStore, useUIStore, useDesktopStore } from "../../stores";
 
 interface AccordionViewProps {
-  title: string;
-  todos: TodoItemType[];
-  newText: string;
-  collapsed: boolean;
-  offMonitor: boolean;
-  monitorName: string;
-  anchorPos: AnchorPosition;
-  expandedPanel: AccordionPanel;
-  timerFlashing: boolean;
-  timerRunning: boolean;
-  timerRemaining: number;
-  timerHours: number;
-  timerMinutes: number;
-  timerSeconds: number;
-  timerPresets: number[];
-  displayGroups: DisplayGroup[];
   displayIndex: number;
-  currentSpaceId: number;
-  monitorNames: Record<number, string>;
-  desktop: DesktopInfo;
-  allSpaces: SpaceInfo[];
-  desktopCount: number;
-  accessibilityGranted: boolean | null;
-  notifySystem: boolean;
-  notifyFlash: boolean;
-  onTitleChange: (v: string) => void;
-  onNewTextChange: (v: string) => void;
-  onAddTodo: () => void;
-  onToggleDone: (id: string) => void;
-  onUpdateText: (id: string, text: string) => void;
-  onDeleteTodo: (id: string) => void;
-  onReorder: (items: TodoItemType[]) => void;
-  onSnap: () => void;
-  onToggleMinimize: () => void;
-  onAnchorSelect: (pos: AnchorPosition) => void;
-  onPanelChange: (panel: AccordionPanel) => void;
-  onSwitchDesktop: (spaceId: number) => void;
-  setTimerHours: (v: number) => void;
-  setTimerMinutes: (v: number) => void;
-  setTimerSeconds: (v: number) => void;
-  onTimerStart: () => void;
-  onTimerCancel: () => void;
-  onTimerPreset: (seconds: number) => void;
-  setAllSpaces: (s: SpaceInfo[]) => void;
-  setDesktop: (fn: (prev: DesktopInfo) => DesktopInfo) => void;
-  setAccessibilityGranted: (v: boolean) => void;
-  setTimerPresets: (fn: (prev: number[]) => number[]) => void;
-  setNotifySystem: (v: boolean) => void;
-  setNotifyFlash: (v: boolean) => void;
-  setTodos: (t: []) => void;
-  setTitle: (t: string) => void;
-  refreshSpaces: () => void;
-  onShowSetup: () => void;
 }
 
-export default function AccordionView({
-  title,
-  todos,
-  newText,
-  collapsed,
-  offMonitor,
-  monitorName,
-  anchorPos,
-  expandedPanel,
-  timerFlashing,
-  timerRunning,
-  timerRemaining,
-  timerHours,
-  timerMinutes,
-  timerSeconds,
-  timerPresets,
-  displayGroups,
-  displayIndex,
-  currentSpaceId,
-  monitorNames,
-  desktop,
-  allSpaces,
-  desktopCount,
-  accessibilityGranted,
-  notifySystem,
-  notifyFlash,
-  onTitleChange,
-  onNewTextChange,
-  onAddTodo,
-  onToggleDone,
-  onUpdateText,
-  onDeleteTodo,
-  onReorder,
-  onSnap,
-  onToggleMinimize,
-  onAnchorSelect,
-  onPanelChange,
-  onSwitchDesktop,
-  setTimerHours,
-  setTimerMinutes,
-  setTimerSeconds,
-  onTimerStart,
-  onTimerCancel,
-  onTimerPreset,
-  setAllSpaces,
-  setDesktop,
-  setAccessibilityGranted,
-  setTimerPresets,
-  setNotifySystem,
-  setNotifyFlash,
-  setTodos,
-  setTitle,
-  refreshSpaces,
-  onShowSetup,
-}: AccordionViewProps) {
+export default function AccordionView({ displayIndex }: AccordionViewProps) {
   const tc = useTheme().custom.tc;
 
+  // Zustand stores
+  const { todos, title, updateTitle } = useTodoStore();
+  const { flashing, running, remaining } = useTimerStore();
+  const {
+    collapsed,
+    offMonitor,
+    anchorPos,
+    expandedPanel,
+    toggleMinimize,
+    snapToMonitor,
+    selectAnchor,
+    changePanel,
+  } = useUIStore();
+  const { desktop, monitorNames } = useDesktopStore();
+
+  const monitorName = monitorNames[displayIndex] || `Screen ${displayIndex + 1}`;
   const firstUncompleted = todos.filter((t) => !t.done)[0]?.text ?? "";
 
-  const handleChange = (_: React.SyntheticEvent, isExpanded: boolean, panel: AccordionPanel) => {
-    if (isExpanded) onPanelChange(panel);
+  const handleChange = (_: React.SyntheticEvent, isExpanded: boolean, panel: string) => {
+    if (isExpanded) changePanel(panel as any);
   };
 
   const sectionLabelSx = {
@@ -160,19 +63,19 @@ export default function AccordionView({
     flex: 1,
   } as const;
 
-  const chevron = (panel: AccordionPanel) => (
+  const chevron = (panel: string) => (
     <Typography sx={{ fontSize: 16, color: tc(0.3) }}>
       {expandedPanel === panel ? "\u25BE" : "\u25B8"}
     </Typography>
   );
 
   return (
-    <Layout timerFlashing={timerFlashing}>
+    <Layout timerFlashing={flashing}>
       {/* ── Header ── */}
       <Box sx={{ px: "10px", py: "6px", display: "flex", alignItems: "center", flexShrink: 0 }}>
         <InputBase
           value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
+          onChange={(e) => updateTitle(e.target.value, desktop.space_id)}
           placeholder="What are you working on?"
           sx={{
             flex: 1,
@@ -189,17 +92,31 @@ export default function AccordionView({
         <Box sx={{ display: "flex", alignItems: "center", gap: "2px", flexShrink: 0 }}>
           {offMonitor && (
             <IconButton
-              onClick={onSnap}
+              onClick={() => snapToMonitor()}
               title={`This window has been moved off its assigned monitor (${monitorName}). Click to snap it back.`}
-              sx={{ p: "0 3px", lineHeight: 1, fontSize: 16, fontWeight: 700, color: tc(0.6), "&:hover": { color: tc(0.9) } }}
+              sx={{
+                p: "0 3px",
+                lineHeight: 1,
+                fontSize: 16,
+                fontWeight: 700,
+                color: tc(0.6),
+                "&:hover": { color: tc(0.9) },
+              }}
             >
               !
             </IconButton>
           )}
           <IconButton
-            onClick={onToggleMinimize}
+            onClick={toggleMinimize}
             title={collapsed ? "Expand" : "Collapse"}
-            sx={{ p: "0 3px", lineHeight: 1, fontSize: 14, fontWeight: 700, color: tc(0.3), "&:hover": { color: tc(0.6) } }}
+            sx={{
+              p: "0 3px",
+              lineHeight: 1,
+              fontSize: 14,
+              fontWeight: 700,
+              color: tc(0.3),
+              "&:hover": { color: tc(0.6) },
+            }}
           >
             {collapsed ? "+" : "\u2014"}
           </IconButton>
@@ -217,16 +134,7 @@ export default function AccordionView({
           )}
         </AccordionSummary>
         <AccordionDetails sx={{ p: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <QueuePanel
-            todos={todos}
-            newText={newText}
-            onNewTextChange={onNewTextChange}
-            onAddTodo={onAddTodo}
-            onToggleDone={onToggleDone}
-            onUpdateText={onUpdateText}
-            onDeleteTodo={onDeleteTodo}
-            onReorder={onReorder}
-          />
+          <QueuePanel desktopId={desktop.space_id} />
         </AccordionDetails>
       </Accordion>
 
@@ -234,25 +142,12 @@ export default function AccordionView({
       <Accordion expanded={expandedPanel === "timer"} onChange={(e, exp) => handleChange(e, exp, "timer")}>
         <AccordionSummary expandIcon={chevron("timer")}>
           <Typography sx={sectionLabelSx}>Timer</Typography>
-          {expandedPanel !== "timer" && timerRunning && (
-            <Typography sx={summaryPreviewSx}>{formatCountdown(timerRemaining)}</Typography>
+          {expandedPanel !== "timer" && running && (
+            <Typography sx={summaryPreviewSx}>{formatCountdown(remaining)}</Typography>
           )}
         </AccordionSummary>
         <AccordionDetails>
-          <TimerPanel
-            timerRunning={timerRunning}
-            timerRemaining={timerRemaining}
-            timerHours={timerHours}
-            timerMinutes={timerMinutes}
-            timerSeconds={timerSeconds}
-            timerPresets={timerPresets}
-            setTimerHours={setTimerHours}
-            setTimerMinutes={setTimerMinutes}
-            setTimerSeconds={setTimerSeconds}
-            onTimerStart={onTimerStart}
-            onTimerCancel={onTimerCancel}
-            onTimerPreset={onTimerPreset}
-          />
+          <TimerPanel />
         </AccordionDetails>
       </Accordion>
 
@@ -275,7 +170,7 @@ export default function AccordionView({
               <Box
                 key={pos}
                 component="button"
-                onClick={() => onAnchorSelect(pos)}
+                onClick={() => selectAnchor(pos)}
                 title={pos}
                 sx={{
                   width: 36,
@@ -306,13 +201,7 @@ export default function AccordionView({
           <Typography sx={sectionLabelSx}>Desktops</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <DesktopsPanel
-            displayGroups={displayGroups}
-            displayIndex={displayIndex}
-            currentSpaceId={currentSpaceId}
-            monitorNames={monitorNames}
-            onSwitchDesktop={onSwitchDesktop}
-          />
+          <DesktopsPanel displayIndex={displayIndex} />
         </AccordionDetails>
       </Accordion>
 
@@ -322,25 +211,7 @@ export default function AccordionView({
           <Typography sx={sectionLabelSx}>Settings</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <SettingsPanel
-            desktop={desktop}
-            allSpaces={allSpaces}
-            desktopCount={desktopCount}
-            timerPresets={timerPresets}
-            accessibilityGranted={accessibilityGranted}
-            notifySystem={notifySystem}
-            notifyFlash={notifyFlash}
-            setAllSpaces={setAllSpaces}
-            setDesktop={setDesktop}
-            setAccessibilityGranted={setAccessibilityGranted}
-            setTimerPresets={setTimerPresets}
-            setNotifySystem={setNotifySystem}
-            setNotifyFlash={setNotifyFlash}
-            setTodos={setTodos}
-            setTitle={setTitle}
-            refreshSpaces={refreshSpaces}
-            onShowSetup={onShowSetup}
-          />
+          <SettingsPanel />
         </AccordionDetails>
       </Accordion>
     </Layout>

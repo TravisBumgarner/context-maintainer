@@ -3,25 +3,16 @@ import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import Layout from "./AccordionView/components/Layout";
 import { formatRelativeTime } from "../utils";
-import type { SpaceInfo, ContextHistory } from "../types";
+import { useUIStore, useDesktopStore, useSettingsStore } from "../stores";
+import type { ContextHistory } from "../types";
 
-interface HistoryPickerViewProps {
-  allSpaces: SpaceInfo[];
-  contextHistory: ContextHistory;
-  setContextHistory: (h: ContextHistory) => void;
-  onBack: () => void;
-  onDone: () => void;
-}
-
-export default function HistoryPickerView({
-  allSpaces,
-  contextHistory,
-  setContextHistory,
-  onBack,
-  onDone,
-}: HistoryPickerViewProps) {
+export default function HistoryPickerView() {
   const theme = useTheme();
   const tc = theme.custom.tc;
+
+  const { setView } = useUIStore();
+  const { contextHistory, setContextHistory } = useDesktopStore();
+  const { allSpaces } = useSettingsStore();
 
   const hasHistory = Object.values(contextHistory).some((h) => h.length > 0);
 
@@ -29,7 +20,7 @@ export default function HistoryPickerView({
     <Layout>
       <Box sx={{ p: "10px 14px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column" }}>
         <Button
-          onClick={onBack}
+          onClick={() => setView("session-chooser")}
           sx={{
             color: tc(0.4),
             p: "2px 0",
@@ -139,7 +130,7 @@ export default function HistoryPickerView({
           }}
         >
           <Button
-            onClick={onDone}
+            onClick={() => setView("todos")}
             sx={{
               display: "block",
               width: "100%",

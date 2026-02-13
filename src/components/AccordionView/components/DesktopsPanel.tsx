@@ -1,24 +1,16 @@
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { detectColorMode } from "../../../utils";
-import type { DisplayGroup } from "../../../types";
+import { useUIStore, useDesktopStore } from "../../../stores";
 
 interface DesktopsPanelProps {
-  displayGroups: DisplayGroup[];
   displayIndex: number;
-  currentSpaceId: number;
-  monitorNames: Record<number, string>;
-  onSwitchDesktop: (spaceId: number) => void;
 }
 
-export default function DesktopsPanel({
-  displayGroups,
-  displayIndex,
-  currentSpaceId,
-  monitorNames,
-  onSwitchDesktop,
-}: DesktopsPanelProps) {
+export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
   const tc = useTheme().custom.tc;
+  const { displayGroups } = useUIStore();
+  const { desktop, monitorNames, switchDesktop } = useDesktopStore();
 
   const sortedGroups = [...displayGroups].sort((a, b) => {
     if (a.display_index === displayIndex) return -1;
@@ -57,18 +49,16 @@ export default function DesktopsPanel({
           >
             {group.desktops.map((d) => {
               const cardFg = detectColorMode(d.color) === "dark" ? "#000000" : "#ffffff";
-              const isActive = d.space_id === currentSpaceId;
+              const isActive = d.space_id === desktop.space_id;
               return (
                 <ButtonBase
                   key={d.space_id}
-                  onClick={() => onSwitchDesktop(d.space_id)}
+                  onClick={() => switchDesktop(displayIndex, d.space_id)}
                   sx={{
                     flexShrink: 0,
                     width: 80,
                     minHeight: 56,
-                    border: isActive
-                      ? `2px solid ${cardFg}`
-                      : "2px solid transparent",
+                    border: isActive ? `2px solid ${cardFg}` : "2px solid transparent",
                     borderRadius: "8px",
                     p: "6px",
                     display: "flex",

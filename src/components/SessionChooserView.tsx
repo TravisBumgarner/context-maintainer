@@ -2,21 +2,17 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import Layout from "./AccordionView/components/Layout";
+import { useUIStore, useTodoStore, useDesktopStore, useSettingsStore } from "../stores";
 import type { SpaceInfo, ContextHistory } from "../types";
 
-interface SessionChooserViewProps {
-  onContinue: () => void;
-  onNewSession: () => void;
-  onPickHistory: (spaces: SpaceInfo[], history: ContextHistory) => void;
-}
-
-export default function SessionChooserView({
-  onContinue,
-  onNewSession,
-  onPickHistory,
-}: SessionChooserViewProps) {
+export default function SessionChooserView() {
   const theme = useTheme();
   const tc = theme.custom.tc;
+
+  const { setView } = useUIStore();
+  const { setTodos, setTitle } = useTodoStore();
+  const { setContextHistory } = useDesktopStore();
+  const { setAllSpaces } = useSettingsStore();
 
   const btnSx = {
     display: "block",
@@ -63,14 +59,18 @@ export default function SessionChooserView({
           You have an existing session.
         </Typography>
         <Stack spacing={1} sx={{ width: "100%", maxWidth: 180 }}>
-          <Button sx={btnSx} onClick={onContinue}>
+          <Button sx={btnSx} onClick={() => setView("todos")}>
             Continue Session
           </Button>
           <Button
             sx={btnSx}
             onClick={() => {
               invoke("start_new_session")
-                .then(onNewSession)
+                .then(() => {
+                  setTodos([]);
+                  setTitle("");
+                  setView("todos");
+                })
                 .catch(() => { });
             }}
           >
@@ -83,7 +83,11 @@ export default function SessionChooserView({
                 invoke<SpaceInfo[]>("list_all_spaces"),
                 invoke<ContextHistory>("get_context_history"),
               ])
-                .then(([spaces, history]) => onPickHistory(spaces, history))
+                .then(([spaces, history]) => {
+                  setAllSpaces(spaces);
+                  setContextHistory(history);
+                  setView("history-picker");
+                })
                 .catch(() => { });
             }}
           >

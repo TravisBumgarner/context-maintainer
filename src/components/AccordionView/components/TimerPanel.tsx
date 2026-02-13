@@ -1,37 +1,24 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { formatPreset, formatCountdown } from "../utils";
+import { formatPreset, formatCountdown } from "../../../utils";
+import { useTimerStore, useSettingsStore } from "../../../stores";
 
-interface TimerPanelProps {
-  timerRunning: boolean;
-  timerRemaining: number;
-  timerHours: number;
-  timerMinutes: number;
-  timerSeconds: number;
-  timerPresets: number[];
-  setTimerHours: (v: number) => void;
-  setTimerMinutes: (v: number) => void;
-  setTimerSeconds: (v: number) => void;
-  onTimerStart: () => void;
-  onTimerCancel: () => void;
-  onTimerPreset: (seconds: number) => void;
-}
-
-export default function TimerPanel({
-  timerRunning,
-  timerRemaining,
-  timerHours,
-  timerMinutes,
-  timerSeconds,
-  timerPresets,
-  setTimerHours,
-  setTimerMinutes,
-  setTimerSeconds,
-  onTimerStart,
-  onTimerCancel,
-  onTimerPreset,
-}: TimerPanelProps) {
+export default function TimerPanel() {
   const tc = useTheme().custom.tc;
+  const {
+    hours,
+    minutes,
+    seconds,
+    running,
+    remaining,
+    setHours,
+    setMinutes,
+    setSeconds,
+    startTimer,
+    cancelTimer,
+    populateFromPreset,
+  } = useTimerStore();
+  const { timerPresets, notifySystem, notifyFlash } = useSettingsStore();
 
   const fieldInputSx = {
     width: 48,
@@ -51,7 +38,7 @@ export default function TimerPanel({
     },
   } as const;
 
-  if (timerRunning) {
+  if (running) {
     return (
       <Box
         sx={{
@@ -71,10 +58,10 @@ export default function TimerPanel({
             letterSpacing: "1px",
           }}
         >
-          {formatCountdown(timerRemaining)}
+          {formatCountdown(remaining)}
         </Typography>
         <Button
-          onClick={onTimerCancel}
+          onClick={cancelTimer}
           sx={{
             px: "14px",
             py: "4px",
@@ -99,9 +86,9 @@ export default function TimerPanel({
         }}
       >
         {[
-          { value: timerHours, set: setTimerHours, max: 99, label: "HH" },
-          { value: timerMinutes, set: setTimerMinutes, max: 59, label: "MM" },
-          { value: timerSeconds, set: setTimerSeconds, max: 59, label: "SS" },
+          { value: hours, set: setHours, max: 99, label: "HH" },
+          { value: minutes, set: setMinutes, max: 59, label: "MM" },
+          { value: seconds, set: setSeconds, max: 59, label: "SS" },
         ].map((field, i) => (
           <Box key={field.label} sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
             {i > 0 && (
@@ -131,7 +118,7 @@ export default function TimerPanel({
         {timerPresets.map((p, i) => (
           <Button
             key={i}
-            onClick={() => onTimerPreset(p)}
+            onClick={() => populateFromPreset(p)}
             sx={{
               px: "8px",
               py: "2px",
@@ -144,8 +131,8 @@ export default function TimerPanel({
       </Box>
 
       <Button
-        onClick={onTimerStart}
-        disabled={timerHours === 0 && timerMinutes === 0 && timerSeconds === 0}
+        onClick={() => startTimer(notifySystem, notifyFlash)}
+        disabled={hours === 0 && minutes === 0 && seconds === 0}
         sx={{
           display: "block",
           mx: "auto",

@@ -2,30 +2,25 @@ import { Box, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Reorder } from "framer-motion";
 import TodoItem from "./TodoItem";
-import type { TodoItem as TodoItemType } from "../../../types";
+import { useTodoStore } from "../../../stores";
 
 interface QueuePanelProps {
-  todos: TodoItemType[];
-  newText: string;
-  onNewTextChange: (v: string) => void;
-  onAddTodo: () => void;
-  onToggleDone: (id: string) => void;
-  onUpdateText: (id: string, text: string) => void;
-  onDeleteTodo: (id: string) => void;
-  onReorder: (items: TodoItemType[]) => void;
+  desktopId: number;
 }
 
-export default function QueuePanel({
-  todos,
-  newText,
-  onNewTextChange,
-  onAddTodo,
-  onToggleDone,
-  onUpdateText,
-  onDeleteTodo,
-  onReorder,
-}: QueuePanelProps) {
+export default function QueuePanel({ desktopId }: QueuePanelProps) {
   const tc = useTheme().custom.tc;
+  const {
+    todos,
+    newText,
+    setNewText,
+    addTodo,
+    toggleDone,
+    updateText,
+    deleteTodo,
+    reorderTodos,
+  } = useTodoStore();
+
   const active = todos.filter((t) => !t.done);
   const done = todos.filter((t) => t.done);
 
@@ -34,7 +29,7 @@ export default function QueuePanel({
       <Reorder.Group
         axis="y"
         values={active}
-        onReorder={onReorder}
+        onReorder={(reordered) => reorderTodos(reordered, desktopId)}
         style={{
           flex: 1,
           overflowY: "auto",
@@ -63,9 +58,9 @@ export default function QueuePanel({
                   ⠿
                 </Typography>
               }
-              onToggle={onToggleDone}
-              onUpdate={onUpdateText}
-              onDelete={onDeleteTodo}
+              onToggle={() => toggleDone(item.id, desktopId)}
+              onUpdate={(text) => updateText(item.id, text, desktopId)}
+              onDelete={() => deleteTodo(item.id, desktopId)}
             />
           </Reorder.Item>
         ))}
@@ -83,8 +78,8 @@ export default function QueuePanel({
         <InputBase
           placeholder="Add task..."
           value={newText}
-          onChange={(e) => onNewTextChange(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && onAddTodo()}
+          onChange={(e) => setNewText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addTodo(desktopId)}
           sx={{
             flex: 1,
             minWidth: 0,
@@ -131,9 +126,9 @@ export default function QueuePanel({
                 key={item.id}
                 item={item}
                 isDone
-                onToggle={onToggleDone}
-                onUpdate={onUpdateText}
-                onDelete={onDeleteTodo}
+                onToggle={() => toggleDone(item.id, desktopId)}
+                onUpdate={(text) => updateText(item.id, text, desktopId)}
+                onDelete={() => deleteTodo(item.id, desktopId)}
               />
             ))}
           </Box>

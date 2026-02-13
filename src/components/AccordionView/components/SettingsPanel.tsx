@@ -2,50 +2,30 @@ import { useState } from "react";
 import { Box, Button, Switch, Typography, Tabs, Tab } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
-import { THEMES } from "../constants";
-import type { SpaceInfo, DesktopInfo } from "../types";
+import { THEMES } from "../../../constants";
+import { useDesktopStore, useSettingsStore, useTodoStore, useUIStore } from "../../../stores";
 
-interface SettingsPanelProps {
-  desktop: DesktopInfo;
-  allSpaces: SpaceInfo[];
-  desktopCount: number;
-  timerPresets: number[];
-  accessibilityGranted: boolean | null;
-  notifySystem: boolean;
-  notifyFlash: boolean;
-  setAllSpaces: (s: SpaceInfo[]) => void;
-  setDesktop: (fn: (prev: DesktopInfo) => DesktopInfo) => void;
-  setAccessibilityGranted: (v: boolean) => void;
-  setTimerPresets: (fn: (prev: number[]) => number[]) => void;
-  setNotifySystem: (v: boolean) => void;
-  setNotifyFlash: (v: boolean) => void;
-  setTodos: (t: []) => void;
-  setTitle: (t: string) => void;
-  refreshSpaces: () => void;
-  onShowSetup: () => void;
-}
-
-export default function SettingsPanel({
-  desktop,
-  allSpaces,
-  desktopCount,
-  timerPresets,
-  accessibilityGranted,
-  notifySystem,
-  notifyFlash,
-  setAllSpaces,
-  setDesktop,
-  setAccessibilityGranted,
-  setTimerPresets,
-  setNotifySystem,
-  setNotifyFlash,
-  setTodos,
-  setTitle,
-  refreshSpaces,
-  onShowSetup,
-}: SettingsPanelProps) {
+export default function SettingsPanel() {
   const theme = useTheme();
   const tc = theme.custom.tc;
+
+  const { desktop, setDesktop } = useDesktopStore();
+  const {
+    allSpaces,
+    desktopCount,
+    timerPresets,
+    accessibilityGranted,
+    notifySystem,
+    notifyFlash,
+    setAllSpaces,
+    setAccessibilityGranted,
+    setTimerPresets,
+    setNotifySystem,
+    setNotifyFlash,
+    refreshSpaces,
+  } = useSettingsStore();
+  const { setTodos, setTitle } = useTodoStore();
+  const { setView } = useUIStore();
 
   const [settingsTab, setSettingsTab] = useState(0);
   const [showThemePicker, setShowThemePicker] = useState(false);
@@ -274,7 +254,7 @@ export default function SettingsPanel({
           </Box>
 
           <Button
-            onClick={onShowSetup}
+            onClick={() => setView("setup")}
             sx={{
               fontSize: 10,
               color: tc(0.3),
