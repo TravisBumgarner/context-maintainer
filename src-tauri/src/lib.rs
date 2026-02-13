@@ -83,10 +83,8 @@ extern "C" {
 }
 
 // ── Space detection ────────────────────────────────────────────
-/// Returns the global 0-based desktop index for a specific display,
-/// using that display's "Current Space" (not the globally focused one).
-/// Spaces are numbered globally: display 0 spaces first, then display 1, etc.
-fn desktop_index_for_display(target_display: usize) -> u32 {
+/// Returns the stable `id64` for the active space on the given display.
+fn space_id_for_display(target_display: usize) -> i64 {
     unsafe {
         let conn = CGSMainConnectionID();
         if conn == 0 {
@@ -103,12 +101,9 @@ fn desktop_index_for_display(target_display: usize) -> u32 {
             return 0;
         }
 
-        let key_spaces = cf_str("Spaces");
         let key_current = cf_str("Current Space");
         let key_id = cf_str("id64");
-        let key_type = cf_str("type");
 
-        // Get the active space id for the target display via "Current Space"
         let clamped = if target_display < display_count { target_display } else { 0 };
         let disp = CFArrayGetValueAtIndex(displays, clamped as isize);
         let current_space = CFDictionaryGetValue(disp, key_current);
@@ -120,61 +115,16 @@ fn desktop_index_for_display(target_display: usize) -> u32 {
             }
         }
 
-        // Walk all displays' spaces to compute the global index
-        let mut global_index: u32 = 0;
-        let mut result: u32 = 0;
-        let mut found = false;
-
-        for d in 0..display_count {
-            let display = CFArrayGetValueAtIndex(displays, d as isize);
-            let spaces = CFDictionaryGetValue(display, key_spaces);
-            if spaces.is_null() {
-                continue;
-            }
-
-            let count = CFArrayGetCount(spaces);
-            for i in 0..count {
-                let space = CFArrayGetValueAtIndex(spaces, i);
-
-                let type_ptr = CFDictionaryGetValue(space, key_type);
-                let mut stype: i32 = -1;
-                if !type_ptr.is_null() {
-                    CFNumberGetValue(type_ptr, CF_NUMBER_SINT32, &mut stype as *mut _ as *mut c_void);
-                }
-                if stype != 0 {
-                    continue;
-                }
-
-                let id_ptr = CFDictionaryGetValue(space, key_id);
-                let mut sid: i64 = 0;
-                if !id_ptr.is_null() {
-                    CFNumberGetValue(id_ptr, CF_NUMBER_SINT64, &mut sid as *mut _ as *mut c_void);
-                }
-
-                if sid == active_id {
-                    result = global_index;
-                    found = true;
-                    break;
-                }
-                global_index += 1;
-            }
-            if found {
-                break;
-            }
-        }
-
-        CFRelease(key_spaces);
         CFRelease(key_current);
         CFRelease(key_id);
-        CFRelease(key_type);
         CFRelease(displays);
-        result
+        active_id
     }
 }
 
-// ── Space enumeration (global_index, display, local_1based) ───
+// ── Space enumeration (space_id, display, local_1based) ───
 
-fn enumerate_spaces() -> Vec<(u32, usize, u32)> {
+fn enumerate_spaces() -> Vec<(i64, usize, u32)> {
     let mut result = Vec::new();
     unsafe {
         let conn = CGSMainConnectionID();
@@ -186,8 +136,7 @@ fn enumerate_spaces() -> Vec<(u32, usize, u32)> {
         let display_count = CFArrayGetCount(displays) as usize;
         let key_spaces = cf_str("Spaces");
         let key_type = cf_str("type");
-
-        let mut global_index: u32 = 0;
+        let key_id = cf_str("id64");
 
         for d in 0..display_count {
             let display = CFArrayGetValueAtIndex(displays, d as isize);
@@ -205,14 +154,20 @@ fn enumerate_spaces() -> Vec<(u32, usize, u32)> {
                 }
                 if stype != 0 { continue; }
 
-                result.push((global_index, d, local));
-                global_index += 1;
+                let id_ptr = CFDictionaryGetValue(space, key_id);
+                let mut sid: i64 = 0;
+                if !id_ptr.is_null() {
+                    CFNumberGetValue(id_ptr, CF_NUMBER_SINT64, &mut sid as *mut _ as *mut c_void);
+                }
+
+                result.push((sid, d, local));
                 local += 1;
             }
         }
 
         CFRelease(key_spaces);
         CFRelease(key_type);
+        CFRelease(key_id);
         CFRelease(displays);
     }
     result
@@ -258,14 +213,14 @@ struct TodoItem {
     done: bool,
 }
 
-type NotesStore = HashMap<u32, Vec<TodoItem>>;
-type TitleStore = HashMap<u32, String>;
+type NotesStore = HashMap<i64, Vec<TodoItem>>;
+type TitleStore = HashMap<i64, String>;
 
 fn default_desktop_count() -> u32 { 10 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct Settings {
-    custom_colors: HashMap<u32, String>,
+    custom_colors: HashMap<i64, String>,
     setup_complete: bool,
     #[serde(default = "default_desktop_count")]
     desktop_count: u32,
@@ -281,12 +236,16 @@ impl Default for Settings {
     }
 }
 
+fn default_version() -> u32 { 0 }
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 struct PersistData {
     notes: NotesStore,
     titles: TitleStore,
     #[serde(default)]
     settings: Settings,
+    #[serde(default = "default_version")]
+    version: u32,
 }
 
 struct AppState {
@@ -307,41 +266,78 @@ fn persist_data(path: &str, data: &PersistData) {
     }
 }
 
+/// Migrate v0 data (keyed by positional index) to v1 (keyed by space id64).
+fn migrate_v0_to_v1(data: &mut PersistData) {
+    if data.version >= 1 {
+        return;
+    }
+
+    let spaces = enumerate_spaces();
+    // Build position → space_id mapping (position is the global 0-based index)
+    let pos_to_sid: HashMap<i64, i64> = spaces
+        .iter()
+        .enumerate()
+        .map(|(pos, &(sid, _disp, _local))| (pos as i64, sid))
+        .collect();
+
+    fn rekey<V: Clone>(old: &HashMap<i64, V>, mapping: &HashMap<i64, i64>) -> HashMap<i64, V> {
+        let mut new = HashMap::new();
+        for (old_key, value) in old {
+            if let Some(&new_key) = mapping.get(old_key) {
+                new.insert(new_key, value.clone());
+            }
+            // Drop entries that don't map to a current space
+        }
+        new
+    }
+
+    data.notes = rekey(&data.notes, &pos_to_sid);
+    data.titles = rekey(&data.titles, &pos_to_sid);
+    data.settings.custom_colors = rekey(&data.settings.custom_colors, &pos_to_sid);
+    data.version = 1;
+}
+
 // ── Tauri commands ────────────────────────────────────────────
 
 #[derive(Serialize, Clone)]
 struct DesktopInfo {
-    index: u32,
+    space_id: i64,
+    position: u32,
     name: String,
     color: String,
 }
 
-fn default_color(idx: u32) -> String {
-    COLORS[(idx as usize) % COLORS.len()].to_string()
+fn default_color(position: u32) -> String {
+    COLORS[(position as usize) % COLORS.len()].to_string()
 }
 
 #[tauri::command]
 fn get_desktop(state: tauri::State<'_, AppState>, display: u32) -> DesktopInfo {
-    let idx = desktop_index_for_display(display as usize);
+    let sid = space_id_for_display(display as usize);
+    let spaces = enumerate_spaces();
+    let position = spaces.iter()
+        .position(|&(s, _, _)| s == sid)
+        .unwrap_or(0) as u32;
     let data = state.data.lock().unwrap();
-    let color = data.settings.custom_colors.get(&idx)
+    let color = data.settings.custom_colors.get(&sid)
         .cloned()
-        .unwrap_or_else(|| default_color(idx));
+        .unwrap_or_else(|| default_color(position));
     DesktopInfo {
-        index: idx,
-        name: format!("Desktop {}", idx + 1),
+        space_id: sid,
+        position,
+        name: format!("Desktop {}", position + 1),
         color,
     }
 }
 
 #[tauri::command]
-fn get_todos(state: tauri::State<'_, AppState>, desktop: u32) -> Vec<TodoItem> {
+fn get_todos(state: tauri::State<'_, AppState>, desktop: i64) -> Vec<TodoItem> {
     let data = state.data.lock().unwrap();
     data.notes.get(&desktop).cloned().unwrap_or_default()
 }
 
 #[tauri::command]
-fn save_todos(state: tauri::State<'_, AppState>, desktop: u32, todos: Vec<TodoItem>) {
+fn save_todos(state: tauri::State<'_, AppState>, desktop: i64, todos: Vec<TodoItem>) {
     let mut data = state.data.lock().unwrap();
     data.notes.insert(desktop, todos);
     let path = state.data_path.lock().unwrap();
@@ -349,13 +345,13 @@ fn save_todos(state: tauri::State<'_, AppState>, desktop: u32, todos: Vec<TodoIt
 }
 
 #[tauri::command]
-fn get_title(state: tauri::State<'_, AppState>, desktop: u32) -> String {
+fn get_title(state: tauri::State<'_, AppState>, desktop: i64) -> String {
     let data = state.data.lock().unwrap();
     data.titles.get(&desktop).cloned().unwrap_or_default()
 }
 
 #[tauri::command]
-fn save_title(state: tauri::State<'_, AppState>, desktop: u32, title: String) {
+fn save_title(state: tauri::State<'_, AppState>, desktop: i64, title: String) {
     let mut data = state.data.lock().unwrap();
     if title.is_empty() {
         data.titles.remove(&desktop);
@@ -368,7 +364,8 @@ fn save_title(state: tauri::State<'_, AppState>, desktop: u32, title: String) {
 
 #[derive(Serialize, Clone)]
 struct DesktopSummary {
-    index: u32,
+    space_id: i64,
+    position: u32,
     name: String,
     title: String,
     color: String,
@@ -377,28 +374,25 @@ struct DesktopSummary {
 
 #[tauri::command]
 fn list_all_desktops(state: tauri::State<'_, AppState>) -> Vec<DesktopSummary> {
+    let spaces = enumerate_spaces();
     let data = state.data.lock().unwrap();
-    let mut indices: std::collections::BTreeSet<u32> = std::collections::BTreeSet::new();
-    for k in data.notes.keys() {
-        indices.insert(*k);
-    }
-    for k in data.titles.keys() {
-        indices.insert(*k);
-    }
-    indices
+    spaces
         .iter()
-        .map(|&idx| {
-            let todos = data.notes.get(&idx);
+        .enumerate()
+        .map(|(pos, &(sid, _disp, _local))| {
+            let position = pos as u32;
+            let todos = data.notes.get(&sid);
             let active_count = todos
                 .map(|t| t.iter().filter(|i| !i.done).count())
                 .unwrap_or(0);
-            let color = data.settings.custom_colors.get(&idx)
+            let color = data.settings.custom_colors.get(&sid)
                 .cloned()
-                .unwrap_or_else(|| default_color(idx));
+                .unwrap_or_else(|| default_color(position));
             DesktopSummary {
-                index: idx,
-                name: format!("Desktop {}", idx + 1),
-                title: data.titles.get(&idx).cloned().unwrap_or_default(),
+                space_id: sid,
+                position,
+                name: format!("Desktop {}", position + 1),
+                title: data.titles.get(&sid).cloned().unwrap_or_default(),
                 color,
                 todo_count: active_count,
             }
@@ -416,59 +410,29 @@ struct DisplayGroup {
 fn list_desktops_grouped(state: tauri::State<'_, AppState>) -> Vec<DisplayGroup> {
     let spaces = enumerate_spaces();
     let data = state.data.lock().unwrap();
-    let desktop_count = data.settings.desktop_count;
 
-    // Track which global indices are covered by enumerate_spaces
-    let mut seen: std::collections::HashSet<u32> = std::collections::HashSet::new();
     let mut groups: std::collections::BTreeMap<usize, Vec<DesktopSummary>> = std::collections::BTreeMap::new();
+    let mut global_pos: u32 = 0;
 
-    for &(global, disp, _local) in &spaces {
-        if global >= desktop_count {
-            continue;
-        }
-        seen.insert(global);
-        let todos = data.notes.get(&global);
+    for &(sid, disp, _local) in &spaces {
+        let position = global_pos;
+        let todos = data.notes.get(&sid);
         let active_count = todos
             .map(|t| t.iter().filter(|i| !i.done).count())
             .unwrap_or(0);
-        let color = data.settings.custom_colors.get(&global)
+        let color = data.settings.custom_colors.get(&sid)
             .cloned()
-            .unwrap_or_else(|| default_color(global));
+            .unwrap_or_else(|| default_color(position));
         let summary = DesktopSummary {
-            index: global,
-            name: format!("Desktop {}", global + 1),
-            title: data.titles.get(&global).cloned().unwrap_or_default(),
+            space_id: sid,
+            position,
+            name: format!("Desktop {}", position + 1),
+            title: data.titles.get(&sid).cloned().unwrap_or_default(),
             color,
             todo_count: active_count,
         };
         groups.entry(disp).or_default().push(summary);
-    }
-
-    // Fallback: any desktops in 0..desktop_count not found go into display 0
-    for idx in 0..desktop_count {
-        if seen.contains(&idx) {
-            continue;
-        }
-        let todos = data.notes.get(&idx);
-        let active_count = todos
-            .map(|t| t.iter().filter(|i| !i.done).count())
-            .unwrap_or(0);
-        let color = data.settings.custom_colors.get(&idx)
-            .cloned()
-            .unwrap_or_else(|| default_color(idx));
-        let summary = DesktopSummary {
-            index: idx,
-            name: format!("Desktop {}", idx + 1),
-            title: data.titles.get(&idx).cloned().unwrap_or_default(),
-            color,
-            todo_count: active_count,
-        };
-        groups.entry(0).or_default().push(summary);
-    }
-
-    // Sort desktops within each group by index
-    for desktops in groups.values_mut() {
-        desktops.sort_by_key(|d| d.index);
+        global_pos += 1;
     }
 
     groups.into_iter().map(|(display_index, desktops)| {
@@ -477,10 +441,10 @@ fn list_desktops_grouped(state: tauri::State<'_, AppState>) -> Vec<DisplayGroup>
 }
 
 #[tauri::command]
-fn switch_desktop(display: u32, target: u32) -> bool {
+fn switch_desktop(display: u32, target: i64) -> bool {
     let spaces = enumerate_spaces();
-    for &(global, disp, local) in &spaces {
-        if global == target && disp == display as usize && local <= 9 {
+    for &(sid, disp, local) in &spaces {
+        if sid == target && disp == display as usize && local <= 9 {
             simulate_ctrl_number(local);
             return true;
         }
@@ -505,7 +469,7 @@ fn complete_setup(state: tauri::State<'_, AppState>) {
 }
 
 #[tauri::command]
-fn save_color(state: tauri::State<'_, AppState>, desktop: u32, color: String) {
+fn save_color(state: tauri::State<'_, AppState>, desktop: i64, color: String) {
     let mut data = state.data.lock().unwrap();
     data.settings.custom_colors.insert(desktop, color);
     let path = state.data_path.lock().unwrap();
@@ -514,7 +478,8 @@ fn save_color(state: tauri::State<'_, AppState>, desktop: u32, color: String) {
 
 #[derive(Serialize, Clone)]
 struct SpaceInfo {
-    index: u32,
+    space_id: i64,
+    position: u32,
     name: String,
     title: String,
     color: String,
@@ -524,18 +489,23 @@ struct SpaceInfo {
 fn list_all_spaces(state: tauri::State<'_, AppState>) -> Vec<SpaceInfo> {
     let spaces = enumerate_spaces();
     let data = state.data.lock().unwrap();
-    let count = std::cmp::max(spaces.len(), data.settings.desktop_count as usize);
-    (0..count as u32).map(|idx| {
-        let color = data.settings.custom_colors.get(&idx)
-            .cloned()
-            .unwrap_or_else(|| default_color(idx));
-        SpaceInfo {
-            index: idx,
-            name: format!("Desktop {}", idx + 1),
-            title: data.titles.get(&idx).cloned().unwrap_or_default(),
-            color,
-        }
-    }).collect()
+    spaces
+        .iter()
+        .enumerate()
+        .map(|(pos, &(sid, _disp, _local))| {
+            let position = pos as u32;
+            let color = data.settings.custom_colors.get(&sid)
+                .cloned()
+                .unwrap_or_else(|| default_color(position));
+            SpaceInfo {
+                space_id: sid,
+                position,
+                name: format!("Desktop {}", position + 1),
+                title: data.titles.get(&sid).cloned().unwrap_or_default(),
+                color,
+            }
+        })
+        .collect()
 }
 
 #[tauri::command]
@@ -548,11 +518,24 @@ fn save_desktop_count(state: tauri::State<'_, AppState>, count: u32) {
 
 #[tauri::command]
 fn apply_theme(state: tauri::State<'_, AppState>, colors: Vec<String>) {
+    let spaces = enumerate_spaces();
     let mut data = state.data.lock().unwrap();
     data.settings.custom_colors.clear();
-    for (i, color) in colors.iter().enumerate() {
-        data.settings.custom_colors.insert(i as u32, color.clone());
+    for (i, &(sid, _disp, _local)) in spaces.iter().enumerate() {
+        if i < colors.len() {
+            data.settings.custom_colors.insert(sid, colors[i].clone());
+        }
     }
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
+fn clear_all_data(state: tauri::State<'_, AppState>) {
+    let mut data = state.data.lock().unwrap();
+    data.notes.clear();
+    data.titles.clear();
+    data.settings.custom_colors.clear();
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
 }
@@ -597,7 +580,13 @@ pub fn run() {
             fs::create_dir_all(&data_dir).ok();
             let data_path = data_dir.join("notes.json");
             let data_path_str = data_path.to_string_lossy().to_string();
-            let data = load_data(&data_path_str);
+            let mut data = load_data(&data_path_str);
+
+            // Migrate v0 → v1 (positional index → space id64)
+            if data.version < 1 {
+                migrate_v0_to_v1(&mut data);
+                persist_data(&data_path_str, &data);
+            }
 
             app.manage(AppState {
                 data: Mutex::new(data),
@@ -693,7 +682,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
