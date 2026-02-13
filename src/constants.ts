@@ -53,6 +53,50 @@ export const THEMES: { name: string; colors: string[] }[] = [
     name: "Retro",
     colors: ["#E8D44D","#E6A23C","#F56C6C","#67C23A","#409EFF","#B37FEB","#F759AB","#36CFC9","#FFA940","#FF7A45"],
   },
+  {
+    name: "Lavender",
+    colors: ["#E6E6FA","#D8BFD8","#DDA0DD","#DA70D6","#BA55D3","#9932CC","#8B008B","#800080","#4B0082","#9370DB"],
+  },
+  {
+    name: "Mintale",
+    colors: ["#E0F7F4","#A8E6E1","#7FD8D3","#56CEC5","#3FBFB7","#26B8A9","#1A9B8E","#0F8073","#04695F","#02453D"],
+  },
+  {
+    name: "Coral",
+    colors: ["#FFE5D9","#FFD4C4","#FFC4AF","#FFB39A","#FFA285","#FF9170","#FF805B","#FF6F46","#FF5E31","#FF4D1C"],
+  },
+  {
+    name: "Sage",
+    colors: ["#E8F5E9","#C8E6C9","#A5D6A7","#81C784","#66BB6A","#4CAF50","#43A047","#388E3C","#2E7D32","#1B5E20"],
+  },
+  {
+    name: "Plum",
+    colors: ["#F3E5F5","#E1BEE7","#CE93D8","#BA68C8","#AB47BC","#9C27B0","#8E24AA","#7B1FA2","#6A1B9A","#4A148C"],
+  },
+  {
+    name: "Peach",
+    colors: ["#FFEAA7","#FDCB6E","#F9CA24","#F0932B","#EB5757","#FF7675","#FD79A8","#FDCB6E","#E17055","#D63031"],
+  },
+  {
+    name: "Arctic",
+    colors: ["#E0F4FF","#B3E5FC","#81D4FA","#4FC3F7","#29B6F6","#03A9F4","#039BE5","#0288D1","#0277BD","#01579B"],
+  },
+  {
+    name: "Burgundy",
+    colors: ["#E8D1CD","#E8B9C8","#D89BC8","#C87BB8","#B85CA8","#A83D98","#982E88","#871E78","#760E68","#650358"],
+  },
+  {
+    name: "Lime",
+    colors: ["#F1FF6B","#E4FF6E","#D7FF71","#CAFF74","#BDFB77","#B0FF7A","#A3FF7D","#96FF80","#89FF83","#7CFF86"],
+  },
+  {
+    name: "Rust",
+    colors: ["#F4DFD0","#E8C4B0","#DCA890","#D08C70","#C47050","#B85430","#AC3810","#9C2F0F","#8C2407","#7C1A00"],
+  },
+  {
+    name: "Slate",
+    colors: ["#E8EAED","#D0D5DD","#B8BCC7","#A0A8BB","#8894AF","#7080A3","#586C97","#40588B","#28447F","#103073"],
+  },
 ];
 
 export const DEFAULT_BG = "#F5E6A3";

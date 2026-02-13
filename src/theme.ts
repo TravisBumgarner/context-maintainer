@@ -43,8 +43,8 @@ export function buildTheme(bgColor: string): Theme {
   // 0.3 → 0.55, 0.5 → 0.71, 0.7 → 0.84, 0.9 → 0.95
   const boost = (t: number) => Math.pow(t, 0.5);
 
-  const tc = (amount = 1) => mix(fgRgb, bgRgb, boost(amount));
-  const tcInv = (amount = 1) => mix(fgInvRgb, bgRgb, boost(amount));
+  const textColor = (amount = 1) => mix(fgRgb, bgRgb, boost(amount));
+  const textColorInverse = (amount = 1) => mix(fgInvRgb, bgRgb, boost(amount));
 
   return createTheme({
     typography: {
@@ -62,7 +62,7 @@ export function buildTheme(bgColor: string): Theme {
       },
       MuiTypography: {
         styleOverrides: {
-          root: { fontSize: 11, color: tc(0.55) },
+          root: { fontSize: 11, color: textColor(0.55) },
         },
       },
       MuiButton: {
@@ -73,11 +73,28 @@ export function buildTheme(bgColor: string): Theme {
             minWidth: 0,
             fontWeight: 600,
             fontSize: 11,
-            color: tc(0.45),
+            color: textColor(0.45),
             boxShadow: "none",
             "&:hover": { background: "none" },
           },
         },
+        variants: [
+          {
+            props: { variant: "contained" },
+            style: {
+              marginTop: 0.5,
+              paddingLeft: "10px",
+              paddingRight: "10px",
+              paddingTop: "3px",
+              paddingBottom: "3px",
+              fontSize: 10,
+              color: textColorInverse(),
+              backgroundColor: textColor(0.45),
+              borderRadius: "10px",
+              "&:hover": { backgroundColor: textColor(0.6) },
+            },
+          },
+        ],
       },
       MuiIconButton: {
         styleOverrides: {
@@ -90,7 +107,7 @@ export function buildTheme(bgColor: string): Theme {
       },
       MuiInputBase: {
         styleOverrides: {
-          root: { fontSize: 11, fontFamily: "inherit", color: tc(0.7) },
+          root: { fontSize: 11, fontFamily: "inherit", color: textColor(0.7) },
         },
       },
       MuiAccordion: {
@@ -116,7 +133,7 @@ export function buildTheme(bgColor: string): Theme {
               overflow: "hidden",
             },
             "& .MuiAccordionSummary-expandIconWrapper": {
-              color: tc(0.3),
+              color: textColor(0.3),
               fontSize: 16,
             },
           },
@@ -136,7 +153,7 @@ export function buildTheme(bgColor: string): Theme {
         styleOverrides: {
           root: {
             minHeight: 0,
-            "& .MuiTabs-indicator": { backgroundColor: tc(0.45) },
+            "& .MuiTabs-indicator": { backgroundColor: textColor(0.45) },
           },
         },
       },
@@ -145,38 +162,38 @@ export function buildTheme(bgColor: string): Theme {
           root: {
             fontSize: 11,
             fontWeight: 600,
-            color: tc(0.35),
+            color: textColor(0.35),
             textTransform: "none",
             minHeight: 0,
             padding: "5px 0",
-            "&.Mui-selected": { color: tc(0.65) },
+            "&.Mui-selected": { color: textColor(0.65) },
           },
         },
       },
       MuiSwitch: {
         styleOverrides: {
           root: {
-            "& .MuiSwitch-switchBase.Mui-checked": { color: tc(0.6) },
+            "& .MuiSwitch-switchBase.Mui-checked": { color: textColor(0.6) },
             "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-              backgroundColor: tc(0.3),
+              backgroundColor: textColor(0.3),
             },
           },
         },
       },
       MuiDivider: {
         styleOverrides: {
-          root: { backgroundColor: tc(0.12) },
+          root: { backgroundColor: textColor(0.12) },
         },
       },
       MuiCheckbox: {
         styleOverrides: {
           root: {
-            color: tc(0.3),
-            "&.Mui-checked": { color: tc(0.5) },
+            color: textColor(0.3),
+            "&.Mui-checked": { color: textColor(0.5) },
           },
         },
       },
     },
-    custom: { tc, tcInv, bg: bgColor },
+    custom: { tc: textColor, tcInv: textColorInverse, bg: bgColor },
   });
 }

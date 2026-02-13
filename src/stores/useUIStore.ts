@@ -8,6 +8,7 @@ import {
 import { currentWindow, loadAnchor, saveAnchor } from "../utils";
 import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED } from "../constants";
 import type { AnchorPosition, ViewType, AccordionPanel, DisplayGroup } from "../types";
+import { useSettingsStore } from "./useSettingsStore";
 
 interface UIState {
   view: ViewType;
@@ -149,6 +150,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   changePanel: (panel) => {
     set({ expandedPanel: panel });
     if (panel === "desktops") get().refreshDisplayGroups();
-    // Note: settings refresh is handled in useSettingsStore
+    if (panel === "settings") useSettingsStore.getState().refreshSpaces();
   },
 }));
