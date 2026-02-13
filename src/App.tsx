@@ -1191,10 +1191,22 @@ function App() {
         )}
         <button
           className="minimize-btn"
-          onClick={() => {
+          onClick={async () => {
             const next = !minimized;
             setMinimized(next);
-            currentWindow.setSize(new LogicalSize(240, next ? 56 : 320));
+            const pos = await currentWindow.outerPosition();
+            const oldSize = await currentWindow.outerSize();
+            const m = monitorRef.current;
+            await currentWindow.setSize(new LogicalSize(240, next ? 56 : 320));
+            if (m) {
+              const newSize = await currentWindow.outerSize();
+              const dh = oldSize.height - newSize.height;
+              const midY = pos.y + oldSize.height / 2;
+              const monMidY = m.position.y + m.size.height / 2;
+              if (midY > monMidY) {
+                await currentWindow.setPosition(new PhysicalPosition(pos.x, pos.y + dh));
+              }
+            }
           }}
           title={minimized ? "Expand" : "Collapse"}
         >
