@@ -14,8 +14,8 @@
       {
         "label": "main",
         "title": "Context Maintainer",
-        "width": 240,
-        "height": 320,
+        "width": 290,
+        "height": 370,
         "minWidth": 180,
         "minHeight": 30,
         "alwaysOnTop": true,
