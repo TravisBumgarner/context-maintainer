@@ -27,7 +27,7 @@ export default function TodoItem({
       sx={{
         display: "flex",
         alignItems: "center",
-        px: "10px",
+        px: "4px",
         py: "2px",
         gap: "4px",
         transition: "background 0.1s",

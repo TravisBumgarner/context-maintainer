@@ -13,6 +13,7 @@ import SetupView from "./components/SetupView";
 import SessionChooserView from "./components/SessionChooserView";
 import HistoryPickerView from "./components/HistoryPickerView";
 import AccordionView from "./components/AccordionView";
+import SettingsView from "./components/SettingsView";
 
 import { useTodoStore, useUIStore, useDesktopStore, useSettingsStore } from "./stores";
 
@@ -126,14 +127,14 @@ function App() {
 
   // ── Accessibility check ──────────────────────────────
   useEffect(() => {
-    if (view === "setup" || expandedPanel === "settings") {
+    if (view === "setup" || view === "settings") {
       useSettingsStore.getState().checkAccessibility();
       const id = setInterval(() => {
         useSettingsStore.getState().checkAccessibility();
       }, 2000);
       return () => clearInterval(id);
     }
-  }, [view, expandedPanel]);
+  }, [view]);
 
   // ── View router ───────────────────────────────────────
   return (
@@ -144,6 +145,7 @@ function App() {
       {view === "session-chooser" && <SessionChooserView />}
       {view === "history-picker" && <HistoryPickerView />}
       {view === "todos" && <AccordionView displayIndex={displayIndex} />}
+      {view === "settings" && <SettingsView />}
     </ThemeProvider>
   );
 }

@@ -1,19 +1,15 @@
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Box,
   Divider,
   IconButton,
   InputBase,
-  Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Layout from "./components/Layout";
+import CollapsibleSection from "./components/CollapsibleSection";
 import QueuePanel from "./components/QueuePanel";
 import TimerPanel from "./components/TimerPanel";
 import DesktopsPanel from "./components/DesktopsPanel";
-import SettingsPanel from "./components/SettingsPanel";
 import { ANCHOR_POSITIONS, ANCHOR_LABELS } from "../../constants";
 import { formatCountdown } from "../../utils";
 import { useTodoStore, useTimerStore, useUIStore, useDesktopStore } from "../../stores";
@@ -37,6 +33,7 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
     snapToMonitor,
     selectAnchor,
     changePanel,
+    setView,
   } = useUIStore();
   const { desktop, monitorNames } = useDesktopStore();
 
@@ -47,44 +44,22 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
     if (isExpanded) changePanel(panel as any);
   };
 
-  const sectionLabelSx = {
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    color: tc(0.45),
-  } as const;
-
-  const summaryPreviewSx = {
-    color: tc(0.35),
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    ml: "8px",
-    flex: 1,
-  } as const;
-
-  const chevron = (panel: string) => (
-    <Typography sx={{ fontSize: 16, color: tc(0.3) }}>
-      {expandedPanel === panel ? "\u25BE" : "\u25B8"}
-    </Typography>
-  );
-
   return (
     <Layout timerFlashing={flashing}>
       {/* ── Header ── */}
-      <Box sx={{ px: "10px", py: "6px", display: "flex", alignItems: "center", flexShrink: 0 }}>
+      <Box sx={{ px: "10px", py: "6px", display: "flex", alignItems: "center", flexShrink: 0, justifyContent: 'space-between' }}>
         <InputBase
           value={title}
           onChange={(e) => updateTitle(e.target.value, desktop.space_id)}
-          placeholder="What are you working on?"
+          placeholder="What is this screen about?"
           sx={{
             flex: 1,
             fontSize: 14,
             fontWeight: 700,
             color: tc(0.55),
+            textAlign: 'left',
             letterSpacing: "-0.3px",
-            textAlign: "center",
-            "& input": { textAlign: "center", p: 0 },
+            "& input": { p: 0 },
             "& input::placeholder": { color: tc(0.3) },
             "&.Mui-focused input": { color: tc(0.7) },
           }}
@@ -107,6 +82,20 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
             </IconButton>
           )}
           <IconButton
+            onClick={() => setView("settings")}
+            title="Settings"
+            sx={{
+              p: "0 3px",
+              lineHeight: 1,
+              fontSize: 14,
+              fontWeight: 700,
+              color: tc(0.3),
+              "&:hover": { color: tc(0.6) },
+            }}
+          >
+            ⚙
+          </IconButton>
+          <IconButton
             onClick={toggleMinimize}
             title={collapsed ? "Expand" : "Collapse"}
             sx={{
@@ -125,45 +114,40 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
 
       <Divider />
 
-      {/* ── Queue ── */}
-      <Accordion expanded={expandedPanel === "queue"} onChange={(e, exp) => handleChange(e, exp, "queue")}>
-        <AccordionSummary expandIcon={chevron("queue")}>
-          <Typography sx={sectionLabelSx}>Queue</Typography>
-          {expandedPanel !== "queue" && firstUncompleted && (
-            <Typography sx={summaryPreviewSx}>{firstUncompleted}</Typography>
-          )}
-        </AccordionSummary>
-        <AccordionDetails sx={{ p: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+        {/* ── Queue ── */}
+        <CollapsibleSection
+          label="Queue"
+          isExpanded={expandedPanel === "queue"}
+          onToggle={() => changePanel("queue")}
+          preview={expandedPanel !== "queue" ? firstUncompleted : undefined}
+        >
           <QueuePanel desktopId={desktop.space_id} />
-        </AccordionDetails>
-      </Accordion>
+        </CollapsibleSection>
 
-      {/* ── Timer ── */}
-      <Accordion expanded={expandedPanel === "timer"} onChange={(e, exp) => handleChange(e, exp, "timer")}>
-        <AccordionSummary expandIcon={chevron("timer")}>
-          <Typography sx={sectionLabelSx}>Timer</Typography>
-          {expandedPanel !== "timer" && running && (
-            <Typography sx={summaryPreviewSx}>{formatCountdown(remaining)}</Typography>
-          )}
-        </AccordionSummary>
-        <AccordionDetails>
+        {/* ── Timer ── */}
+        <CollapsibleSection
+          label="Timer"
+          isExpanded={expandedPanel === "timer"}
+          onToggle={() => changePanel("timer")}
+          preview={expandedPanel !== "timer" && running ? formatCountdown(remaining) : undefined}
+        >
           <TimerPanel />
-        </AccordionDetails>
-      </Accordion>
+        </CollapsibleSection>
 
-      {/* ── Anchor (inline — small) ── */}
-      <Accordion expanded={expandedPanel === "anchor"} onChange={(e, exp) => handleChange(e, exp, "anchor")}>
-        <AccordionSummary expandIcon={chevron("anchor")}>
-          <Typography sx={sectionLabelSx}>Anchor</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
+        {/* ── Anchor ── */}
+        <CollapsibleSection
+          label="Anchor"
+          isExpanded={expandedPanel === "anchor"}
+          onToggle={() => changePanel("anchor")}
+          preview={expandedPanel !== "anchor" ? ANCHOR_LABELS[anchorPos] : undefined}
+        >
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
               gap: "2px",
               maxWidth: 120,
-              mx: "auto",
             }}
           >
             {ANCHOR_POSITIONS.map((pos) => (
@@ -172,6 +156,7 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
                 component="button"
                 onClick={() => selectAnchor(pos)}
                 title={pos}
+                disabled={pos === 'middle-center'}
                 sx={{
                   width: 36,
                   height: 28,
@@ -181,39 +166,28 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
                   fontSize: 16,
                   fontFamily: "inherit",
                   cursor: "pointer",
-                  display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   p: 0,
                   "&:hover": { color: tc(0.7) },
+                  opacity: pos === 'middle-center' ? 0 : 1,
                 }}
               >
                 {ANCHOR_LABELS[pos]}
               </Box>
             ))}
           </Box>
-        </AccordionDetails>
-      </Accordion>
+        </CollapsibleSection>
 
-      {/* ── Desktops ── */}
-      <Accordion expanded={expandedPanel === "desktops"} onChange={(e, exp) => handleChange(e, exp, "desktops")}>
-        <AccordionSummary expandIcon={chevron("desktops")}>
-          <Typography sx={sectionLabelSx}>Desktops</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
+        {/* ── Desktops ── */}
+        <CollapsibleSection
+          label="Desktops"
+          isExpanded={expandedPanel === "desktops"}
+          onToggle={() => changePanel("desktops")}
+        >
           <DesktopsPanel displayIndex={displayIndex} />
-        </AccordionDetails>
-      </Accordion>
-
-      {/* ── Settings ── */}
-      <Accordion expanded={expandedPanel === "settings"} onChange={(e, exp) => handleChange(e, exp, "settings")}>
-        <AccordionSummary expandIcon={chevron("settings")}>
-          <Typography sx={sectionLabelSx}>Settings</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <SettingsPanel />
-        </AccordionDetails>
-      </Accordion>
-    </Layout>
+        </CollapsibleSection>
+      </Box>
+    </Layout >
   );
 }

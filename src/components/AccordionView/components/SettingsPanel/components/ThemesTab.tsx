@@ -84,39 +84,41 @@ export function ThemesTab() {
 
             {selectedTheme && (
                 <Box sx={{ mb: "12px" }}>
-                    <Box sx={{ display: "flex", gap: "2px", mb: "6px", flexWrap: "wrap" }}>
-                        {selectedTheme.colors.map((c, i) => (
-                            <Box
-                                key={i}
-                                sx={{
-                                    width: 20,
-                                    height: 20,
-                                    borderRadius: "3px",
-                                    border: i === colorIndex ? `2px solid ${tc(0.5)}` : `1px solid ${tc(0.12)}`,
-                                    bgcolor: c,
-                                    cursor: "pointer",
-                                    transition: "border 0.2s",
-                                }}
-                                onClick={() => {
-                                    setColorIndex(i);
-                                    const newColors = selectedTheme.colors.slice(i).concat(selectedTheme.colors.slice(0, i));
-                                    handleApplyTheme(newColors);
-                                }}
-                            />
-                        ))}
+                    <Box sx={{ display: "flex", gap: "2px", alignItems: "center" }}>
+                        <Box sx={{ display: "flex", gap: "2px", flexWrap: "wrap" }}>
+                            {selectedTheme.colors.map((c, i) => (
+                                <Box
+                                    key={i}
+                                    sx={{
+                                        width: 20,
+                                        height: 20,
+                                        borderRadius: "3px",
+                                        border: i === colorIndex ? `2px solid ${tc(0.5)}` : `1px solid ${tc(0.12)}`,
+                                        bgcolor: c,
+                                        cursor: "pointer",
+                                        transition: "border 0.2s",
+                                    }}
+                                    onClick={() => {
+                                        setColorIndex(i);
+                                        const newColors = selectedTheme.colors.slice(i).concat(selectedTheme.colors.slice(0, i));
+                                        handleApplyTheme(newColors);
+                                    }}
+                                />
+                            ))}
+                        </Box>
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                setColorIndex((prev) => (prev + 1) % selectedTheme.colors.length);
+                                const newIndex = (colorIndex + 1) % selectedTheme.colors.length;
+                                const newColors = selectedTheme.colors.slice(newIndex).concat(selectedTheme.colors.slice(0, newIndex));
+                                handleApplyTheme(newColors);
+                            }}
+                            sx={{ fontSize: 10, ml: "4px", flexShrink: 0 }}
+                        >
+                            Cycle
+                        </Button>
                     </Box>
-                    <Button
-                        variant="contained"
-                        onClick={() => {
-                            setColorIndex((prev) => (prev + 1) % selectedTheme.colors.length);
-                            const newIndex = (colorIndex + 1) % selectedTheme.colors.length;
-                            const newColors = selectedTheme.colors.slice(newIndex).concat(selectedTheme.colors.slice(0, newIndex));
-                            handleApplyTheme(newColors);
-                        }}
-                        sx={{ fontSize: 10 }}
-                    >
-                        Cycle
-                    </Button>
                 </Box>
             )}
         </>

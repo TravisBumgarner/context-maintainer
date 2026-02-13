@@ -150,6 +150,5 @@ export const useUIStore = create<UIState>((set, get) => ({
   changePanel: (panel) => {
     set({ expandedPanel: panel });
     if (panel === "desktops") get().refreshDisplayGroups();
-    if (panel === "settings") useSettingsStore.getState().refreshSpaces();
   },
 }));

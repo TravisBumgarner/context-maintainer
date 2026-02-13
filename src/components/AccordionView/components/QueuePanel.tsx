@@ -70,7 +70,7 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
         sx={{
           display: "flex",
           alignItems: "center",
-          px: "10px",
+          px: "4px",
           py: "2px",
           gap: "4px",
         }}
@@ -98,7 +98,7 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
             "& summary": {
               fontSize: 10,
               color: tc(0.35),
-              px: "10px",
+              px: "4px",
               py: "4px",
               cursor: "pointer",
               userSelect: "none",

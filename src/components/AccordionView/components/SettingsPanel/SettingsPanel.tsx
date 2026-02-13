@@ -20,7 +20,19 @@ export default function SettingsPanel() {
                 sx={{ mb: "10px", borderBottom: `1px solid ${tc(0.12)}` }}
             >
                 {["Themes", "Permissions", "Timer"].map((label) => (
-                    <Tab key={label} label={label} sx={{ flex: 1 }} />
+                    <Tab
+                        key={label}
+                        label={label}
+                        sx={{
+                            flexGrow: 0,
+                            px: "10px",
+                            borderRadius: "8px 8px 0 0",
+                            "&.Mui-selected": {
+                                flexGrow: 1,
+                                backgroundColor: tc(0.08),
+                            },
+                        }}
+                    />
                 ))}
             </Tabs>
 

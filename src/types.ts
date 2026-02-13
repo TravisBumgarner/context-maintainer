@@ -60,6 +60,7 @@ export type ViewType =
   | "setup"
   | "session-chooser"
   | "todos"
-  | "history-picker";
+  | "history-picker"
+  | "settings";
 
-export type AccordionPanel = "queue" | "timer" | "anchor" | "desktops" | "settings";
+export type AccordionPanel = "queue" | "timer" | "anchor" | "desktops";
