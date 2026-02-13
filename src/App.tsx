@@ -14,7 +14,7 @@ import {
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { buildTheme } from "./theme";
-import { DEFAULT_BG } from "./constants";
+import { DEFAULT_BG, WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED } from "./constants";
 import {
   currentWindow,
   friendlyMonitorName,
@@ -67,7 +67,7 @@ function App() {
   const [accessibilityGranted, setAccessibilityGranted] = useState<boolean | null>(null);
   const [desktopCount, setDesktopCount] = useState(10);
   const [anchorPos, setAnchorPos] = useState<AnchorPosition>(loadAnchor);
-  const [minimized, setMinimized] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [expandedPanel, setExpandedPanel] = useState<AccordionPanel>("queue");
   const [timerPresets, setTimerPresets] = useState<number[]>([60, 300, 600]);
   const [notifySystem, setNotifySystem] = useState(true);
@@ -205,6 +205,10 @@ function App() {
       const mh = m.size.height;
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
       setOffMonitor(!isOn);
+      const sf = m.scaleFactor;
+      const logicalHeight = size.height / sf;
+      const threshold = (WINDOW_HEIGHT_COLLAPSED + WINDOW_HEIGHT_EXPANDED) / 2;
+      setCollapsed(logicalHeight < threshold);
     } catch {
       // ignore
     }
@@ -447,12 +451,11 @@ function App() {
 
   // ── Minimize handler ──────────────────────────────────
   const handleToggleMinimize = useCallback(async () => {
-    const next = !minimized;
-    setMinimized(next);
+    const next = !collapsed;
     const pos = await currentWindow.outerPosition();
     const oldSize = await currentWindow.outerSize();
     const m = monitorRef.current;
-    await currentWindow.setSize(new LogicalSize(240, next ? 56 : 320));
+    await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, next ? WINDOW_HEIGHT_COLLAPSED : WINDOW_HEIGHT_EXPANDED));
     if (m) {
       const newSize = await currentWindow.outerSize();
       const dh = oldSize.height - newSize.height;
@@ -462,7 +465,7 @@ function App() {
         await currentWindow.setPosition(new PhysicalPosition(pos.x, pos.y + dh));
       }
     }
-  }, [minimized]);
+  }, [collapsed]);
 
   // ── View router ───────────────────────────────────────
   return (
@@ -509,7 +512,7 @@ function App() {
           title={title}
           todos={todos}
           newText={newText}
-          minimized={minimized}
+          collapsed={collapsed}
           offMonitor={offMonitor}
           monitorName={monitorName}
           anchorPos={anchorPos}

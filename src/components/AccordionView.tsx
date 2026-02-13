@@ -20,7 +20,7 @@ import { invoke } from "@tauri-apps/api/core";
 import Layout from "./Layout";
 import TodoItem from "./TodoItem";
 import { ANCHOR_POSITIONS, ANCHOR_LABELS, THEMES } from "../constants";
-import { formatPreset, formatCountdown, textColorRgb } from "../utils";
+import { formatPreset, formatCountdown, detectColorMode } from "../utils";
 import type {
   TodoItem as TodoItemType,
   AnchorPosition,
@@ -34,7 +34,7 @@ interface AccordionViewProps {
   title: string;
   todos: TodoItemType[];
   newText: string;
-  minimized: boolean;
+  collapsed: boolean;
   offMonitor: boolean;
   monitorName: string;
   anchorPos: AnchorPosition;
@@ -91,7 +91,7 @@ export default function AccordionView({
   title,
   todos,
   newText,
-  minimized,
+  collapsed,
   offMonitor,
   monitorName,
   anchorPos,
@@ -193,7 +193,7 @@ export default function AccordionView({
     },
     "& .MuiAccordionSummary-expandIconWrapper": {
       color: tc(0.3),
-      fontSize: 10,
+      fontSize: 16,
     },
   } as const;
 
@@ -292,7 +292,7 @@ export default function AccordionView({
             textAlign: "center",
             fontFamily: "inherit",
             "& input": { textAlign: "center", p: 0 },
-            "& input::placeholder": { color: tc(0.3), opacity: 1 },
+            "& input::placeholder": { color: tc(0.3) },
             "&.Mui-focused input": { color: tc(0.7) },
           }}
         />
@@ -319,7 +319,7 @@ export default function AccordionView({
           )}
           <IconButton
             onClick={onToggleMinimize}
-            title={minimized ? "Expand" : "Collapse"}
+            title={collapsed ? "Expand" : "Collapse"}
             sx={{
               background: "none",
               border: "none",
@@ -333,14 +333,12 @@ export default function AccordionView({
               "&:hover": { color: tc(0.6), background: "none" },
             }}
           >
-            —
+            {collapsed ? "+" : "\u2014"}
           </IconButton>
         </Box>
       </Box>
 
-      {!minimized && (
-        <>
-          <Divider sx={{ bgcolor: tc(0.12) }} />
+      <Divider sx={{ bgcolor: tc(0.12) }} />
 
           {/* ── Queue panel ── */}
           <Accordion
@@ -350,7 +348,7 @@ export default function AccordionView({
             disableGutters
           >
             <AccordionSummary
-              expandIcon={<Typography sx={{ fontSize: 10, color: tc(0.3) }}>{expandedPanel === "queue" ? "\u25BE" : "\u25B8"}</Typography>}
+              expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "queue" ? "\u25BE" : "\u25B8"}</Typography>}
               sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Queue</Typography>
@@ -376,7 +374,7 @@ export default function AccordionView({
                     fontSize: 11,
                     fontFamily: "inherit",
                     color: tc(0.7),
-                    "& input::placeholder": { color: tc(0.3), opacity: 1 },
+                    "& input::placeholder": { color: tc(0.3) },
                     "&.Mui-focused": {
                       borderColor: tc(0.2),
                       bgcolor: tc(0.04),
@@ -483,7 +481,7 @@ export default function AccordionView({
             disableGutters
           >
             <AccordionSummary
-              expandIcon={<Typography sx={{ fontSize: 10, color: tc(0.3) }}>{expandedPanel === "timer" ? "\u25BE" : "\u25B8"}</Typography>}
+              expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "timer" ? "\u25BE" : "\u25B8"}</Typography>}
               sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Timer</Typography>
@@ -630,7 +628,7 @@ export default function AccordionView({
             disableGutters
           >
             <AccordionSummary
-              expandIcon={<Typography sx={{ fontSize: 10, color: tc(0.3) }}>{expandedPanel === "anchor" ? "\u25BE" : "\u25B8"}</Typography>}
+              expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "anchor" ? "\u25BE" : "\u25B8"}</Typography>}
               sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Anchor</Typography>
@@ -687,7 +685,7 @@ export default function AccordionView({
             disableGutters
           >
             <AccordionSummary
-              expandIcon={<Typography sx={{ fontSize: 10, color: tc(0.3) }}>{expandedPanel === "desktops" ? "\u25BE" : "\u25B8"}</Typography>}
+              expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "desktops" ? "\u25BE" : "\u25B8"}</Typography>}
               sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Desktops</Typography>
@@ -721,7 +719,7 @@ export default function AccordionView({
                     }}
                   >
                     {group.desktops.map((d) => {
-                      const cardTc = textColorRgb(d.color);
+                      const cardFg = detectColorMode(d.color) === "dark" ? "#000000" : "#ffffff";
                       const isActive = d.space_id === currentSpaceId;
                       return (
                         <ButtonBase
@@ -732,7 +730,7 @@ export default function AccordionView({
                             width: 80,
                             minHeight: 56,
                             border: isActive
-                              ? `2px solid rgba(${cardTc}, 0.5)`
+                              ? `2px solid ${cardFg}`
                               : "2px solid transparent",
                             borderRadius: "8px",
                             p: "6px",
@@ -744,7 +742,6 @@ export default function AccordionView({
                             fontFamily: "inherit",
                             bgcolor: d.color,
                             transition: "border-color 0.15s, transform 0.1s",
-                            boxShadow: isActive ? `0 0 0 1px rgba(${cardTc}, 0.2)` : "none",
                             "&:hover": { transform: "scale(1.04)" },
                           }}
                         >
@@ -752,7 +749,7 @@ export default function AccordionView({
                             sx={{
                               fontSize: 10,
                               fontWeight: 600,
-                              color: `rgba(${cardTc}, 0.7)`,
+                              color: cardFg,
                               textAlign: "center",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
@@ -767,8 +764,7 @@ export default function AccordionView({
                               sx={{
                                 fontSize: 9,
                                 fontWeight: 600,
-                                color: `rgba(${cardTc}, 0.5)`,
-                                bgcolor: `rgba(${cardTc}, 0.1)`,
+                                color: cardFg,
                                 borderRadius: "8px",
                                 px: "5px",
                               }}
@@ -799,7 +795,7 @@ export default function AccordionView({
             disableGutters
           >
             <AccordionSummary
-              expandIcon={<Typography sx={{ fontSize: 10, color: tc(0.3) }}>{expandedPanel === "settings" ? "\u25BE" : "\u25B8"}</Typography>}
+              expandIcon={<Typography sx={{ fontSize: 16, color: tc(0.3) }}>{expandedPanel === "settings" ? "\u25BE" : "\u25B8"}</Typography>}
               sx={summarySx}
             >
               <Typography sx={sectionLabelSx}>Settings</Typography>
@@ -906,7 +902,7 @@ export default function AccordionView({
                                       width: 14,
                                       height: 14,
                                       borderRadius: "3px",
-                                      border: "1px solid rgba(0,0,0,0.08)",
+                                      border: `1px solid ${tc(0.12)}`,
                                       bgcolor: c,
                                     }}
                                   />
@@ -1328,8 +1324,6 @@ export default function AccordionView({
               )}
             </AccordionDetails>
           </Accordion>
-        </>
-      )}
     </Layout>
   );
 }

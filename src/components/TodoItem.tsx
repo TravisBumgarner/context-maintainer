@@ -63,7 +63,7 @@ export default function TodoItem({
           color: tc(isDone ? 0.35 : 0.7),
           p: "2px 0",
           textDecoration: isDone ? "line-through" : "none",
-          "& input::placeholder": { color: tc(0.25), opacity: 1 },
+          "& input::placeholder": { color: tc(0.25) },
         }}
       />
       <IconButton

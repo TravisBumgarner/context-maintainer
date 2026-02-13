@@ -56,3 +56,7 @@ export const THEMES: { name: string; colors: string[] }[] = [
 ];
 
 export const DEFAULT_BG = "#F5E6A3";
+
+export const WINDOW_WIDTH = 290;
+export const WINDOW_HEIGHT_EXPANDED = 370;
+export const WINDOW_HEIGHT_COLLAPSED = 56;
