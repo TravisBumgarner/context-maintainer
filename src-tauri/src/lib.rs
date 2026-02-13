@@ -83,42 +83,50 @@ extern "C" {
 }
 
 // ── Space detection ────────────────────────────────────────────
-/// Returns the stable `id64` for the active space on the given display.
-fn space_id_for_display(target_display: usize) -> i64 {
+/// Returns (id64, space_type) for the active space on the given display.
+/// space_type 0 = normal desktop, non-zero (typically 4) = full-screen app.
+fn space_info_for_display(target_display: usize) -> (i64, i32) {
     unsafe {
         let conn = CGSMainConnectionID();
         if conn == 0 {
-            return 0;
+            return (0, 0);
         }
 
         let displays = CGSCopyManagedDisplaySpaces(conn);
         if displays.is_null() {
-            return 0;
+            return (0, 0);
         }
         let display_count = CFArrayGetCount(displays) as usize;
         if display_count == 0 {
             CFRelease(displays);
-            return 0;
+            return (0, 0);
         }
 
         let key_current = cf_str("Current Space");
         let key_id = cf_str("id64");
+        let key_type = cf_str("type");
 
         let clamped = if target_display < display_count { target_display } else { 0 };
         let disp = CFArrayGetValueAtIndex(displays, clamped as isize);
         let current_space = CFDictionaryGetValue(disp, key_current);
         let mut active_id: i64 = 0;
+        let mut space_type: i32 = 0;
         if !current_space.is_null() {
             let id_ptr = CFDictionaryGetValue(current_space, key_id);
             if !id_ptr.is_null() {
                 CFNumberGetValue(id_ptr, CF_NUMBER_SINT64, &mut active_id as *mut _ as *mut c_void);
             }
+            let type_ptr = CFDictionaryGetValue(current_space, key_type);
+            if !type_ptr.is_null() {
+                CFNumberGetValue(type_ptr, CF_NUMBER_SINT32, &mut space_type as *mut _ as *mut c_void);
+            }
         }
 
         CFRelease(key_current);
         CFRelease(key_id);
+        CFRelease(key_type);
         CFRelease(displays);
-        active_id
+        (active_id, space_type)
     }
 }
 
@@ -328,6 +336,7 @@ struct DesktopInfo {
     position: u32,
     name: String,
     color: String,
+    is_fullscreen: bool,
 }
 
 fn default_color(position: u32) -> String {
@@ -336,7 +345,7 @@ fn default_color(position: u32) -> String {
 
 #[tauri::command]
 fn get_desktop(state: tauri::State<'_, AppState>, display: u32) -> DesktopInfo {
-    let sid = space_id_for_display(display as usize);
+    let (sid, space_type) = space_info_for_display(display as usize);
     let spaces = enumerate_spaces();
     let position = spaces.iter()
         .position(|&(s, _, _)| s == sid)
@@ -350,6 +359,7 @@ fn get_desktop(state: tauri::State<'_, AppState>, display: u32) -> DesktopInfo {
         position,
         name: format!("Desktop {}", position + 1),
         color,
+        is_fullscreen: space_type != 0,
     }
 }
 
@@ -734,8 +744,8 @@ pub fn run() {
 
             // Create one window per monitor
             let monitors = app.available_monitors()?;
-            let win_w = 240.0_f64;
-            let win_h = 320.0_f64;
+            let win_w = 290.0_f64;
+            let win_h = 370.0_f64;
 
             for (i, monitor) in monitors.iter().enumerate() {
                 let label = if i == 0 { "main".to_string() } else { format!("monitor-{}", i) };
