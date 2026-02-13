@@ -556,7 +556,6 @@ function App() {
           onTimerPreset={populateFromPreset}
           setAllSpaces={setAllSpaces}
           setDesktop={setDesktop}
-          setDesktopCount={setDesktopCount}
           setAccessibilityGranted={setAccessibilityGranted}
           setTimerPresets={setTimerPresets}
           setNotifySystem={setNotifySystem}

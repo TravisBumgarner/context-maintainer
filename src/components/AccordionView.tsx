@@ -76,7 +76,6 @@ interface AccordionViewProps {
   onTimerPreset: (seconds: number) => void;
   setAllSpaces: (s: SpaceInfo[]) => void;
   setDesktop: (fn: (prev: DesktopInfo) => DesktopInfo) => void;
-  setDesktopCount: (n: number) => void;
   setAccessibilityGranted: (v: boolean) => void;
   setTimerPresets: (fn: (prev: number[]) => number[]) => void;
   setNotifySystem: (v: boolean) => void;
@@ -133,7 +132,6 @@ export default function AccordionView({
   onTimerPreset,
   setAllSpaces,
   setDesktop,
-  setDesktopCount,
   setAccessibilityGranted,
   setTimerPresets,
   setNotifySystem,
@@ -214,14 +212,6 @@ export default function AccordionView({
       .catch(() => {});
   };
 
-  const handleDesktopCountChange = (delta: number) => {
-    const next = Math.max(1, Math.min(20, desktopCount + delta));
-    setDesktopCount(next);
-    invoke("save_desktop_count", { count: next })
-      .then(() => refreshSpaces())
-      .catch(() => {});
-  };
-
   const smallBtnSx = {
     mt: 0.5,
     px: "10px",
@@ -244,19 +234,14 @@ export default function AccordionView({
     fontWeight: 700,
     fontFamily: "inherit",
     color: tc(0.7),
-    bgcolor: tc(0.06),
-    border: `1px solid ${tc(0.12)}`,
-    borderRadius: "6px",
+    bgcolor: "transparent",
+    border: "none",
     p: "4px 2px",
     outline: "none",
     MozAppearance: "textfield",
     "&::-webkit-inner-spin-button, &::-webkit-outer-spin-button": {
       WebkitAppearance: "none",
       margin: 0,
-    },
-    "&:focus": {
-      borderColor: tc(0.3),
-      bgcolor: tc(0.04),
     },
   } as const;
 
@@ -357,32 +342,6 @@ export default function AccordionView({
               )}
             </AccordionSummary>
             <AccordionDetails sx={{ ...detailsSx, p: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              {/* Add new todo */}
-              <Box sx={{ display: "flex", alignItems: "center", px: "10px", py: "4px", flexShrink: 0 }}>
-                <InputBase
-                  placeholder="Queue monitor task..."
-                  value={newText}
-                  onChange={(e) => onNewTextChange(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && onAddTodo()}
-                  sx={{
-                    width: "100%",
-                    bgcolor: tc(0.06),
-                    border: `1px solid ${tc(0.08)}`,
-                    borderRadius: "4px",
-                    px: "6px",
-                    py: "4px",
-                    fontSize: 11,
-                    fontFamily: "inherit",
-                    color: tc(0.7),
-                    "& input::placeholder": { color: tc(0.3) },
-                    "&.Mui-focused": {
-                      borderColor: tc(0.2),
-                      bgcolor: tc(0.04),
-                    },
-                  }}
-                />
-              </Box>
-
               {/* Active todos */}
               <Reorder.Group
                 axis="y"
@@ -423,6 +382,33 @@ export default function AccordionView({
                   </Reorder.Item>
                 ))}
               </Reorder.Group>
+
+              {/* New item row */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  px: "10px",
+                  py: "2px",
+                  gap: "4px",
+                }}
+              >
+                <InputBase
+                  placeholder="Add task..."
+                  value={newText}
+                  onChange={(e) => onNewTextChange(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && onAddTodo()}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 11,
+                    fontFamily: "inherit",
+                    color: tc(0.7),
+                    p: "2px 0",
+                    "& input::placeholder": { color: tc(0.3) },
+                  }}
+                />
+              </Box>
 
               {/* Archive */}
               {done.length > 0 && (
@@ -536,17 +522,15 @@ export default function AccordionView({
                         key={i}
                         onClick={() => onTimerPreset(p)}
                         sx={{
-                          px: "12px",
-                          py: "4px",
+                          px: "8px",
+                          py: "2px",
                           fontSize: 11,
                           fontWeight: 600,
-                          color: tc(0.55),
-                          bgcolor: tc(0.06),
-                          border: `1px solid ${tc(0.12)}`,
-                          borderRadius: "10px",
+                          color: tc(0.45),
+                          background: "none",
                           textTransform: "none",
                           minWidth: 0,
-                          "&:hover": { bgcolor: tc(0.12), color: tc(0.7) },
+                          "&:hover": { color: tc(0.7), background: "none" },
                         }}
                       >
                         {formatPreset(p)}
@@ -559,18 +543,16 @@ export default function AccordionView({
                     disabled={timerHours === 0 && timerMinutes === 0 && timerSeconds === 0}
                     sx={{
                       display: "block",
-                      width: "100%",
-                      maxWidth: 160,
                       mx: "auto",
                       px: "14px",
-                      py: "7px",
+                      py: "4px",
                       fontSize: 12,
                       fontWeight: 600,
-                      color: theme.custom.tcInv(),
-                      bgcolor: tc(0.55),
-                      borderRadius: "12px",
+                      color: tc(0.55),
+                      background: "none",
                       textTransform: "none",
-                      "&:hover": { bgcolor: tc(0.7) },
+                      minWidth: 0,
+                      "&:hover": { color: tc(0.7), background: "none" },
                       "&:disabled": { opacity: 0.4 },
                     }}
                   >
@@ -601,16 +583,15 @@ export default function AccordionView({
                   <Button
                     onClick={onTimerCancel}
                     sx={{
-                      px: "18px",
-                      py: "5px",
+                      px: "14px",
+                      py: "4px",
                       fontSize: 11,
                       fontWeight: 600,
-                      color: tc(0.55),
-                      bgcolor: tc(0.08),
-                      border: `1px solid ${tc(0.15)}`,
-                      borderRadius: "10px",
+                      color: tc(0.45),
+                      background: "none",
                       textTransform: "none",
-                      "&:hover": { bgcolor: tc(0.15) },
+                      minWidth: 0,
+                      "&:hover": { color: tc(0.7), background: "none" },
                     }}
                   >
                     Cancel
@@ -638,8 +619,8 @@ export default function AccordionView({
                 sx={{
                   display: "grid",
                   gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: "3px",
-                  maxWidth: 100,
+                  gap: "2px",
+                  maxWidth: 120,
                   mx: "auto",
                 }}
               >
@@ -650,14 +631,12 @@ export default function AccordionView({
                     onClick={() => onAnchorSelect(pos)}
                     title={pos}
                     sx={{
-                      width: 28,
-                      height: 22,
-                      border: `1px solid ${tc(pos === anchorPos ? 0.3 : 0.12)}`,
-                      borderRadius: "3px",
-                      bgcolor: tc(pos === anchorPos ? 0.25 : 0.04),
-                      color: tc(pos === anchorPos ? 0.9 : 0.4),
-                      fontSize: 8,
-                      fontWeight: 600,
+                      width: 36,
+                      height: 28,
+                      border: "none",
+                      background: "none",
+                      color: tc(pos === anchorPos ? 0.9 : 0.35),
+                      fontSize: 16,
                       fontFamily: "inherit",
                       cursor: "pointer",
                       display: "flex",
@@ -665,7 +644,6 @@ export default function AccordionView({
                       justifyContent: "center",
                       p: 0,
                       "&:hover": {
-                        bgcolor: tc(0.12),
                         color: tc(0.7),
                       },
                     }}
@@ -919,116 +897,15 @@ export default function AccordionView({
                   </Box>
 
                   <Box sx={{ mb: "12px" }}>
-                    <Typography
-                      sx={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: tc(0.45),
-                        mb: "6px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.3px",
-                      }}
-                    >
-                      Desktops
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Typography sx={{ fontSize: 11, color: tc(0.55) }}>
-                        Number of desktops
-                      </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Box
-                          component="button"
-                          onClick={() => handleDesktopCountChange(-1)}
-                          sx={{
-                            width: 20,
-                            height: 20,
-                            border: `1px solid ${tc(0.15)}`,
-                            borderRadius: "4px",
-                            bgcolor: tc(0.05),
-                            color: tc(0.5),
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontFamily: "inherit",
-                            p: 0,
-                            lineHeight: 1,
-                            "&:hover": { bgcolor: tc(0.1) },
-                          }}
-                        >
-                          -
-                        </Box>
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: tc(0.6),
-                            minWidth: 18,
-                            textAlign: "center",
-                          }}
-                        >
-                          {desktopCount}
-                        </Typography>
-                        <Box
-                          component="button"
-                          onClick={() => handleDesktopCountChange(1)}
-                          sx={{
-                            width: 20,
-                            height: 20,
-                            border: `1px solid ${tc(0.15)}`,
-                            borderRadius: "4px",
-                            bgcolor: tc(0.05),
-                            color: tc(0.5),
-                            fontSize: 12,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontFamily: "inherit",
-                            p: 0,
-                            lineHeight: 1,
-                            "&:hover": { bgcolor: tc(0.1) },
-                          }}
-                        >
-                          +
-                        </Box>
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ mb: "12px" }}>
                     {allSpaces.map((s) => (
                       <Box
                         key={s.space_id}
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "space-between",
                           py: "3px",
                         }}
                       >
-                        <Typography
-                          sx={{
-                            fontSize: 11,
-                            color: tc(0.55),
-                            flex: 1,
-                            minWidth: 0,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {s.title || s.name}
-                        </Typography>
                         <Box
                           component="input"
                           type="color"
@@ -1189,24 +1066,10 @@ export default function AccordionView({
               {settingsTab === 2 && (
                 <>
                   <Box sx={{ mb: "12px" }}>
-                    <Typography
-                      sx={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: tc(0.45),
-                        mb: "6px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.3px",
-                      }}
-                    >
-                      Presets
-                    </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <Box sx={{ display: "flex", gap: "8px", mb: "6px" }}>
                       {timerPresets.map((p, i) => (
-                        <Box key={i} sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <Typography
-                            sx={{ fontSize: 11, color: tc(0.5), width: 52, flexShrink: 0 }}
-                          >
+                        <Box key={i} sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                          <Typography sx={{ fontSize: 10, color: tc(0.35) }}>
                             Preset {i + 1}
                           </Typography>
                           <Box
@@ -1219,14 +1082,15 @@ export default function AccordionView({
                               setTimerPresets((prev) => prev.map((v, j) => (j === i ? val : v)));
                             }}
                             sx={{
-                              width: 60,
+                              width: 52,
                               fontSize: 11,
                               fontFamily: "inherit",
                               color: tc(0.7),
-                              bgcolor: tc(0.06),
-                              border: `1px solid ${tc(0.12)}`,
-                              borderRadius: "4px",
-                              p: "3px 6px",
+                              bgcolor: "transparent",
+                              border: "none",
+                              borderBottom: `1px solid ${tc(0.12)}`,
+                              p: "3px 4px",
+                              textAlign: "center",
                               outline: "none",
                               MozAppearance: "textfield",
                               "&::-webkit-inner-spin-button, &::-webkit-outer-spin-button": {
@@ -1236,7 +1100,7 @@ export default function AccordionView({
                               "&:focus": { borderColor: tc(0.3) },
                             }}
                           />
-                          <Typography sx={{ fontSize: 10, color: tc(0.35) }}>sec</Typography>
+                          <Typography sx={{ fontSize: 9, color: tc(0.25) }}>sec</Typography>
                         </Box>
                       ))}
                     </Box>
