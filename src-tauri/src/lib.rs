@@ -226,6 +226,9 @@ struct SavedContext {
 type ContextHistoryStore = HashMap<i64, Vec<SavedContext>>;
 
 fn default_desktop_count() -> u32 { 10 }
+fn default_timer_presets() -> Vec<u32> { vec![60, 300, 600] }
+fn default_notify_system() -> bool { true }
+fn default_notify_flash() -> bool { true }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct Settings {
@@ -233,6 +236,12 @@ struct Settings {
     setup_complete: bool,
     #[serde(default = "default_desktop_count")]
     desktop_count: u32,
+    #[serde(default = "default_timer_presets")]
+    timer_presets: Vec<u32>,
+    #[serde(default = "default_notify_system")]
+    notify_system: bool,
+    #[serde(default = "default_notify_flash")]
+    notify_flash: bool,
 }
 
 impl Default for Settings {
@@ -241,6 +250,9 @@ impl Default for Settings {
             custom_colors: HashMap::new(),
             setup_complete: false,
             desktop_count: 10,
+            timer_presets: default_timer_presets(),
+            notify_system: true,
+            notify_flash: true,
         }
     }
 }
@@ -606,6 +618,23 @@ fn apply_theme(state: tauri::State<'_, AppState>, colors: Vec<String>) {
 }
 
 #[tauri::command]
+fn save_timer_presets(state: tauri::State<'_, AppState>, presets: Vec<u32>) {
+    let mut data = state.data.lock().unwrap();
+    data.settings.timer_presets = presets;
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
+fn save_notify_settings(state: tauri::State<'_, AppState>, system: bool, flash: bool) {
+    let mut data = state.data.lock().unwrap();
+    data.settings.notify_system = system;
+    data.settings.notify_flash = flash;
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
 fn clear_all_data(state: tauri::State<'_, AppState>) {
     let mut data = state.data.lock().unwrap();
     data.notes.clear();
@@ -649,6 +678,7 @@ fn request_accessibility() -> bool {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             // Persistence setup
             let data_dir = app.path().app_data_dir().expect("no app data dir");
@@ -757,7 +787,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

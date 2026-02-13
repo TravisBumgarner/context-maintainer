@@ -229,26 +229,28 @@ body {
   border-radius: 2px;
 }
 
-/* ── All desktops button ──────────────────────────────── */
+/* ── Footer row (All desktops / Timer / Settings) ───── */
 
-.all-desktops-section {
+.footer-row {
   flex-shrink: 0;
   border-top: 1px solid rgba(var(--tc), 0.08);
+  display: flex;
+  align-items: center;
 }
 
-.all-desktops-btn {
-  width: 100%;
+.footer-btn {
+  flex: 1;
   background: none;
   border: none;
   font-size: 10px;
   color: rgba(var(--tc), 0.35);
-  padding: 4px 10px;
+  padding: 5px 4px;
   cursor: pointer;
   font-family: inherit;
-  text-align: left;
+  text-align: center;
 }
 
-.all-desktops-btn:hover {
+.footer-btn:hover {
   color: rgba(var(--tc), 0.55);
 }
 
@@ -451,25 +453,6 @@ body {
   border-color: rgba(var(--tc), 0.3);
 }
 
-/* ── Settings gear (fixed bottom-right) ──────────────── */
-
-.settings-btn-fixed {
-  position: absolute;
-  bottom: 4px;
-  right: 8px;
-  z-index: 10;
-  background: none;
-  border: none;
-  font-size: 14px;
-  color: rgba(var(--tc), 0.25);
-  cursor: pointer;
-  padding: 0 2px;
-  line-height: 1;
-}
-
-.settings-btn-fixed:hover {
-  color: rgba(var(--tc), 0.5);
-}
 
 /* ── Setup view ──────────────────────────────────────── */
 
@@ -890,4 +873,229 @@ body {
   border-top: 1px solid rgba(var(--tc), 0.08);
   display: flex;
   justify-content: center;
+}
+
+/* ── Timer view ─────────────────────────────────────── */
+
+.timer-view {
+  padding: 10px 14px;
+  overflow-y: auto;
+}
+
+.timer-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(var(--tc), 0.55);
+  margin-bottom: 14px;
+}
+
+.timer-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.timer-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timer-field input {
+  width: 48px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+  color: rgba(var(--tc), 0.7);
+  background: rgba(var(--tc), 0.06);
+  border: 1px solid rgba(var(--tc), 0.12);
+  border-radius: 6px;
+  padding: 4px 2px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.timer-field input::-webkit-inner-spin-button,
+.timer-field input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.timer-field input:focus {
+  border-color: rgba(var(--tc), 0.3);
+  background: rgba(var(--tc), 0.04);
+}
+
+.timer-label {
+  font-size: 9px;
+  color: rgba(var(--tc), 0.35);
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.timer-colon {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(var(--tc), 0.35);
+  padding-bottom: 14px;
+}
+
+.timer-presets {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.timer-preset-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 600;
+  color: rgba(var(--tc), 0.55);
+  background: rgba(var(--tc), 0.06);
+  border: 1px solid rgba(var(--tc), 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.timer-preset-btn:hover {
+  background: rgba(var(--tc), 0.12);
+  color: rgba(var(--tc), 0.7);
+}
+
+.timer-start-btn {
+  display: block;
+  width: 100%;
+  max-width: 160px;
+  margin: 0 auto;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  color: rgb(var(--tc-inv));
+  background: rgba(var(--tc), 0.55);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.timer-start-btn:hover {
+  background: rgba(var(--tc), 0.7);
+}
+
+.timer-start-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.timer-running {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.timer-countdown {
+  font-size: 32px;
+  font-weight: 700;
+  color: rgba(var(--tc), 0.7);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+.timer-cancel-btn {
+  padding: 5px 18px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 600;
+  color: rgba(var(--tc), 0.55);
+  background: rgba(var(--tc), 0.08);
+  border: 1px solid rgba(var(--tc), 0.15);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.timer-cancel-btn:hover {
+  background: rgba(var(--tc), 0.15);
+}
+
+/* ── Timer flash animation ──────────────────────────── */
+
+.timer-flash {
+  animation: timer-pulse 0.5s ease-in-out 3;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.5); }
+}
+
+
+/* ── Timer settings ─────────────────────────────────── */
+
+.timer-presets-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timer-preset-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-preset-edit-label {
+  font-size: 11px;
+  color: rgba(var(--tc), 0.5);
+  width: 52px;
+  flex-shrink: 0;
+}
+
+.timer-preset-edit-input {
+  width: 60px;
+  font-size: 11px;
+  font-family: inherit;
+  color: rgba(var(--tc), 0.7);
+  background: rgba(var(--tc), 0.06);
+  border: 1px solid rgba(var(--tc), 0.12);
+  border-radius: 4px;
+  padding: 3px 6px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.timer-preset-edit-input::-webkit-inner-spin-button,
+.timer-preset-edit-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.timer-preset-edit-input:focus {
+  border-color: rgba(var(--tc), 0.3);
+}
+
+.timer-preset-edit-unit {
+  font-size: 10px;
+  color: rgba(var(--tc), 0.35);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(var(--tc), 0.55);
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+.toggle-row input[type="checkbox"] {
+  accent-color: rgba(var(--tc), 0.5);
+  cursor: pointer;
 }
