@@ -1,7 +1,7 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
-import Layout from "./Layout";
+import Layout from "./AccordionView/components/Layout";
 import type { SpaceInfo, ContextHistory } from "../types";
 
 interface SessionChooserViewProps {
@@ -71,7 +71,7 @@ export default function SessionChooserView({
             onClick={() => {
               invoke("start_new_session")
                 .then(onNewSession)
-                .catch(() => {});
+                .catch(() => { });
             }}
           >
             New Session
@@ -84,7 +84,7 @@ export default function SessionChooserView({
                 invoke<ContextHistory>("get_context_history"),
               ])
                 .then(([spaces, history]) => onPickHistory(spaces, history))
-                .catch(() => {});
+                .catch(() => { });
             }}
           >
             Pick from History

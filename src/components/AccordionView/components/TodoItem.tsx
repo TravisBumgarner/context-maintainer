@@ -1,6 +1,6 @@
 import { Box, Checkbox, InputBase, IconButton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import type { TodoItem as TodoItemType } from "../types";
+import type { TodoItem as TodoItemType } from "../../../types";
 
 interface TodoItemProps {
   item: TodoItemType;

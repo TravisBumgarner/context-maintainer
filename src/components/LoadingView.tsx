@@ -1,4 +1,4 @@
-import Layout from "./Layout";
+import Layout from "./AccordionView/components/Layout";
 
 export default function LoadingView() {
   return <Layout>{null}</Layout>;

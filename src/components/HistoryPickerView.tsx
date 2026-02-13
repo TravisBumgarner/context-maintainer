@@ -1,7 +1,7 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
-import Layout from "./Layout";
+import Layout from "./AccordionView/components/Layout";
 import { formatRelativeTime } from "../utils";
 import type { SpaceInfo, ContextHistory } from "../types";
 
@@ -87,10 +87,10 @@ export default function HistoryPickerView({
                             if (ok) {
                               invoke<ContextHistory>("get_context_history")
                                 .then(setContextHistory)
-                                .catch(() => {});
+                                .catch(() => { });
                             }
                           })
-                          .catch(() => {});
+                          .catch(() => { });
                       }}
                       sx={{
                         display: "flex",

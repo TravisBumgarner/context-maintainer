@@ -1,7 +1,7 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
-import Layout from "./Layout";
+import Layout from "./AccordionView/components/Layout";
 
 interface SetupViewProps {
   accessibilityGranted: boolean | null;
@@ -57,7 +57,7 @@ export default function SetupView({
                 onClick={() => {
                   invoke<boolean>("request_accessibility")
                     .then(setAccessibilityGranted)
-                    .catch(() => {});
+                    .catch(() => { });
                 }}
                 sx={{
                   mt: 0.5,
@@ -92,7 +92,7 @@ export default function SetupView({
           onClick={() => {
             invoke("complete_setup")
               .then(onComplete)
-              .catch(() => {});
+              .catch(() => { });
           }}
           sx={{
             mt: 1,
