@@ -21,7 +21,7 @@ milestones:
       release notes are tracked.
     branch:
       working: task-3-update-ui
-      base: task-1-updater-infrastructure
+      base: main
 
 tasks:
   - id: 1
@@ -162,4 +162,4 @@ tasks:
       - Follows Keep a Changelog format with [Unreleased] and [0.1.0] sections
     depends_on: []
     effort: 1
-    status: scoped
+    status: implementing
