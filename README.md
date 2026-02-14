@@ -38,6 +38,18 @@ On first launch, Context Maintainer will walk you through two quick steps:
 
 That's it. The app handles the rest.
 
+## Releasing
+
+See [`.github/workflows/README.md`](.github/workflows/README.md) for secrets setup and certificate generation.
+
+1. Bump the version: `npm run version-bump -- --patch` (or `--minor` / `--major`)
+2. Update `CHANGELOG.md` with the new version's changes
+3. Open a PR, get it reviewed and merged
+4. Go to Actions > "Build and Release (macOS)" > Run workflow
+5. Review the draft release, then publish it
+
+Once published, running copies of the app will detect the update on next launch.
+
 ## Tech
 
 Built with [Tauri 2](https://tauri.app/), React, and Rust. Uses macOS CoreGraphics APIs for reliable virtual desktop detection without polling AppleScript.
