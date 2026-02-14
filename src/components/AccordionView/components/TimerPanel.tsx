@@ -6,18 +6,25 @@ import { useTimerStore, useSettingsStore } from "../../../stores";
 export default function TimerPanel() {
   const tc = useTheme().custom.tc;
   const {
-    hours,
-    minutes,
-    seconds,
-    running,
-    remaining,
-    setHours,
-    setMinutes,
-    setSeconds,
     startTimer,
     cancelTimer,
     populateFromPreset,
+    setHours,
+    setMinutes,
+    setSeconds,
   } = useTimerStore();
+  const { hours, minutes, seconds, running, remaining } = useTimerStore(
+    (s) => {
+      const t = s.timers[s.activeDesktop];
+      return {
+        hours: t?.hours ?? 0,
+        minutes: t?.minutes ?? 0,
+        seconds: t?.seconds ?? 0,
+        running: t?.running ?? false,
+        remaining: t?.remaining ?? 0,
+      };
+    },
+  );
   const { timerPresets, notifySystem, notifyFlash } = useSettingsStore();
 
   const fieldInputSx = {
