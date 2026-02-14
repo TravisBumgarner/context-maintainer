@@ -19,6 +19,8 @@ interface UIState {
   displayGroups: DisplayGroup[];
   monitorRef: Monitor | null;
   showWhatsNew: boolean;
+  updateAvailable: { version: string; body: string; downloadAndInstall: (onEvent?: (event: any) => void) => Promise<void> } | null;
+  updateStatus: "idle" | "downloading" | "error";
 
   setView: (v: ViewType) => void;
   setCollapsed: (c: boolean) => void;
@@ -28,6 +30,9 @@ interface UIState {
   setDisplayGroups: (g: DisplayGroup[]) => void;
   setMonitorRef: (m: Monitor | null) => void;
   setShowWhatsNew: (v: boolean) => void;
+  setUpdateAvailable: (u: UIState["updateAvailable"]) => void;
+  setUpdateStatus: (s: UIState["updateStatus"]) => void;
+  dismissUpdate: () => void;
 
   checkPosition: () => Promise<void>;
   snapToMonitor: (overrideAnchor?: AnchorPosition) => Promise<void>;
@@ -46,6 +51,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   displayGroups: [],
   monitorRef: null,
   showWhatsNew: false,
+  updateAvailable: null,
+  updateStatus: "idle",
 
   setView: (v) => set({ view: v }),
   setCollapsed: (c) => set({ collapsed: c }),
@@ -55,6 +62,9 @@ export const useUIStore = create<UIState>((set, get) => ({
   setDisplayGroups: (g) => set({ displayGroups: g }),
   setMonitorRef: (m) => set({ monitorRef: m }),
   setShowWhatsNew: (v) => set({ showWhatsNew: v }),
+  setUpdateAvailable: (u) => set({ updateAvailable: u }),
+  setUpdateStatus: (s) => set({ updateStatus: s }),
+  dismissUpdate: () => set({ updateAvailable: null, updateStatus: "idle" }),
 
   checkPosition: async () => {
     const m = get().monitorRef;

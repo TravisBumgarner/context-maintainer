@@ -105,7 +105,7 @@ tasks:
       - Dismissing the notification hides it for the current session
     depends_on: [1]
     effort: 2
-    status: scoped
+    status: completed
 
   - id: 4
     milestone: 1

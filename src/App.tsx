@@ -15,6 +15,7 @@ import SessionChooserView from "./components/SessionChooserView";
 import HistoryPickerView from "./components/HistoryPickerView";
 import AccordionView from "./components/AccordionView";
 import SettingsView from "./components/SettingsView";
+import UpdateBanner from "./components/UpdateBanner";
 
 import { useTodoStore, useUIStore, useDesktopStore, useSettingsStore } from "./stores";
 
@@ -139,6 +140,29 @@ function App() {
     }
   }, [view, setView]);
 
+  // ── Update check ────────────────────────────────────
+  useEffect(() => {
+    if (view !== "todos") return;
+    let cancelled = false;
+
+    import("@tauri-apps/plugin-updater").then(({ check }) => {
+      check().then((update) => {
+        if (cancelled || !update) return;
+        useUIStore.getState().setUpdateAvailable({
+          version: update.version,
+          body: update.body ?? "",
+          downloadAndInstall: (onEvent) => update.downloadAndInstall(onEvent),
+        });
+      }).catch(() => {
+        // offline or no update — ignore
+      });
+    }).catch(() => {
+      // plugin not available in dev — ignore
+    });
+
+    return () => { cancelled = true; };
+  }, [view]);
+
   // ── Accessibility check ──────────────────────────────
   useEffect(() => {
     if (view === "setup" || view === "settings") {
@@ -160,6 +184,7 @@ function App() {
       {view === "history-picker" && <HistoryPickerView />}
       {view === "todos" && <AccordionView displayIndex={displayIndex} />}
       {view === "settings" && <SettingsView />}
+      <UpdateBanner />
     </ThemeProvider>
   );
 }
