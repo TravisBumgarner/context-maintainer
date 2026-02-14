@@ -56,7 +56,7 @@ tasks:
       - updater:default permission is in capabilities/default.json
     depends_on: []
     effort: 2
-    status: implementing
+    status: completed
 
   - id: 2
     milestone: 1
