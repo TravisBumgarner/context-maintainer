@@ -38,6 +38,36 @@ On first launch, Context Maintainer will walk you through two quick steps:
 
 That's it. The app handles the rest.
 
+## Releasing
+
+### Prerequisites
+
+1. **Tauri signing key** — Generate with `npx tauri signer generate -w ~/.tauri/context-switching.key`. The public key is already in `tauri.conf.json`.
+
+2. **GitHub Secrets** — Add these to the repo (Settings > Secrets and variables > Actions):
+   - `TAURI_SIGNING_PRIVATE_KEY` — Contents of `~/.tauri/context-switching.key`
+   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` — Password used when generating the key (empty string if none)
+   - `APPLE_CERTIFICATE` — Base64-encoded .p12 certificate for macOS code signing
+   - `APPLE_CERTIFICATE_PASSWORD` — Password for the .p12 certificate
+   - `APPLE_IDENTITY` — Apple signing identity (e.g. `Developer ID Application: Name (TEAM_ID)`)
+   - `APPLE_ID` — Apple ID email for notarization
+   - `APPLE_PASSWORD` — App-specific password for notarization
+   - `APPLE_TEAM_ID` — Apple Developer Team ID
+
+### Creating a release
+
+1. Update the version in all three files (or use the version-bump script once available):
+   - `package.json`
+   - `src-tauri/tauri.conf.json`
+   - `src-tauri/Cargo.toml`
+2. Update `CHANGELOG.md` with the new version's changes
+3. Commit and push to `main`
+4. Go to Actions > "Build and Release (macOS)" > Run workflow
+5. The workflow creates a draft GitHub Release with signed artifacts and a `latest.json` for auto-updates
+6. Review the draft release, edit the description if needed, then publish it
+
+Once published, running copies of the app will detect the update on next launch.
+
 ## Tech
 
 Built with [Tauri 2](https://tauri.app/), React, and Rust. Uses macOS CoreGraphics APIs for reliable virtual desktop detection without polling AppleScript.
