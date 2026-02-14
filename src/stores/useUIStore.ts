@@ -39,6 +39,9 @@ interface UIState {
   refreshDisplayGroups: () => Promise<void>;
 }
 
+let lastPos: { x: number; y: number } | null = null;
+let ignoreNextMove = false;
+
 export const useUIStore = create<UIState>((set, get) => ({
   view: "loading",
   collapsed: false,
@@ -77,6 +80,17 @@ export const useUIStore = create<UIState>((set, get) => ({
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
       set({ offMonitor: !isOn });
 
+      // Detect user drag — if position changed and anchor isn't already free, switch to free
+      if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
+        if (ignoreNextMove) {
+          ignoreNextMove = false;
+        } else if (get().anchorPos !== "middle-center") {
+          set({ anchorPos: "middle-center" });
+          saveAnchor("middle-center");
+        }
+      }
+      lastPos = { x: pos.x, y: pos.y };
+
       const sf = m.scaleFactor;
       const logicalHeight = size.height / sf;
       const threshold = (WINDOW_HEIGHT_COLLAPSED + WINDOW_HEIGHT_EXPANDED) / 2;
@@ -113,7 +127,9 @@ export const useUIStore = create<UIState>((set, get) => ({
       else if (anchorPos.startsWith("middle")) y = my + Math.round((mh - wh) / 2);
       else y = my + mh - wh - padding;
 
+      ignoreNextMove = true;
       await currentWindow.setPosition(new PhysicalPosition(x, y));
+      lastPos = { x, y };
       set({ offMonitor: false });
     } catch {
       // ignore
@@ -144,7 +160,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   selectAnchor: (pos) => {
     set({ anchorPos: pos });
     saveAnchor(pos);
-    get().snapToMonitor(pos);
+    if (pos !== "middle-center") get().snapToMonitor(pos);
   },
 
   refreshDisplayGroups: async () => {

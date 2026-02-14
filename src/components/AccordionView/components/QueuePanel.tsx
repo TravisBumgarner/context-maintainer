@@ -26,12 +26,35 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
 
   return (
     <>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          px: "4px",
+          py: "2px",
+          gap: "4px",
+        }}
+      >
+        <InputBase
+          placeholder="Add task..."
+          value={newText}
+          onChange={(e) => setNewText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addTodo(desktopId)}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            p: 0,
+            "& input": { p: 0 },
+            "& input::placeholder": { color: tc(0.3) },
+          }}
+        />
+      </Box>
+
       <Reorder.Group
         axis="y"
         values={active}
         onReorder={(reordered) => reorderTodos(reordered, desktopId)}
         style={{
-          flex: 1,
           overflowY: "auto",
           padding: "2px 0",
           minHeight: 0,
@@ -65,29 +88,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
           </Reorder.Item>
         ))}
       </Reorder.Group>
-
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          px: "4px",
-          py: "2px",
-          gap: "4px",
-        }}
-      >
-        <InputBase
-          placeholder="Add task..."
-          value={newText}
-          onChange={(e) => setNewText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addTodo(desktopId)}
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            p: "2px 0",
-            "& input::placeholder": { color: tc(0.3) },
-          }}
-        />
-      </Box>
 
       {done.length > 0 && (
         <Box

@@ -6,9 +6,9 @@ interface TodoItemProps {
   item: TodoItemType;
   isDone?: boolean;
   dragHandle?: React.ReactNode;
-  onToggle: (id: string) => void;
-  onUpdate: (id: string, text: string) => void;
-  onDelete: (id: string) => void;
+  onToggle: () => void;
+  onUpdate: (text: string) => void;
+  onDelete: () => void;
 }
 
 export default function TodoItem({
@@ -31,7 +31,6 @@ export default function TodoItem({
         py: "2px",
         gap: "4px",
         transition: "background 0.1s",
-        "&:hover": { bgcolor: tc(0.04) },
         "&:hover .delete-btn": { opacity: 1 },
       }}
     >
@@ -39,7 +38,7 @@ export default function TodoItem({
       <Checkbox
         size="small"
         checked={item.done}
-        onChange={() => onToggle(item.id)}
+        onChange={() => onToggle()}
         sx={{
           flexShrink: 0,
           p: 0,
@@ -50,20 +49,21 @@ export default function TodoItem({
       />
       <InputBase
         value={item.text}
-        onChange={(e) => onUpdate(item.id, e.target.value)}
+        onChange={(e) => onUpdate(e.target.value)}
         readOnly={isDone}
         placeholder="empty"
         sx={{
           flex: 1,
           minWidth: 0,
-          p: "2px 0",
+          p: 0,
+          "& input": { p: 0 },
           ...(isDone && { color: tc(0.35), textDecoration: "line-through" }),
           "& input::placeholder": { color: tc(0.25) },
         }}
       />
       <IconButton
         className="delete-btn"
-        onClick={() => onDelete(item.id)}
+        onClick={() => onDelete()}
         sx={{
           flexShrink: 0,
           color: tc(0.2),

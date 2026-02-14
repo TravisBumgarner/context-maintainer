@@ -70,17 +70,6 @@ export default function SetupView() {
           )}
         </Box>
 
-        <Box sx={{ fontSize: 11, color: tc(0.5), mb: 1, lineHeight: 1.4 }}>
-          <Typography
-            component="strong"
-            sx={{ fontWeight: 700, color: tc(0.65), fontSize: "inherit" }}
-          >
-            2. Keyboard Shortcuts
-          </Typography>
-          <br />
-          System Settings &gt; Keyboard &gt; Keyboard Shortcuts &gt; Mission
-          Control — enable "Switch to Desktop N" for each desktop.
-        </Box>
 
         <Button
           onClick={() => {

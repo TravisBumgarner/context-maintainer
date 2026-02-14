@@ -1,5 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useShallow } from "zustand/react/shallow";
 import { formatPreset, formatCountdown } from "../../../utils";
 import { useTimerStore, useSettingsStore } from "../../../stores";
 
@@ -14,7 +15,7 @@ export default function TimerPanel() {
     setSeconds,
   } = useTimerStore();
   const { hours, minutes, seconds, running, remaining } = useTimerStore(
-    (s) => {
+    useShallow((s) => {
       const t = s.timers[s.activeDesktop];
       return {
         hours: t?.hours ?? 0,
@@ -23,7 +24,7 @@ export default function TimerPanel() {
         running: t?.running ?? false,
         remaining: t?.remaining ?? 0,
       };
-    },
+    }),
   );
   const { timerPresets, notifySystem, notifyFlash } = useSettingsStore();
 
