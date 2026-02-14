@@ -21,7 +21,7 @@ milestones:
       release notes are tracked.
     branch:
       working: task-3-update-ui
-      base: task-1-updater-infrastructure
+      base: main
 
 tasks:
   - id: 1
@@ -162,4 +162,35 @@ tasks:
       - Follows Keep a Changelog format with [Unreleased] and [0.1.0] sections
     depends_on: []
     effort: 1
-    status: scoped
+    status: completed
+
+  - id: 6
+    milestone: 2
+    title: Add in-app "What's New" tab in Settings
+    description: |
+      Add a changelog data file and a "What's New" tab to the Settings view.
+
+      **Data (`src/changelog.ts`):**
+      - Export a `changelog` array of `{ version: string, date: string, changes: { category: string, items: string[] }[] }`
+      - Populate with the same content as `CHANGELOG.md` (0.1.0 initial release)
+      - When releasing, developers update both this file and `CHANGELOG.md`
+
+      **Settings tab:**
+      - Add a tab bar to `SettingsView.tsx` with two tabs: "Settings" (existing content) and "What's New"
+      - "What's New" tab renders the most recent changelog entry only (first item in the array)
+      - Display version, date, and grouped changes (category heading + bullet list)
+      - Style consistently with the existing settings panel using MUI components and the theme's `tc()` helper
+
+      **On app start:**
+      - Compare the latest changelog version against a `lastSeenVersion` value persisted in settings/localStorage
+      - If there's a new version the user hasn't seen, automatically switch to the Settings view with the "What's New" tab active
+      - After viewing, update `lastSeenVersion` so it doesn't show again
+    acceptance_criteria:
+      - changelog.ts exports a typed changelog array with at least the 0.1.0 entry
+      - Settings view has two tabs — "Settings" and "What's New"
+      - "What's New" tab displays the most recent changelog entry with version, date, and changes
+      - On first launch after an update, the app opens to the "What's New" tab automatically
+      - Subsequent launches don't re-show the changelog
+    depends_on: []
+    effort: 3
+    status: implementing

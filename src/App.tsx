@@ -6,6 +6,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { buildTheme } from "./theme";
 import { DEFAULT_BG } from "./constants";
 import { currentWindow, friendlyMonitorName, loadAnchor } from "./utils";
+import { changelog } from "./changelog";
 import type { DesktopInfo, DesktopSummary, Settings, ViewType } from "./types";
 
 import LoadingView from "./components/LoadingView";
@@ -124,6 +125,19 @@ function App() {
     const saved = loadAnchor();
     if (saved !== "top-right") useUIStore.getState().snapToMonitor(saved);
   }, [view]);
+
+  // ── What's New check ─────────────────────────────────
+  useEffect(() => {
+    if (view !== "todos") return;
+    const latest = changelog[0];
+    if (!latest) return;
+    const lastSeen = localStorage.getItem("lastSeenVersion");
+    if (lastSeen !== latest.version) {
+      localStorage.setItem("lastSeenVersion", latest.version);
+      useUIStore.getState().setShowWhatsNew(true);
+      setView("settings");
+    }
+  }, [view, setView]);
 
   // ── Accessibility check ──────────────────────────────
   useEffect(() => {

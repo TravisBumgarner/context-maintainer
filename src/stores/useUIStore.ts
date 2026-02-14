@@ -18,6 +18,7 @@ interface UIState {
   expandedPanel: AccordionPanel;
   displayGroups: DisplayGroup[];
   monitorRef: Monitor | null;
+  showWhatsNew: boolean;
 
   setView: (v: ViewType) => void;
   setCollapsed: (c: boolean) => void;
@@ -26,6 +27,7 @@ interface UIState {
   setExpandedPanel: (p: AccordionPanel) => void;
   setDisplayGroups: (g: DisplayGroup[]) => void;
   setMonitorRef: (m: Monitor | null) => void;
+  setShowWhatsNew: (v: boolean) => void;
 
   checkPosition: () => Promise<void>;
   snapToMonitor: (overrideAnchor?: AnchorPosition) => Promise<void>;
@@ -43,6 +45,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   expandedPanel: "queue",
   displayGroups: [],
   monitorRef: null,
+  showWhatsNew: false,
 
   setView: (v) => set({ view: v }),
   setCollapsed: (c) => set({ collapsed: c }),
@@ -51,6 +54,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setExpandedPanel: (p) => set({ expandedPanel: p }),
   setDisplayGroups: (g) => set({ displayGroups: g }),
   setMonitorRef: (m) => set({ monitorRef: m }),
+  setShowWhatsNew: (v) => set({ showWhatsNew: v }),
 
   checkPosition: async () => {
     const m = get().monitorRef;

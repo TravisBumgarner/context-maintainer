@@ -4,12 +4,17 @@ import { useTheme } from "@mui/material/styles";
 import { ThemesTab } from "./components/ThemesTab";
 import { PermissionsTab } from "./components/PermissionsTab";
 import { TimerTab } from "./components/TimerTab";
+import { WhatsNewTab } from "./components/WhatsNewTab";
 
-export default function SettingsPanel() {
+interface SettingsPanelProps {
+    initialTab?: number;
+}
+
+export default function SettingsPanel({ initialTab = 0 }: SettingsPanelProps) {
     const theme = useTheme();
     const tc = theme.custom.tc;
 
-    const [settingsTab, setSettingsTab] = useState(0);
+    const [settingsTab, setSettingsTab] = useState(initialTab);
     const [confirmClear, setConfirmClear] = useState(false);
 
     return (
@@ -19,7 +24,7 @@ export default function SettingsPanel() {
                 onChange={(_, v) => setSettingsTab(v)}
                 sx={{ mb: "10px", borderBottom: `1px solid ${tc(0.12)}` }}
             >
-                {["Themes", "Permissions", "Timer"].map((label) => (
+                {["Themes", "Permissions", "Timer", "What's New"].map((label) => (
                     <Tab
                         key={label}
                         label={label}
@@ -43,6 +48,8 @@ export default function SettingsPanel() {
             )}
 
             {settingsTab === 2 && <TimerTab />}
+
+            {settingsTab === 3 && <WhatsNewTab />}
         </>
     );
 }
