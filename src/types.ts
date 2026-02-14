@@ -63,4 +63,4 @@ export type ViewType =
   | "history-picker"
   | "settings";
 
-export type AccordionPanel = "queue" | "timer" | "anchor" | "desktops";
+export type AccordionPanel = "queue" | "timer" | "desktops";
