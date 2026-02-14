@@ -162,4 +162,4 @@ tasks:
       - Follows Keep a Changelog format with [Unreleased] and [0.1.0] sections
     depends_on: []
     effort: 1
-    status: implementing
+    status: completed
