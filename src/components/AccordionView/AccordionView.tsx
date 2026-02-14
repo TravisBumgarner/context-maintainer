@@ -23,7 +23,14 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
 
   // Zustand stores
   const { todos, title, updateTitle } = useTodoStore();
-  const { flashing, running, remaining } = useTimerStore();
+  const { flashing, running, remaining } = useTimerStore((s) => {
+    const t = s.timers[s.activeDesktop];
+    return {
+      flashing: t?.flashing ?? false,
+      running: t?.running ?? false,
+      remaining: t?.remaining ?? 0,
+    };
+  });
   const {
     collapsed,
     offMonitor,

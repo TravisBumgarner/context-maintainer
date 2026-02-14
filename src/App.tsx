@@ -17,7 +17,7 @@ import AccordionView from "./components/AccordionView";
 import SettingsView from "./components/SettingsView";
 import UpdateBanner from "./components/UpdateBanner";
 
-import { useTodoStore, useUIStore, useDesktopStore, useSettingsStore } from "./stores";
+import { useTodoStore, useTimerStore, useUIStore, useDesktopStore, useSettingsStore } from "./stores";
 
 function App() {
   const displayIndex = useMemo(() => {
@@ -88,6 +88,7 @@ function App() {
     let prevId = useDesktopStore.getState().desktop.space_id;
 
     // Initial load
+    useTimerStore.getState().setActiveDesktop(prevId);
     useTodoStore.getState().loadTodos(prevId);
     useTodoStore.getState().loadTitle(prevId);
 
@@ -106,6 +107,7 @@ function App() {
           todoState.saveTodos(prevId, todoState.todos);
 
           prevId = info.space_id;
+          useTimerStore.getState().setActiveDesktop(info.space_id);
           await useTodoStore.getState().loadTodos(info.space_id);
           await useTodoStore.getState().loadTitle(info.space_id);
         }
