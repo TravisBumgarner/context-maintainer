@@ -142,7 +142,7 @@ tasks:
       - Exits with error and helpful message if no flag is provided
     depends_on: []
     effort: 2
-    status: implementing
+    status: completed
 
   - id: 5
     milestone: 2
