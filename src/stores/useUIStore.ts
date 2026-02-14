@@ -7,7 +7,7 @@ import {
 } from "@tauri-apps/api/window";
 import { currentWindow, loadAnchor, saveAnchor } from "../utils";
 import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED } from "../constants";
-import type { AnchorPosition, ViewType, AccordionPanel, DisplayGroup } from "../types";
+import type { AnchorPosition, ViewType, DisplayGroup } from "../types";
 import { useSettingsStore } from "./useSettingsStore";
 
 interface UIState {
@@ -15,7 +15,6 @@ interface UIState {
   collapsed: boolean;
   offMonitor: boolean;
   anchorPos: AnchorPosition;
-  expandedPanel: AccordionPanel;
   displayGroups: DisplayGroup[];
   monitorRef: Monitor | null;
   showWhatsNew: boolean;
@@ -26,7 +25,6 @@ interface UIState {
   setCollapsed: (c: boolean) => void;
   setOffMonitor: (o: boolean) => void;
   setAnchorPos: (p: AnchorPosition) => void;
-  setExpandedPanel: (p: AccordionPanel) => void;
   setDisplayGroups: (g: DisplayGroup[]) => void;
   setMonitorRef: (m: Monitor | null) => void;
   setShowWhatsNew: (v: boolean) => void;
@@ -39,7 +37,6 @@ interface UIState {
   toggleMinimize: () => Promise<void>;
   selectAnchor: (pos: AnchorPosition) => void;
   refreshDisplayGroups: () => Promise<void>;
-  changePanel: (panel: AccordionPanel) => void;
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -47,7 +44,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   collapsed: false,
   offMonitor: false,
   anchorPos: loadAnchor(),
-  expandedPanel: "queue",
   displayGroups: [],
   monitorRef: null,
   showWhatsNew: false,
@@ -58,7 +54,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   setCollapsed: (c) => set({ collapsed: c }),
   setOffMonitor: (o) => set({ offMonitor: o }),
   setAnchorPos: (p) => set({ anchorPos: p }),
-  setExpandedPanel: (p) => set({ expandedPanel: p }),
   setDisplayGroups: (g) => set({ displayGroups: g }),
   setMonitorRef: (m) => set({ monitorRef: m }),
   setShowWhatsNew: (v) => set({ showWhatsNew: v }),
@@ -161,8 +156,4 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
 
-  changePanel: (panel) => {
-    set({ expandedPanel: panel });
-    if (panel === "desktops") get().refreshDisplayGroups();
-  },
 }));

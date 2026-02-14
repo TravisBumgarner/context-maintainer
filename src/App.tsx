@@ -30,7 +30,6 @@ function App() {
   const view = useUIStore((s) => s.view);
   const setView = useUIStore((s) => s.setView);
   const desktopColor = useDesktopStore((s) => s.desktop.color);
-  const expandedPanel = useUIStore((s) => s.expandedPanel);
 
   // ── Effective background for theme ──────────────────
   const effectiveBg = useMemo(() => {

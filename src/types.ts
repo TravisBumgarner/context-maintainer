@@ -62,5 +62,3 @@ export type ViewType =
   | "todos"
   | "history-picker"
   | "settings";
-
-export type AccordionPanel = "queue" | "timer" | "desktops";

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Divider,
@@ -6,15 +6,14 @@ import {
   InputBase,
   Popover,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Layout from "./components/Layout";
-import CollapsibleSection from "./components/CollapsibleSection";
 import QueuePanel from "./components/QueuePanel";
 import TimerPanel from "./components/TimerPanel";
 import DesktopsPanel from "./components/DesktopsPanel";
 import { ANCHOR_POSITIONS, ANCHOR_LABELS } from "../../constants";
-import { formatCountdown } from "../../utils";
 import { useShallow } from "zustand/react/shallow";
 import { useTodoStore, useTimerStore, useUIStore, useDesktopStore } from "../../stores";
 
@@ -28,34 +27,45 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
 
   // Zustand stores
   const { todos, title, updateTitle } = useTodoStore();
-  const { flashing, running, remaining } = useTimerStore(useShallow((s) => {
+  const { flashing } = useTimerStore(useShallow((s) => {
     const t = s.timers[s.activeDesktop];
     return {
       flashing: t?.flashing ?? false,
-      running: t?.running ?? false,
-      remaining: t?.remaining ?? 0,
     };
   }));
   const {
     collapsed,
     offMonitor,
     anchorPos,
-    expandedPanel,
     toggleMinimize,
     snapToMonitor,
     selectAnchor,
-    changePanel,
     setView,
+    refreshDisplayGroups,
   } = useUIStore();
   const { desktop, monitorNames } = useDesktopStore();
 
   const monitorName = monitorNames[displayIndex] || `Screen ${displayIndex + 1}`;
-  const firstUncompleted = todos.filter((t) => !t.done)[0]?.text ?? "";
 
   const handleAnchorSelect = (pos: typeof anchorPos) => {
     selectAnchor(pos);
     setAnchorEl(null);
   };
+
+  // Refresh display groups on mount
+  useEffect(() => {
+    refreshDisplayGroups();
+  }, [refreshDisplayGroups]);
+
+  const sectionLabelSx = {
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    color: tc(0.45),
+    px: "16px",
+    py: "4px",
+    flexShrink: 0,
+  } as const;
 
   return (
     <Layout timerFlashing={flashing}>
@@ -198,34 +208,33 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
 
       <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
         {/* ── Queue ── */}
-        <CollapsibleSection
-          label="Queue"
-          isExpanded={expandedPanel === "queue"}
-          onToggle={() => changePanel("queue")}
-          preview={expandedPanel !== "queue" ? firstUncompleted : undefined}
-        >
-          <QueuePanel desktopId={desktop.space_id} />
-        </CollapsibleSection>
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+          <Typography sx={sectionLabelSx}>Queue</Typography>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "auto", px: "8px" }}>
+            <QueuePanel desktopId={desktop.space_id} />
+          </Box>
+        </Box>
+
+        <Divider />
 
         {/* ── Timer ── */}
-        <CollapsibleSection
-          label="Timer"
-          isExpanded={expandedPanel === "timer"}
-          onToggle={() => changePanel("timer")}
-          preview={expandedPanel !== "timer" && running ? formatCountdown(remaining) : undefined}
-        >
-          <TimerPanel />
-        </CollapsibleSection>
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+          <Typography sx={sectionLabelSx}>Timer</Typography>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "auto", alignItems: "center", justifyContent: "center" }}>
+            <TimerPanel />
+          </Box>
+        </Box>
+
+        <Divider />
 
         {/* ── Desktops ── */}
-        <CollapsibleSection
-          label="Desktops"
-          isExpanded={expandedPanel === "desktops"}
-          onToggle={() => changePanel("desktops")}
-        >
-          <DesktopsPanel displayIndex={displayIndex} />
-        </CollapsibleSection>
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+          <Typography sx={sectionLabelSx}>Desktops</Typography>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "auto", px: "8px" }}>
+            <DesktopsPanel displayIndex={displayIndex} />
+          </Box>
+        </Box>
       </Box>
-    </Layout >
+    </Layout>
   );
 }
