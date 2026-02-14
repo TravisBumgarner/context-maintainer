@@ -1,8 +1,11 @@
+import { useState } from "react";
 import {
   Box,
   Divider,
   IconButton,
   InputBase,
+  Popover,
+  Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Layout from "./components/Layout";
@@ -12,6 +15,7 @@ import TimerPanel from "./components/TimerPanel";
 import DesktopsPanel from "./components/DesktopsPanel";
 import { ANCHOR_POSITIONS, ANCHOR_LABELS } from "../../constants";
 import { formatCountdown } from "../../utils";
+import { useShallow } from "zustand/react/shallow";
 import { useTodoStore, useTimerStore, useUIStore, useDesktopStore } from "../../stores";
 
 interface AccordionViewProps {
@@ -20,17 +24,18 @@ interface AccordionViewProps {
 
 export default function AccordionView({ displayIndex }: AccordionViewProps) {
   const tc = useTheme().custom.tc;
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   // Zustand stores
   const { todos, title, updateTitle } = useTodoStore();
-  const { flashing, running, remaining } = useTimerStore((s) => {
+  const { flashing, running, remaining } = useTimerStore(useShallow((s) => {
     const t = s.timers[s.activeDesktop];
     return {
       flashing: t?.flashing ?? false,
       running: t?.running ?? false,
       remaining: t?.remaining ?? 0,
     };
-  });
+  }));
   const {
     collapsed,
     offMonitor,
@@ -47,8 +52,9 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
   const monitorName = monitorNames[displayIndex] || `Screen ${displayIndex + 1}`;
   const firstUncompleted = todos.filter((t) => !t.done)[0]?.text ?? "";
 
-  const handleChange = (_: React.SyntheticEvent, isExpanded: boolean, panel: string) => {
-    if (isExpanded) changePanel(panel as any);
+  const handleAnchorSelect = (pos: typeof anchorPos) => {
+    selectAnchor(pos);
+    setAnchorEl(null);
   };
 
   return (
@@ -73,49 +79,118 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
         />
         <Box sx={{ display: "flex", alignItems: "center", gap: "2px", flexShrink: 0 }}>
           {offMonitor && (
+            <Tooltip title="Snap back to monitor" arrow>
+              <IconButton
+                onClick={() => snapToMonitor()}
+                sx={{
+                  p: "0 3px",
+                  lineHeight: 1,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: tc(0.6),
+                  "&:hover": { color: tc(0.9) },
+                }}
+              >
+                !
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title="Anchor position" arrow>
             <IconButton
-              onClick={() => snapToMonitor()}
-              title={`This window has been moved off its assigned monitor (${monitorName}). Click to snap it back.`}
+              onClick={(e) => setAnchorEl(e.currentTarget)}
               sx={{
                 p: "0 3px",
                 lineHeight: 1,
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: 700,
-                color: tc(0.6),
-                "&:hover": { color: tc(0.9) },
+                color: tc(0.3),
+                "&:hover": { color: tc(0.6) },
               }}
             >
-              !
+              {ANCHOR_LABELS[anchorPos]}
             </IconButton>
-          )}
-          <IconButton
-            onClick={() => setView("settings")}
-            title="Settings"
-            sx={{
-              p: "0 3px",
-              lineHeight: 1,
-              fontSize: 14,
-              fontWeight: 700,
-              color: tc(0.3),
-              "&:hover": { color: tc(0.6) },
+          </Tooltip>
+          <Popover
+            open={Boolean(anchorEl)}
+            anchorEl={anchorEl}
+            onClose={() => setAnchorEl(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            transformOrigin={{ vertical: "top", horizontal: "center" }}
+            slotProps={{
+              paper: {
+                sx: {
+                  p: "8px",
+                  bgcolor: tc(0.05),
+                  borderRadius: "8px",
+                },
+              },
             }}
           >
-            ⚙
-          </IconButton>
-          <IconButton
-            onClick={toggleMinimize}
-            title={collapsed ? "Expand" : "Collapse"}
-            sx={{
-              p: "0 3px",
-              lineHeight: 1,
-              fontSize: 14,
-              fontWeight: 700,
-              color: tc(0.3),
-              "&:hover": { color: tc(0.6) },
-            }}
-          >
-            {collapsed ? "+" : "\u2014"}
-          </IconButton>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "2px",
+              }}
+            >
+              {ANCHOR_POSITIONS.map((pos) => (
+                <Box
+                  key={pos}
+                  component="button"
+                  onClick={() => handleAnchorSelect(pos)}
+                  title={pos}
+                  disabled={pos === 'middle-center'}
+                  sx={{
+                    width: 36,
+                    height: 28,
+                    border: "none",
+                    background: "none",
+                    color: tc(pos === anchorPos ? 0.9 : 0.35),
+                    fontSize: 16,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    p: 0,
+                    "&:hover": { color: tc(0.7) },
+                    opacity: pos === 'middle-center' ? 0 : 1,
+                  }}
+                >
+                  {ANCHOR_LABELS[pos]}
+                </Box>
+              ))}
+            </Box>
+          </Popover>
+          <Tooltip title="Settings" arrow>
+            <IconButton
+              onClick={() => setView("settings")}
+              sx={{
+                p: "0 3px",
+                lineHeight: 1,
+                fontSize: 14,
+                fontWeight: 700,
+                color: tc(0.3),
+                "&:hover": { color: tc(0.6) },
+              }}
+            >
+              ⚙
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={collapsed ? "Expand" : "Collapse"} arrow>
+            <IconButton
+              onClick={toggleMinimize}
+              sx={{
+                p: "0 3px",
+                lineHeight: 1,
+                fontSize: 14,
+                fontWeight: 700,
+                color: tc(0.3),
+                "&:hover": { color: tc(0.6) },
+              }}
+            >
+              {collapsed ? "+" : "\u2014"}
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
 
@@ -140,50 +215,6 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
           preview={expandedPanel !== "timer" && running ? formatCountdown(remaining) : undefined}
         >
           <TimerPanel />
-        </CollapsibleSection>
-
-        {/* ── Anchor ── */}
-        <CollapsibleSection
-          label="Anchor"
-          isExpanded={expandedPanel === "anchor"}
-          onToggle={() => changePanel("anchor")}
-          preview={expandedPanel !== "anchor" ? ANCHOR_LABELS[anchorPos] : undefined}
-        >
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "2px",
-              maxWidth: 120,
-            }}
-          >
-            {ANCHOR_POSITIONS.map((pos) => (
-              <Box
-                key={pos}
-                component="button"
-                onClick={() => selectAnchor(pos)}
-                title={pos}
-                disabled={pos === 'middle-center'}
-                sx={{
-                  width: 36,
-                  height: 28,
-                  border: "none",
-                  background: "none",
-                  color: tc(pos === anchorPos ? 0.9 : 0.35),
-                  fontSize: 16,
-                  fontFamily: "inherit",
-                  cursor: "pointer",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  p: 0,
-                  "&:hover": { color: tc(0.7) },
-                  opacity: pos === 'middle-center' ? 0 : 1,
-                }}
-              >
-                {ANCHOR_LABELS[pos]}
-              </Box>
-            ))}
-          </Box>
         </CollapsibleSection>
 
         {/* ── Desktops ── */}
