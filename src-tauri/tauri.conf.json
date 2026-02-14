@@ -40,7 +40,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQxMzRENkJDMDNEQkQ5QkIKUldTNzJkc0R2TlkwMGN4TnRYSlBJMDU5NDVZSG1NN2RPTmpzWU1Dd1VQdVhHcUl0R29JL2RWTTQK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc5QzZDODRENEY4OTIyRUQKUldUdElvbFBUY2pHZWVXcnRwdFBqeFRQUzhydTU4bnZDK1J5ZG4zdWtScXIrMzR4RWlUSXZsOG8K",
       "endpoints": [
         "https://github.com/TravisBumgarner/context-switching/releases/latest/download/latest.json"
       ]
