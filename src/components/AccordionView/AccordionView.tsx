@@ -5,6 +5,7 @@ import {
   IconButton,
   InputBase,
   Popover,
+  Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Layout from "./components/Layout";
@@ -78,35 +79,37 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
         />
         <Box sx={{ display: "flex", alignItems: "center", gap: "2px", flexShrink: 0 }}>
           {offMonitor && (
+            <Tooltip title="Snap back to monitor" arrow>
+              <IconButton
+                onClick={() => snapToMonitor()}
+                sx={{
+                  p: "0 3px",
+                  lineHeight: 1,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: tc(0.6),
+                  "&:hover": { color: tc(0.9) },
+                }}
+              >
+                !
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title="Anchor position" arrow>
             <IconButton
-              onClick={() => snapToMonitor()}
-              title={`This window has been moved off its assigned monitor (${monitorName}). Click to snap it back.`}
+              onClick={(e) => setAnchorEl(e.currentTarget)}
               sx={{
                 p: "0 3px",
                 lineHeight: 1,
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: 700,
-                color: tc(0.6),
-                "&:hover": { color: tc(0.9) },
+                color: tc(0.3),
+                "&:hover": { color: tc(0.6) },
               }}
             >
-              !
+              {ANCHOR_LABELS[anchorPos]}
             </IconButton>
-          )}
-          <IconButton
-            onClick={(e) => setAnchorEl(e.currentTarget)}
-            title="Anchor position"
-            sx={{
-              p: "0 3px",
-              lineHeight: 1,
-              fontSize: 14,
-              fontWeight: 700,
-              color: tc(0.3),
-              "&:hover": { color: tc(0.6) },
-            }}
-          >
-            {ANCHOR_LABELS[anchorPos]}
-          </IconButton>
+          </Tooltip>
           <Popover
             open={Boolean(anchorEl)}
             anchorEl={anchorEl}
@@ -158,34 +161,36 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
               ))}
             </Box>
           </Popover>
-          <IconButton
-            onClick={() => setView("settings")}
-            title="Settings"
-            sx={{
-              p: "0 3px",
-              lineHeight: 1,
-              fontSize: 14,
-              fontWeight: 700,
-              color: tc(0.3),
-              "&:hover": { color: tc(0.6) },
-            }}
-          >
-            ⚙
-          </IconButton>
-          <IconButton
-            onClick={toggleMinimize}
-            title={collapsed ? "Expand" : "Collapse"}
-            sx={{
-              p: "0 3px",
-              lineHeight: 1,
-              fontSize: 14,
-              fontWeight: 700,
-              color: tc(0.3),
-              "&:hover": { color: tc(0.6) },
-            }}
-          >
-            {collapsed ? "+" : "\u2014"}
-          </IconButton>
+          <Tooltip title="Settings" arrow>
+            <IconButton
+              onClick={() => setView("settings")}
+              sx={{
+                p: "0 3px",
+                lineHeight: 1,
+                fontSize: 14,
+                fontWeight: 700,
+                color: tc(0.3),
+                "&:hover": { color: tc(0.6) },
+              }}
+            >
+              ⚙
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={collapsed ? "Expand" : "Collapse"} arrow>
+            <IconButton
+              onClick={toggleMinimize}
+              sx={{
+                p: "0 3px",
+                lineHeight: 1,
+                fontSize: 14,
+                fontWeight: 700,
+                color: tc(0.3),
+                "&:hover": { color: tc(0.6) },
+              }}
+            >
+              {collapsed ? "+" : "\u2014"}
+            </IconButton>
+          </Tooltip>
         </Box>
       </Box>
 
