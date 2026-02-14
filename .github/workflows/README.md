@@ -12,6 +12,8 @@
 
 You'll be prompted for a password. The script sets the GitHub secret and updates the pubkey in `tauri.conf.json`. Commit and push the pubkey change.
 
+Credentials (signing key password, Apple certs, etc.) are stored in Proton Pass under "Tauri Context Switching".
+
 ## Releasing a new version
 
 1. Bump the version:
