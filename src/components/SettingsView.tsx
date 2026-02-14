@@ -6,6 +6,13 @@ import { useUIStore } from "../stores";
 export default function SettingsView() {
     const tc = useTheme().custom.tc;
     const setView = useUIStore((s) => s.setView);
+    const showWhatsNew = useUIStore((s) => s.showWhatsNew);
+    const setShowWhatsNew = useUIStore((s) => s.setShowWhatsNew);
+
+    const handleBack = () => {
+        setShowWhatsNew(false);
+        setView("todos");
+    };
 
     return (
         <Box
@@ -28,7 +35,7 @@ export default function SettingsView() {
                 }}
             >
                 <IconButton
-                    onClick={() => setView("todos")}
+                    onClick={handleBack}
                     title="Back"
                     sx={{
                         p: "4px",
@@ -64,7 +71,7 @@ export default function SettingsView() {
                     py: "12px",
                 }}
             >
-                <SettingsPanel />
+                <SettingsPanel initialTab={showWhatsNew ? 3 : 0} />
             </Box>
         </Box>
     );
