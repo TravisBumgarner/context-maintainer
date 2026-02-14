@@ -1,0 +1,110 @@
+project: flat-panel-layout
+design_file: null  # Requirements provided inline by user
+scoping_date: 2026-02-14
+
+milestones:
+  - number: 1
+    title: "1. Replace accordion with flat three-panel layout"
+    description: >
+      Remove the accordion/collapsible pattern and replace it with a fixed
+      three-panel layout where Queue, Timer, and Desktops each occupy 1/3
+      of the vertical space. Move the anchor picker into the header as a
+      compact dropdown/popover next to the settings icon. Simplify the
+      Desktops panel to show only the current monitor's desktops, labeled
+      with their user-set title text.
+    branch:
+      working: flat-panel-layout
+      base: main
+
+tasks:
+  - id: 1
+    milestone: 1
+    title: Move anchor picker from accordion section into the header bar
+    description: |
+      The Anchor section is currently a full CollapsibleSection in the accordion.
+      Move it to be a small popover/dropdown triggered by a button in the header
+      bar, positioned to the left of the existing settings (gear) icon.
+
+      The button should show the current anchor arrow (from `ANCHOR_LABELS[anchorPos]`).
+      Clicking it opens a small popover containing the existing 3x3 grid of
+      anchor positions. Selecting an anchor closes the popover and applies
+      the selection (same `selectAnchor` logic).
+
+      Files to modify:
+      - `AccordionView.tsx` — add anchor button + popover to the header `Box`,
+        remove the Anchor `CollapsibleSection`
+      - Remove `"anchor"` from `AccordionPanel` type in `types.ts`
+      - Update `useUIStore.ts` if `changePanel("anchor")` has any special logic
+        (it doesn't currently, but verify)
+    acceptance_criteria:
+      - Anchor button appears in header to the left of the settings icon, showing the current anchor arrow
+      - Clicking the button opens a popover with the 3x3 anchor grid
+      - Selecting an anchor position snaps the window and closes the popover
+      - The Anchor CollapsibleSection is removed from the main body
+    depends_on: []
+    effort: 2
+    status: testing
+
+  - id: 2
+    milestone: 1
+    title: Replace accordion layout with fixed three-panel layout
+    description: |
+      Remove the `CollapsibleSection` wrapper and accordion expand/collapse
+      pattern. Replace with a simple vertical stack where Queue, Timer, and
+      Desktops each get `flex: 1` (equal 1/3 of available height).
+
+      Each panel should have:
+      - A small section label header (the existing uppercase label style)
+      - Content area that fills the remaining space with `overflow: auto`
+
+      Files to modify:
+      - `AccordionView.tsx` — replace the `CollapsibleSection` wrappers with
+        plain `Box` containers using `flex: 1` and `overflow: hidden`
+      - `CollapsibleSection.tsx` can be deleted after this task
+      - Remove `expandedPanel` / `changePanel` from `useUIStore.ts` and
+        `AccordionPanel` type from `types.ts` (the anchor value was already
+        removed in task 1; now remove the type entirely)
+      - Update `refreshDisplayGroups` — it was triggered by `changePanel("desktops")`;
+        now it should be called on mount or on a regular interval instead
+
+      The three panels are always visible, no expand/collapse behavior.
+    acceptance_criteria:
+      - Queue, Timer, and Desktops panels are all visible simultaneously
+      - Each panel occupies approximately 1/3 of the vertical space below the header
+      - Each panel has a section label and scrollable content area
+      - CollapsibleSection component is deleted
+      - expandedPanel state and changePanel action are removed from useUIStore
+    depends_on: [1]
+    effort: 2
+    status: scoped
+
+  - id: 3
+    milestone: 1
+    title: Simplify Desktops panel to show only current monitor
+    description: |
+      Currently `DesktopsPanel` receives `displayIndex` and shows desktops
+      grouped by all monitors, sorted with the current monitor first. Each
+      group has a header like "Screen 1" or the monitor name.
+
+      Simplify to:
+      - Only show desktops for the current monitor (`displayIndex`)
+      - Remove the monitor name/label header entirely (no "Monitor #..." text)
+      - Desktop cards should display the user-set title (from the "What is this
+        screen about?" field, i.e. `d.title`) as the primary label. Fall back
+        to `d.name` only if title is empty.
+
+      The desktop cards already show `d.title || d.name` (line 87 of
+      DesktopsPanel.tsx), so the label logic is correct. The main changes are
+      filtering to a single monitor and removing the group header.
+
+      Files to modify:
+      - `DesktopsPanel.tsx` — filter `displayGroups` to only the current
+        monitor's group, remove the monitor name `Typography`, flatten the
+        rendering
+    acceptance_criteria:
+      - Only desktops belonging to the current monitor are shown
+      - No monitor name/label text is displayed above the desktop cards
+      - Desktop cards show the user-set title as their label, falling back to the system name
+    depends_on: [2]
+    effort: 1
+    status: scoped
