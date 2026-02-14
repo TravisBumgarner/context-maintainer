@@ -32,6 +32,29 @@ function updateJsonFile(filePath, newVersion) {
   writeFileSync(filePath, JSON.stringify(json, null, indent) + "\n");
 }
 
+function addChangelogEntry(filePath, newVersion) {
+  const raw = readFileSync(filePath, "utf-8");
+  const today = new Date().toISOString().slice(0, 10);
+  const entry = [
+    `    {`,
+    `        version: "${newVersion}",`,
+    `        date: "${today}",`,
+    `        changes: [`,
+    `            {`,
+    `                category: "Added",`,
+    `                items: [],`,
+    `            },`,
+    `        ],`,
+    `    },`,
+  ].join("\n");
+
+  const updated = raw.replace(
+    /^(export const changelog: ChangelogEntry\[] = \[)\n/m,
+    `$1\n${entry}\n`
+  );
+  writeFileSync(filePath, updated);
+}
+
 function updateCargoToml(filePath, newVersion) {
   const raw = readFileSync(filePath, "utf-8");
   const updated = raw.replace(
@@ -62,5 +85,9 @@ if (isMain) {
   updateJsonFile(tauriConfPath, newVersion);
   updateCargoToml(cargoPath, newVersion);
 
+  const changelogPath = resolve(ROOT, "src/changelog.ts");
+  addChangelogEntry(changelogPath, newVersion);
+
   console.log(`${oldVersion} → ${newVersion}`);
+  console.log(`Added empty changelog entry for ${newVersion} in src/changelog.ts — fill in your changes`);
 }
