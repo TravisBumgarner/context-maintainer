@@ -9,14 +9,14 @@ mkdir -p "$KEY_DIR"
 echo "Generating Tauri signing keypair..."
 echo ""
 
-printf '\n\n' | npx @tauri-apps/cli signer generate -w "$KEY_FILE" --force
+npx @tauri-apps/cli signer generate -w "$KEY_FILE" --force --ci -p ""
 
-cat "$KEY_FILE" | pbcopy
+# Set GitHub secret directly from file (clipboard mangles newlines)
+gh secret set TAURI_SIGNING_PRIVATE_KEY < "$KEY_FILE"
 
 # Update pubkey in tauri.conf.json
 CONF="src-tauri/tauri.conf.json"
 PUBKEY=$(cat "$KEY_FILE.pub")
-# Escape slashes/special chars for sed, then replace the pubkey value in-place
 python3 -c "
 import json, sys
 conf = json.load(open('$CONF'))
@@ -27,7 +27,5 @@ print('Updated pubkey in $CONF')
 
 echo ""
 echo "================================================"
-echo "  Private key copied to clipboard."
-echo "  Go set TAURI_SIGNING_PRIVATE_KEY in GitHub secrets."
-echo "  Public key updated in $CONF."
+echo "  Done! GitHub secret set and pubkey updated."
 echo "================================================"
