@@ -9,7 +9,7 @@ mkdir -p "$KEY_DIR"
 echo "Generating Tauri signing keypair..."
 echo ""
 
-npx @tauri-apps/cli signer generate -w "$KEY_FILE" --force --ci -p ""
+npx @tauri-apps/cli signer generate -w "$KEY_FILE" --force --ci
 
 # Set GitHub secret directly from file (clipboard mangles newlines)
 gh secret set TAURI_SIGNING_PRIVATE_KEY < "$KEY_FILE"
