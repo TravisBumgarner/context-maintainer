@@ -44,7 +44,7 @@ See [`.github/workflows/README.md`](.github/workflows/README.md) for secrets set
 
 1. Bump the version: `npm run version-bump -- --patch` (or `--minor` / `--major`)
 2. Update `CHANGELOG.md` with the new version's changes
-3. Commit and push to `main`
+3. Open a PR, get it reviewed and merged
 4. Go to Actions > "Build and Release (macOS)" > Run workflow
 5. Review the draft release, then publish it
 
