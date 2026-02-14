@@ -1,42 +1,43 @@
-# Release Workflow
+# Release
 
-Builds and signs the macOS app, then creates a draft GitHub Release with the `.dmg` attached.
+## First-time setup
 
-## Usage
+1. Install Xcode command line tools
+2. Have an Apple Developer ID certificate in your local keychain
+3. Generate the updater signing key:
 
-1. Go to **Actions > Build and Release (macOS)** on GitHub
-2. Click **Run workflow**
-3. Once complete, find the draft release under **Releases** and publish it
+```bash
+./scripts/generate-signing-key.sh
+```
 
-## Required Secrets
+You'll be prompted for a password. The script sets the GitHub secret and updates the pubkey in `tauri.conf.json`. Commit and push the pubkey change.
 
-Set these in **Settings > Secrets and variables > Actions**:
+Credentials (signing key password, Apple certs, etc.) are stored in Proton Pass under "Tauri Context Switching".
 
-| Secret | Description |
-|--------|-------------|
-| `APPLE_CERTIFICATE` | Base64-encoded `.p12` Developer ID Application certificate |
-| `APPLE_CERTIFICATE_PASSWORD` | Password used when exporting the `.p12` |
-| `APPLE_IDENTITY` | Signing identity string, e.g. `Developer ID Application: Your Name (TEAM_ID)` |
-| `APPLE_ID` | Apple ID email used for notarization |
-| `APPLE_PASSWORD` | App-specific password for notarization ([create one here](https://appleid.apple.com/account/manage)) |
-| `APPLE_TEAM_ID` | Apple Developer Team ID |
-| `TAURI_SIGNING_PRIVATE_KEY` | Contents of the Tauri signing private key file (see below) |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Password for the signing key (empty string if none) |
+## Releasing a new version
 
-Apple code signing is optional — the build will succeed without those secrets, but the app won't be signed or notarized. The Tauri signing key is required for auto-update support.
+1. Bump the version:
 
-## Generating the Tauri signing key
+```bash
+npm run version-bump -- --patch   # 0.2.2 → 0.2.3
+npm run version-bump -- --minor   # 0.2.2 → 0.3.0
+npm run version-bump -- --major   # 0.2.2 → 1.0.0
+```
 
-1. Run `npx tauri signer generate -w ~/.tauri/context-switching.key`
-2. The public key is already embedded in `src-tauri/tauri.conf.json`
-3. Copy the private key contents into the `TAURI_SIGNING_PRIVATE_KEY` secret
-4. If you set a password, add it to `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+This updates `package.json`, `tauri.conf.json`, `Cargo.toml`, and adds an empty changelog entry in `src/changelog.ts`.
 
-## Generating the Apple certificate
+2. Fill in the changelog in `src/changelog.ts`.
+3. Commit and push your changes.
+4. Build and release:
 
-1. Open Keychain Access > Certificate Assistant > Request a Certificate from a Certificate Authority
-2. Go to [developer.apple.com/account](https://developer.apple.com/account) > Certificates > create a **Developer ID Application** certificate using the CSR
-3. Download and install the certificate
-4. Export it from Keychain Access as a `.p12` file with a password
-5. Base64-encode it: `base64 -i certificate.p12 | pbcopy`
-6. Paste into the `APPLE_CERTIFICATE` secret
+```bash
+./scripts/release.sh
+```
+
+You'll be prompted for your signing key password. The script builds the app, signs everything, and asks to create a draft GitHub release.
+
+5. Go to **Releases** on GitHub and publish the draft.
+
+## GitHub Actions (disabled)
+
+The CI workflow (`release.yml`) is disabled due to updater signing key issues in CI. The workflow file is preserved for future re-enablement.

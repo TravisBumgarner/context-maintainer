@@ -1,7 +1,15 @@
 name: Build and Release (macOS)
 
+# DISABLED: signing key issues in CI. Using local build (scripts/release.sh) for now.
+# on:
+#   workflow_dispatch:
 on:
   workflow_dispatch:
+    inputs:
+      disabled:
+        description: "This workflow is disabled. Use scripts/release.sh locally."
+        required: true
+        default: "DO NOT RUN"
 
 permissions:
   contents: write
