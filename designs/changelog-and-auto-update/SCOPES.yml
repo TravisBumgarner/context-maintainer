@@ -1,0 +1,165 @@
+project: changelog-and-auto-update
+design_file: designs/changelog-and-auto-update/DESIGN.md
+scoping_date: 2026-02-13
+
+milestones:
+  - number: 1
+    title: "1. Updater Infrastructure"
+    description: >
+      Set up the Tauri updater plugin (Rust + frontend deps), signing keys,
+      config, capabilities, and CI pipeline changes. After this milestone
+      the app can detect and install updates from GitHub Releases.
+    branch:
+      working: task-1-updater-infrastructure
+      base: main
+
+  - number: 2
+    title: "2. Update UI & Changelog"
+    description: >
+      Add the in-app update notification UI and create the initial CHANGELOG.md.
+      After this milestone users see a prompt when updates are available and
+      release notes are tracked.
+    branch:
+      working: task-3-update-ui
+      base: task-1-updater-infrastructure
+
+tasks:
+  - id: 1
+    milestone: 1
+    title: Add Tauri updater plugin and configure signing
+    description: |
+      Wire up the Tauri 2 updater plugin end-to-end:
+
+      **Rust side:**
+      - Add `tauri-plugin-updater` to `src-tauri/Cargo.toml`
+      - Register the plugin in `lib.rs` via `.plugin(tauri_plugin_updater::Builder::new().build())`
+
+      **Frontend side:**
+      - `npm install @tauri-apps/plugin-updater @tauri-apps/plugin-process`
+
+      **Config:**
+      - In `tauri.conf.json`, add `"createUpdaterArtifacts": true` under `bundle`
+      - Add `plugins.updater` section with `pubkey` (placeholder until keys are generated) and
+        endpoint `https://github.com/TravisBumgarner/context-switching/releases/latest/download/latest.json`
+
+      **Capabilities:**
+      - Add `"updater:default"` to `src-tauri/capabilities/default.json`
+
+      **Signing keys:**
+      - Generate a keypair with `npm run tauri signer generate -- -w ~/.tauri/context-switching.key`
+      - Place the public key in `tauri.conf.json` under `plugins.updater.pubkey`
+      - Document that the private key must be added as `TAURI_SIGNING_PRIVATE_KEY` in GitHub repo secrets
+    acceptance_criteria:
+      - tauri-plugin-updater is registered in Rust and listed in Cargo.toml
+      - @tauri-apps/plugin-updater and @tauri-apps/plugin-process are in package.json
+      - tauri.conf.json has createUpdaterArtifacts, pubkey, and endpoints configured
+      - updater:default permission is in capabilities/default.json
+    depends_on: []
+    effort: 2
+    status: completed
+
+  - id: 2
+    milestone: 1
+    title: Update GitHub Actions release workflow for signing and updater artifacts
+    description: |
+      Modify `.github/workflows/release.yml` so that:
+
+      - The `workflow_dispatch` trigger accepts an optional `version` input
+      - The `TAURI_SIGNING_PRIVATE_KEY` secret is passed as an env var to the build step
+      - The existing `tauri-action` step already handles `latest.json` generation
+        when `createUpdaterArtifacts` is set in the config — no action changes needed
+        for that, but verify it works
+      - The release is no longer a draft (so the updater endpoint resolves)
+        OR keep it as draft and document that the user must publish manually
+    acceptance_criteria:
+      - TAURI_SIGNING_PRIVATE_KEY env var is set in the build step from secrets
+      - Workflow still builds, signs, and creates a GitHub Release with artifacts
+      - latest.json will be included in the release assets (enabled by createUpdaterArtifacts in config)
+    depends_on: [1]
+    effort: 1
+    status: scoped
+
+  - id: 3
+    milestone: 2
+    title: Add in-app update check and notification UI
+    description: |
+      On app startup, check for updates and show a non-blocking UI if one is available.
+
+      **Update check logic** (new file e.g. `src/utils/updater.ts` or inline):
+      - Import `check` from `@tauri-apps/plugin-updater` and `relaunch` from `@tauri-apps/plugin-process`
+      - Call `check()` on app mount
+      - If an update exists, store the update object in a Zustand store or local state
+
+      **UI:**
+      - Show a small banner/snackbar (MUI Snackbar or Alert) when an update is available
+      - Display the new version number and release notes (from `update.body`)
+      - "Update Now" button calls `update.downloadAndInstall()` then `relaunch()`
+      - "Dismiss" button hides the banner until next launch
+      - While downloading, show a simple progress indicator or "Updating..." state
+
+      Keep it minimal — this is a small always-on-top utility window (290x370).
+    acceptance_criteria:
+      - App calls check() on startup and does not crash if offline or no update available
+      - When an update is available, a dismissible notification appears with version and notes
+      - Clicking "Update Now" downloads, installs, and relaunches the app
+      - Dismissing the notification hides it for the current session
+    depends_on: [1]
+    effort: 2
+    status: scoped
+
+  - id: 4
+    milestone: 1
+    title: Add version-bump script
+    description: |
+      Create a Node script at `scripts/version-bump.mjs` that updates the version
+      in all three files that track it:
+
+      - `package.json` (top-level `"version"` field)
+      - `src-tauri/tauri.conf.json` (top-level `"version"` field)
+      - `src-tauri/Cargo.toml` (`version` under `[package]`)
+
+      **Usage:** `npm run version-bump -- --patch|--minor|--major`
+
+      **Behavior:**
+      1. Read the current version from `package.json`
+      2. Parse it as semver and bump the requested component
+      3. Write the new version to all three files (preserving formatting)
+         - For JSON files: parse, update, write with same indentation
+         - For Cargo.toml: regex replace the `version = "x.y.z"` line under `[package]`
+      4. Print the old and new version to stdout
+
+      Add a `"version-bump"` script entry in `package.json`:
+      ```json
+      "version-bump": "node scripts/version-bump.mjs"
+      ```
+
+      No external dependencies — use only Node built-ins (`fs`, `path`, `process`).
+    acceptance_criteria:
+      - `npm run version-bump -- --patch` increments patch (0.1.0 -> 0.1.1)
+      - `npm run version-bump -- --minor` increments minor (0.1.0 -> 0.2.0)
+      - `npm run version-bump -- --major` increments major (0.1.0 -> 1.0.0)
+      - All three files (package.json, tauri.conf.json, Cargo.toml) are updated consistently
+      - Exits with error and helpful message if no flag is provided
+    depends_on: []
+    effort: 2
+    status: scoped
+
+  - id: 5
+    milestone: 2
+    title: Create initial CHANGELOG.md
+    description: |
+      Create a `CHANGELOG.md` in the repo root following [Keep a Changelog](https://keepachangelog.com/) format.
+
+      Include:
+      - An `[Unreleased]` section at the top
+      - A `[0.1.0]` section documenting the initial release features (brief summary)
+      - Standard categories: Added, Changed, Fixed, Removed (use only what applies)
+
+      This file is maintained manually. Each release should have its own section
+      before the version is tagged.
+    acceptance_criteria:
+      - CHANGELOG.md exists at the repo root
+      - Follows Keep a Changelog format with [Unreleased] and [0.1.0] sections
+    depends_on: []
+    effort: 1
+    status: scoped
