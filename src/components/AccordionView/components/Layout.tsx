@@ -95,26 +95,21 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
 
           {/* Row 2: nav buttons */}
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-            <Tooltip title="Home" arrow placement="right">
-              <IconButton onClick={() => setView("todos")} sx={btnSx}>
-                <LightbulbOutline fontSize="inherit" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="History" arrow placement="right">
-              <IconButton onClick={() => setView("history")} sx={btnSx}>
-                <History fontSize="inherit" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="About" arrow placement="right">
-              <IconButton onClick={() => setView("info")} sx={btnSx}>
-                <InfoOutline fontSize="inherit" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Settings" arrow placement="right">
-              <IconButton onClick={() => setView("settings")} sx={btnSx}>
-                <Tune fontSize="inherit" />
-              </IconButton>
-            </Tooltip>
+            {([
+              { key: "todos", label: "Home", icon: <LightbulbOutline fontSize="inherit" /> },
+              { key: "history", label: "History", icon: <History fontSize="inherit" /> },
+              { key: "info", label: "About", icon: <InfoOutline fontSize="inherit" /> },
+              { key: "settings", label: "Settings", icon: <Tune fontSize="inherit" /> },
+            ] as const).map(({ key, label, icon }) => (
+              <Tooltip key={key} title={label} arrow placement="right">
+                <IconButton
+                  onClick={() => setView(key)}
+                  sx={{ ...btnSx, ...(view === key && { color: tc(0.7) }) }}
+                >
+                  {icon}
+                </IconButton>
+              </Tooltip>
+            ))}
           </Box>
 
           {/* Row 3: anchor picker */}
