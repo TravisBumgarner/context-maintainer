@@ -6,6 +6,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.4.0",
+        date: "2026-02-14",
+        changes: [
+            {
+                category: "Added",
+                items: [
+                    "File-based logging via tauri-plugin-log for debugging",
+                    "Updater check logging (success, failure, and version info)",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.3.0",
         date: "2026-02-14",
         changes: [

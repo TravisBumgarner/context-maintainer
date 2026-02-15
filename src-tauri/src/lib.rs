@@ -707,6 +707,7 @@ fn request_accessibility() -> bool {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -716,10 +717,12 @@ pub fn run() {
             fs::create_dir_all(&data_dir).ok();
             let data_path = data_dir.join("notes.json");
             let data_path_str = data_path.to_string_lossy().to_string();
+            log::info!("App starting, data path: {}", data_path_str);
             let mut data = load_data(&data_path_str);
 
             // Migrate v0 → v1 (positional index → space id64)
             if data.version < 1 {
+                log::info!("Migrating data from v0 to v1");
                 migrate_v0_to_v1(&mut data);
                 persist_data(&data_path_str, &data);
             }
@@ -765,6 +768,7 @@ pub fn run() {
 
             // Create one window per monitor
             let monitors = app.available_monitors()?;
+            log::info!("Found {} monitor(s)", monitors.len());
             let win_w = 290.0_f64;
             let win_h = 370.0_f64;
 
@@ -824,6 +828,7 @@ pub fn run() {
                 let app_handle = app.handle().clone();
                 std::thread::spawn(move || {
                     std::thread::sleep(std::time::Duration::from_millis(500));
+                    log::info!("Hiding traffic lights on {} window(s)", app_handle.webview_windows().len());
                     for window in app_handle.webview_windows().values() {
                         hide_traffic_lights(window);
                     }

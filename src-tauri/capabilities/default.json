@@ -18,6 +18,7 @@
     "notification:allow-notify",
     "core:window:allow-hide",
     "core:window:allow-show",
-    "updater:default"
+    "updater:default",
+    "log:default"
   ]
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { availableMonitors } from "@tauri-apps/api/window";
+import { info, error } from "@tauri-apps/plugin-log";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { buildTheme } from "./theme";
@@ -151,19 +152,25 @@ function App() {
     if (view !== "todos") return;
     let cancelled = false;
 
+    info("Checking for updates...");
     import("@tauri-apps/plugin-updater").then(({ check }) => {
       check().then((update) => {
-        if (cancelled || !update) return;
+        if (cancelled) return;
+        if (!update) {
+          info("No update available");
+          return;
+        }
+        info(`Update available: ${update.version}`);
         useUIStore.getState().setUpdateAvailable({
           version: update.version,
           body: update.body ?? "",
           downloadAndInstall: (onEvent) => update.downloadAndInstall(onEvent),
         });
-      }).catch(() => {
-        // offline or no update — ignore
+      }).catch((err) => {
+        error(`Update check failed: ${err}`);
       });
-    }).catch(() => {
-      // plugin not available in dev — ignore
+    }).catch((err) => {
+      error(`Updater plugin not available: ${err}`);
     });
 
     return () => { cancelled = true; };
