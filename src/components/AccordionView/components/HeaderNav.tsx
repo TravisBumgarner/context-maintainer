@@ -31,7 +31,10 @@ export default function HeaderNav() {
   };
 
   return (
-    <Box data-tauri-drag-region sx={{ px: `${ui.spacing.panelPx}px`, py: `${ui.spacing.panelPy}px`, display: "flex", alignItems: "center", flexShrink: 0, justifyContent: "flex-end", position: 'relative', top: '2px' }}>
+    <Box
+      data-tauri-drag-region
+      sx={{ px: `${ui.spacing.panelPx}px`, py: `${ui.spacing.panelPy}px`, display: "flex", alignItems: "center", flexShrink: 0, justifyContent: "flex-end", position: 'relative', top: '2px' }}
+    >
       <Box sx={{ display: "flex", alignItems: "center", gap: "2px", flexShrink: 0 }}>
         {offMonitor && (
           <Tooltip title="Snap back to monitor" arrow>

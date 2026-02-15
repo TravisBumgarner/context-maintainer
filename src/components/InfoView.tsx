@@ -1,17 +1,16 @@
-import { Box, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box, Collapse, Link, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { changelog } from "../changelog";
 
 const links = [
     { label: "GitHub", url: "https://github.com/TravisBumgarner/context-maintainer" },
-    { label: "Portfolio", url: "https://travisbumgarner.dev" },
 ];
 
 export default function InfoView() {
     const { tc, ui } = useTheme().custom;
-
-    const latest = changelog[0];
+    const [expanded, setExpanded] = useState<string | null>(changelog[0]?.version ?? null);
 
     return (
         <Box
@@ -22,23 +21,19 @@ export default function InfoView() {
                 py: "12px",
             }}
         >
-            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), mb: "4px" }}>
-                Context Maintainer — per-desktop task lists for macOS.
-            </Typography>
-            <Typography
-                component="span"
+            <Link
+                component="button"
                 onClick={() => openUrl("https://www.linkedin.com/in/travisbumgarner")}
                 sx={{
                     fontSize: ui.fontSize.sm,
                     color: tc(0.4),
-                    cursor: "pointer",
                     mb: "12px",
                     display: "block",
                     "&:hover": { color: tc(0.6) },
                 }}
             >
                 Built by Travis Bumgarner — open to new roles
-            </Typography>
+            </Link>
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: "4px", mb: "16px" }}>
                 {links.map((link) => (
@@ -69,32 +64,58 @@ export default function InfoView() {
                 ))}
             </Box>
 
-            {latest && (
-                <>
-                    <Typography sx={{ fontSize: ui.fontSize.xs, fontWeight: ui.weights.semibold, color: tc(0.4), mb: "6px", textTransform: "uppercase", letterSpacing: ui.letterSpacing.wide }}>
-                        What's New — v{latest.version}
-                    </Typography>
-                    <Typography sx={{ fontSize: ui.fontSize.md, color: tc(0.35), mb: "10px" }}>
-                        {latest.date}
-                    </Typography>
-
-                    {latest.changes.map((group) => (
-                        <Box key={group.category} sx={{ mb: "10px" }}>
-                            <Typography sx={{ fontSize: ui.fontSize.md, fontWeight: ui.weights.semibold, color: tc(0.5), mb: "4px" }}>
-                                {group.category}
+            {changelog.map((entry) => {
+                const isOpen = expanded === entry.version;
+                return (
+                    <Box key={entry.version} sx={{ mb: "2px" }}>
+                        <Box
+                            component="button"
+                            onClick={() => setExpanded(isOpen ? null : entry.version)}
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                width: "100%",
+                                p: "4px 0",
+                                border: "none",
+                                background: "none",
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                                textAlign: "left",
+                            }}
+                        >
+                            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.3) }}>
+                                {isOpen ? "▾" : "▸"}
                             </Typography>
-                            {group.items.map((item, i) => (
-                                <Typography
-                                    key={i}
-                                    sx={{ fontSize: ui.fontSize.md, color: tc(0.6), pl: "8px", mb: "2px" }}
-                                >
-                                    &bull; {item}
-                                </Typography>
-                            ))}
+                            <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: tc(0.5) }}>
+                                v{entry.version}
+                            </Typography>
+                            <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.3) }}>
+                                {entry.date}
+                            </Typography>
                         </Box>
-                    ))}
-                </>
-            )}
+                        <Collapse in={isOpen}>
+                            <Box sx={{ pl: "14px", pb: "6px" }}>
+                                {entry.changes.map((group) => (
+                                    <Box key={group.category} sx={{ mb: "6px" }}>
+                                        <Typography sx={{ fontSize: ui.fontSize.md, fontWeight: ui.weights.semibold, color: tc(0.45), mb: "2px" }}>
+                                            {group.category}
+                                        </Typography>
+                                        {group.items.map((item, i) => (
+                                            <Typography
+                                                key={i}
+                                                sx={{ fontSize: ui.fontSize.md, color: tc(0.55), pl: "8px", mb: "1px" }}
+                                            >
+                                                &bull; {item}
+                                            </Typography>
+                                        ))}
+                                    </Box>
+                                ))}
+                            </Box>
+                        </Collapse>
+                    </Box>
+                );
+            })}
         </Box>
     );
 }

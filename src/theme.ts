@@ -109,6 +109,14 @@ export function buildTheme(bgColor: string): Theme {
           },
         ],
       },
+      MuiLink: {
+        styleOverrides: {
+          root: {
+            color: "inherit",
+            textDecorationColor: "inherit",
+          },
+        },
+      },
       MuiIconButton: {
         styleOverrides: {
           root: {

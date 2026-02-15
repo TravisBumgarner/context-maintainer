@@ -47,7 +47,6 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
     >
       {showSidebar && (
         <Box
-          data-tauri-drag-region
           sx={{
             width: 24,
             flexShrink: 0,
