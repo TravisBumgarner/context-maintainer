@@ -9,6 +9,30 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 use tauri::Manager;
 
+// ── Hide macOS traffic lights ─────────────────────────────────
+#[cfg(target_os = "macos")]
+fn hide_traffic_lights(window: &tauri::WebviewWindow) {
+    #[link(name = "objc", kind = "dylib")]
+    extern "C" {
+        fn objc_msgSend(receiver: *const c_void, sel: *const c_void, ...) -> *const c_void;
+        fn sel_registerName(name: *const u8) -> *const c_void;
+    }
+
+    unsafe {
+        let ns_window = window.ns_window().unwrap() as *const c_void;
+        let sel_button = sel_registerName(b"standardWindowButton:\0".as_ptr());
+        let sel_set_hidden = sel_registerName(b"setHidden:\0".as_ptr());
+
+        // NSWindowButton: 0=close, 1=miniaturize, 2=zoom
+        for button_type in 0u64..3 {
+            let button: *const c_void = objc_msgSend(ns_window, sel_button, button_type);
+            if !button.is_null() {
+                objc_msgSend(button, sel_set_hidden, 1 as std::ffi::c_int);
+            }
+        }
+    }
+}
+
 // ── Color palette (subtle / muted pastels) ───────────────────
 const COLORS: &[&str] = &[
     "#F5E6A3", // muted yellow
@@ -21,14 +45,11 @@ const COLORS: &[&str] = &[
     "#E0B8C8", // muted pink
 ];
 
-// ── Private CoreGraphics API (space detection + key events) ─────
+// ── Private CoreGraphics API (space detection) ──────────────────
 #[link(name = "CoreGraphics", kind = "framework")]
 extern "C" {
     fn CGSMainConnectionID() -> i32;
     fn CGSCopyManagedDisplaySpaces(cid: i32) -> *const c_void;
-    fn CGEventCreateKeyboardEvent(source: *const c_void, virtual_key: u16, key_down: bool) -> *mut c_void;
-    fn CGEventSetFlags(event: *mut c_void, flags: u64);
-    fn CGEventPost(tap: u32, event: *mut c_void);
 }
 
 // ── CoreFoundation helpers ─────────────────────────────────────
@@ -181,34 +202,22 @@ fn enumerate_spaces() -> Vec<(i64, usize, u32)> {
     result
 }
 
-// ── Keyboard simulation (Ctrl+Number to switch space) ─────────
+// ── Keyboard simulation (Ctrl+Arrow to switch space) ──────────
 
-const CG_EVENT_FLAG_MASK_CONTROL: u64 = 0x40000;
-
-fn digit_keycode(n: u32) -> Option<u16> {
-    match n {
-        1 => Some(18), 2 => Some(19), 3 => Some(20),
-        4 => Some(21), 5 => Some(23), 6 => Some(22),
-        7 => Some(26), 8 => Some(28), 9 => Some(25),
-        _ => None,
-    }
-}
-
-fn simulate_ctrl_number(n: u32) {
-    let Some(keycode) = digit_keycode(n) else { return };
-    unsafe {
-        let down = CGEventCreateKeyboardEvent(std::ptr::null(), keycode, true);
-        if !down.is_null() {
-            CGEventSetFlags(down, CG_EVENT_FLAG_MASK_CONTROL);
-            CGEventPost(0, down);
-            CFRelease(down as *const c_void);
-        }
-        let up = CGEventCreateKeyboardEvent(std::ptr::null(), keycode, false);
-        if !up.is_null() {
-            CGEventSetFlags(up, CG_EVENT_FLAG_MASK_CONTROL);
-            CGEventPost(0, up);
-            CFRelease(up as *const c_void);
-        }
+fn simulate_desktop_switch(steps: i32) {
+    // key code 123 = left arrow, 124 = right arrow
+    let keycode = if steps > 0 { 124 } else { 123 };
+    for _ in 0..steps.unsigned_abs() {
+        let script = format!(
+            "tell application \"System Events\" to key code {} using control down",
+            keycode
+        );
+        std::process::Command::new("osascript")
+            .arg("-e")
+            .arg(&script)
+            .output()
+            .ok();
+        std::thread::sleep(std::time::Duration::from_millis(300));
     }
 }
 
@@ -237,7 +246,6 @@ fn default_desktop_count() -> u32 { 10 }
 fn default_timer_presets() -> Vec<u32> { vec![60, 300, 600] }
 fn default_notify_system() -> bool { true }
 fn default_notify_flash() -> bool { true }
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct Settings {
     custom_colors: HashMap<i64, String>,
@@ -475,14 +483,26 @@ fn list_desktops_grouped(state: tauri::State<'_, AppState>) -> Vec<DisplayGroup>
 
 #[tauri::command]
 fn switch_desktop(display: u32, target: i64) -> bool {
+    let (current_sid, _) = space_info_for_display(display as usize);
     let spaces = enumerate_spaces();
-    for &(sid, disp, local) in &spaces {
-        if sid == target && disp == display as usize && local <= 9 {
-            simulate_ctrl_number(local);
-            return true;
+
+    // Find positions of current and target on the same display
+    let display_spaces: Vec<i64> = spaces.iter()
+        .filter(|&&(_, disp, _)| disp == display as usize)
+        .map(|&(sid, _, _)| sid)
+        .collect();
+
+    let current_pos = display_spaces.iter().position(|&s| s == current_sid);
+    let target_pos = display_spaces.iter().position(|&s| s == target);
+
+    match (current_pos, target_pos) {
+        (Some(cur), Some(tgt)) if cur != tgt => {
+            let steps = tgt as i32 - cur as i32;
+            simulate_desktop_switch(steps);
+            true
         }
+        _ => false,
     }
-    false
 }
 
 // ── Session commands ───────────────────────────────────────────
@@ -786,6 +806,8 @@ pub fn run() {
                     .resizable(true)
                     .maximizable(false)
                     .visible_on_all_workspaces(true)
+                    .title_bar_style(tauri::TitleBarStyle::Overlay)
+                    .hidden_title(true)
                     .build()?;
 
                     // Position after creation — builder .position() doesn't
@@ -794,6 +816,18 @@ pub fn run() {
                         tauri::LogicalPosition::new(x, y),
                     )).ok();
                 }
+            }
+
+            // Hide traffic lights after a short delay so NSWindow buttons exist
+            #[cfg(target_os = "macos")]
+            {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    for window in app_handle.webview_windows().values() {
+                        hide_traffic_lights(window);
+                    }
+                });
             }
 
             Ok(())

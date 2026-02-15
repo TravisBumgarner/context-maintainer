@@ -7,7 +7,7 @@ import {
 } from "@tauri-apps/api/window";
 import { currentWindow, loadAnchor, saveAnchor } from "../utils";
 import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED } from "../constants";
-import type { AnchorPosition, ViewType, AccordionPanel, DisplayGroup } from "../types";
+import type { AnchorPosition, ViewType, DisplayGroup } from "../types";
 import { useSettingsStore } from "./useSettingsStore";
 
 interface UIState {
@@ -15,7 +15,6 @@ interface UIState {
   collapsed: boolean;
   offMonitor: boolean;
   anchorPos: AnchorPosition;
-  expandedPanel: AccordionPanel;
   displayGroups: DisplayGroup[];
   monitorRef: Monitor | null;
   showWhatsNew: boolean;
@@ -26,7 +25,6 @@ interface UIState {
   setCollapsed: (c: boolean) => void;
   setOffMonitor: (o: boolean) => void;
   setAnchorPos: (p: AnchorPosition) => void;
-  setExpandedPanel: (p: AccordionPanel) => void;
   setDisplayGroups: (g: DisplayGroup[]) => void;
   setMonitorRef: (m: Monitor | null) => void;
   setShowWhatsNew: (v: boolean) => void;
@@ -39,15 +37,16 @@ interface UIState {
   toggleMinimize: () => Promise<void>;
   selectAnchor: (pos: AnchorPosition) => void;
   refreshDisplayGroups: () => Promise<void>;
-  changePanel: (panel: AccordionPanel) => void;
 }
+
+let lastPos: { x: number; y: number } | null = null;
+let ignoreNextMove = false;
 
 export const useUIStore = create<UIState>((set, get) => ({
   view: "loading",
   collapsed: false,
   offMonitor: false,
   anchorPos: loadAnchor(),
-  expandedPanel: "queue",
   displayGroups: [],
   monitorRef: null,
   showWhatsNew: false,
@@ -58,7 +57,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   setCollapsed: (c) => set({ collapsed: c }),
   setOffMonitor: (o) => set({ offMonitor: o }),
   setAnchorPos: (p) => set({ anchorPos: p }),
-  setExpandedPanel: (p) => set({ expandedPanel: p }),
   setDisplayGroups: (g) => set({ displayGroups: g }),
   setMonitorRef: (m) => set({ monitorRef: m }),
   setShowWhatsNew: (v) => set({ showWhatsNew: v }),
@@ -81,6 +79,17 @@ export const useUIStore = create<UIState>((set, get) => ({
       const mh = m.size.height;
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
       set({ offMonitor: !isOn });
+
+      // Detect user drag — if position changed and anchor isn't already free, switch to free
+      if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
+        if (ignoreNextMove) {
+          ignoreNextMove = false;
+        } else if (get().anchorPos !== "middle-center") {
+          set({ anchorPos: "middle-center" });
+          saveAnchor("middle-center");
+        }
+      }
+      lastPos = { x: pos.x, y: pos.y };
 
       const sf = m.scaleFactor;
       const logicalHeight = size.height / sf;
@@ -118,7 +127,9 @@ export const useUIStore = create<UIState>((set, get) => ({
       else if (anchorPos.startsWith("middle")) y = my + Math.round((mh - wh) / 2);
       else y = my + mh - wh - padding;
 
+      ignoreNextMove = true;
       await currentWindow.setPosition(new PhysicalPosition(x, y));
+      lastPos = { x, y };
       set({ offMonitor: false });
     } catch {
       // ignore
@@ -149,7 +160,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   selectAnchor: (pos) => {
     set({ anchorPos: pos });
     saveAnchor(pos);
-    get().snapToMonitor(pos);
+    if (pos !== "middle-center") get().snapToMonitor(pos);
   },
 
   refreshDisplayGroups: async () => {
@@ -161,8 +172,4 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
 
-  changePanel: (panel) => {
-    set({ expandedPanel: panel });
-    if (panel === "desktops") get().refreshDisplayGroups();
-  },
 }));

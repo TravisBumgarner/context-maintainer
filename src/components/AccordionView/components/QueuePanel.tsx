@@ -9,7 +9,7 @@ interface QueuePanelProps {
 }
 
 export default function QueuePanel({ desktopId }: QueuePanelProps) {
-  const tc = useTheme().custom.tc;
+  const { tc, ui } = useTheme().custom;
   const {
     todos,
     newText,
@@ -26,12 +26,35 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
 
   return (
     <>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          px: `${ui.spacing.itemPx}px`,
+          py: `${ui.spacing.itemPy}px`,
+          gap: `${ui.spacing.gap}px`,
+        }}
+      >
+        <InputBase
+          placeholder="Add task..."
+          value={newText}
+          onChange={(e) => setNewText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addTodo(desktopId)}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            p: 0,
+            "& input": { p: 0 },
+            "& input::placeholder": { color: tc(0.3) },
+          }}
+        />
+      </Box>
+
       <Reorder.Group
         axis="y"
         values={active}
         onReorder={(reordered) => reorderTodos(reordered, desktopId)}
         style={{
-          flex: 1,
           overflowY: "auto",
           padding: "2px 0",
           minHeight: 0,
@@ -49,7 +72,7 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
                     flexShrink: 0,
                     cursor: "grab",
                     color: tc(0.2),
-                    fontSize: 10,
+                    fontSize: ui.fontSize.sm,
                     px: "2px",
                     userSelect: "none",
                     "&:active": { cursor: "grabbing" },
@@ -66,29 +89,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
         ))}
       </Reorder.Group>
 
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          px: "4px",
-          py: "2px",
-          gap: "4px",
-        }}
-      >
-        <InputBase
-          placeholder="Add task..."
-          value={newText}
-          onChange={(e) => setNewText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addTodo(desktopId)}
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            p: "2px 0",
-            "& input::placeholder": { color: tc(0.3) },
-          }}
-        />
-      </Box>
-
       {done.length > 0 && (
         <Box
           component="details"
@@ -96,10 +96,10 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
             flexShrink: 0,
             borderTop: `1px solid ${tc(0.08)}`,
             "& summary": {
-              fontSize: 10,
+              fontSize: ui.fontSize.sm,
               color: tc(0.35),
-              px: "4px",
-              py: "4px",
+              px: `${ui.spacing.itemPx}px`,
+              py: `${ui.spacing.itemPy}px`,
               cursor: "pointer",
               userSelect: "none",
               listStyle: "none",
@@ -117,7 +117,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
               "&::-webkit-scrollbar": { width: 4 },
               "&::-webkit-scrollbar-thumb": {
                 background: tc(0.1),
-                borderRadius: "2px",
               },
             }}
           >

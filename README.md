@@ -31,10 +31,7 @@ Switch desktops and your tasks follow.
 
 ## Setup
 
-On first launch, Context Maintainer will walk you through two quick steps:
-
-1. **Grant Accessibility permission** — needed to detect desktop switches
-2. **Enable keyboard shortcuts** — System Settings > Keyboard > Keyboard Shortcuts > Mission Control > enable "Switch to Desktop N" for each desktop
+On first launch, Context Maintainer will ask you to **grant Accessibility permission** — needed to detect desktop switches and switch between desktops.
 
 That's it. The app handles the rest.
 

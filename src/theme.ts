@@ -1,12 +1,25 @@
 import { createTheme, type Theme } from "@mui/material/styles";
 import { detectColorMode } from "./utils";
 
+// Focus UI constants — dense, monospace, sharp edges
+const ui = {
+  fontFamily: '"SF Mono", "Fira Code", "Cascadia Code", monospace',
+  timerFontFamily: '"SF Mono", "Fira Code", "Cascadia Code", monospace',
+  fontSize: { xs: 8, sm: 9, md: 10, lg: 12, xl: 18, timer: 28 },
+  spacing: { panelPx: 8, panelPy: 4, itemPx: 2, itemPy: 1, gap: 2 },
+  weights: { normal: 400, semibold: 500, bold: 600, heavy: 700 },
+  letterSpacing: { tight: "0px", normal: "0.5px", wide: "2px" },
+} as const;
+
+export type UIConstants = typeof ui;
+
 declare module "@mui/material/styles" {
   interface Theme {
     custom: {
       tc: (amount?: number) => string;
       tcInv: (amount?: number) => string;
       bg: string;
+      ui: UIConstants;
     };
   }
   interface ThemeOptions {
@@ -14,6 +27,7 @@ declare module "@mui/material/styles" {
       tc?: (amount?: number) => string;
       tcInv?: (amount?: number) => string;
       bg?: string;
+      ui?: UIConstants;
     };
   }
 }
@@ -47,9 +61,9 @@ export function buildTheme(bgColor: string): Theme {
   const textColorInverse = (amount = 1) => mix(fgInvRgb, bgRgb, boost(amount));
 
   return createTheme({
+    shape: { borderRadius: 0 },
     typography: {
-      fontFamily:
-        '-apple-system, BlinkMacSystemFont, "SF Pro Rounded", sans-serif',
+      fontFamily: ui.fontFamily,
     },
     components: {
       MuiCssBaseline: {
@@ -62,7 +76,7 @@ export function buildTheme(bgColor: string): Theme {
       },
       MuiTypography: {
         styleOverrides: {
-          root: { fontSize: 11, color: textColor(0.55) },
+          root: { fontSize: ui.fontSize.md, color: textColor(0.55) },
         },
       },
       MuiButton: {
@@ -71,8 +85,8 @@ export function buildTheme(bgColor: string): Theme {
             background: "none",
             textTransform: "none",
             minWidth: 0,
-            fontWeight: 600,
-            fontSize: 11,
+            fontWeight: ui.weights.semibold,
+            fontSize: ui.fontSize.md,
             color: textColor(0.45),
             boxShadow: "none",
             "&:hover": { background: "none" },
@@ -87,10 +101,9 @@ export function buildTheme(bgColor: string): Theme {
               paddingRight: "10px",
               paddingTop: "3px",
               paddingBottom: "3px",
-              fontSize: 10,
+              fontSize: ui.fontSize.sm,
               color: textColorInverse(),
               backgroundColor: textColor(0.45),
-              borderRadius: "10px",
               "&:hover": { backgroundColor: textColor(0.6) },
             },
           },
@@ -107,7 +120,7 @@ export function buildTheme(bgColor: string): Theme {
       },
       MuiInputBase: {
         styleOverrides: {
-          root: { fontSize: 11, fontFamily: "inherit", color: textColor(0.7) },
+          root: { fontSize: ui.fontSize.md, fontFamily: "inherit", color: textColor(0.7) },
         },
       },
       MuiAccordion: {
@@ -160,8 +173,8 @@ export function buildTheme(bgColor: string): Theme {
       MuiTab: {
         styleOverrides: {
           root: {
-            fontSize: 11,
-            fontWeight: 600,
+            fontSize: ui.fontSize.md,
+            fontWeight: ui.weights.semibold,
             color: textColor(0.35),
             textTransform: "none",
             minHeight: 0,
@@ -194,6 +207,6 @@ export function buildTheme(bgColor: string): Theme {
         },
       },
     },
-    custom: { tc: textColor, tcInv: textColorInverse, bg: bgColor },
+    custom: { tc: textColor, tcInv: textColorInverse, bg: bgColor, ui },
   });
 }

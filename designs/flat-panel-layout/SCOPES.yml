@@ -76,7 +76,7 @@ tasks:
       - expandedPanel state and changePanel action are removed from useUIStore
     depends_on: [1]
     effort: 2
-    status: scoped
+    status: completed
 
   - id: 3
     milestone: 1

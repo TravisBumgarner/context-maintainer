@@ -90,7 +90,6 @@ export default function HistoryPickerView() {
                         p: "6px 8px",
                         mb: "3px",
                         border: `1px solid ${tc(0.1)}`,
-                        borderRadius: "6px",
                         bgcolor: tc(0.03),
                         cursor: "pointer",
                         fontFamily: "inherit",
@@ -139,7 +138,6 @@ export default function HistoryPickerView() {
               py: "7px",
               color: theme.custom.tcInv(),
               bgcolor: tc(0.45),
-              borderRadius: "12px",
               textAlign: "center",
               "&:hover": { bgcolor: tc(0.6) },
             }}

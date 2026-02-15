@@ -9,8 +9,7 @@ interface PermissionsTabProps {
 }
 
 export function PermissionsTab({ confirmClear, setConfirmClear }: PermissionsTabProps) {
-    const theme = useTheme();
-    const tc = theme.custom.tc;
+    const { tc, ui } = useTheme().custom;
 
     const { desktop, setDesktop } = useDesktopStore();
     const { accessibilityGranted, setAccessibilityGranted, refreshSpaces } = useSettingsStore();
@@ -19,17 +18,20 @@ export function PermissionsTab({ confirmClear, setConfirmClear }: PermissionsTab
 
     return (
         <>
-            <Box sx={{ mb: "12px" }}>
-                {!accessibilityGranted && (
-                    <Box sx={{ fontSize: 11, color: tc(0.5), mb: 1, lineHeight: 1.4 }}>
-                        <Typography
-                            component="strong"
-                            sx={{ fontWeight: 700, color: tc(0.65), fontSize: "inherit" }}
-                        >
-                            Accessibility
+            {/* Accessibility */}
+            <Box sx={{ mb: "16px" }}>
+                <Typography sx={{ fontSize: ui.fontSize.xs, fontWeight: ui.weights.semibold, color: tc(0.4), mb: "6px", textTransform: "uppercase", letterSpacing: ui.letterSpacing.wide }}>
+                    Accessibility
+                </Typography>
+                {accessibilityGranted ? (
+                    <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), fontWeight: ui.weights.semibold }}>
+                        Granted
+                    </Typography>
+                ) : (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.35) }}>
+                            Not granted
                         </Typography>
-                        {" — not granted"}
-                        <br />
                         <Button
                             variant="contained"
                             onClick={() => {
@@ -42,89 +44,56 @@ export function PermissionsTab({ confirmClear, setConfirmClear }: PermissionsTab
                         </Button>
                     </Box>
                 )}
-                {accessibilityGranted && (
-                    <Box sx={{ fontSize: 11, color: tc(0.5), mb: 1, lineHeight: 1.4 }}>
-                        <Typography
-                            component="strong"
-                            sx={{ fontWeight: 700, color: tc(0.65), fontSize: "inherit" }}
-                        >
-                            Accessibility
-                        </Typography>
-                        <Typography
-                            component="span"
-                            sx={{ color: "#4caf50", fontSize: 10, fontWeight: 600, ml: 0.5 }}
-                        >
-                            Granted
-                        </Typography>
-                    </Box>
-                )}
-                <Box sx={{ fontSize: 11, color: tc(0.5), mb: 1, lineHeight: 1.4 }}>
-                    <Typography
-                        component="strong"
-                        sx={{ fontWeight: 700, color: tc(0.65), fontSize: "inherit" }}
-                    >
-                        Keyboard Shortcuts
-                    </Typography>
-                    <br />
-                    System Settings &gt; Keyboard &gt; Keyboard Shortcuts &gt; Mission Control —
-                    enable "Switch to Desktop N" for each desktop.
-                </Box>
             </Box>
 
-            <Button
-                onClick={() => setView("setup")}
-                sx={{
-                    fontSize: 10,
-                    color: tc(0.3),
-                    p: "4px 0",
-                    textDecoration: "underline",
-                    "&:hover": { color: tc(0.5) },
-                }}
-            >
-                Show Setup Again
-            </Button>
-
-            <Box sx={{ mb: "12px" }}>
-                <Typography
-                    sx={{
-                        fontWeight: 700,
-                        color: tc(0.45),
-                        mb: "6px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.3px",
-                    }}
+            {/* Setup */}
+            <Box sx={{ mb: "16px" }}>
+                <Typography sx={{ fontSize: ui.fontSize.xs, fontWeight: ui.weights.semibold, color: tc(0.4), mb: "6px", textTransform: "uppercase", letterSpacing: ui.letterSpacing.wide }}>
+                    Setup
+                </Typography>
+                <Button
+                    variant="contained"
+                    onClick={() => setView("setup")}
                 >
+                    Show Setup Again
+                </Button>
+            </Box>
+
+            {/* Data */}
+            <Box sx={{ mb: "16px" }}>
+                <Typography sx={{ fontSize: ui.fontSize.xs, fontWeight: ui.weights.semibold, color: tc(0.4), mb: "6px", textTransform: "uppercase", letterSpacing: ui.letterSpacing.wide }}>
                     Data
                 </Typography>
                 {!confirmClear ? (
-                    <Button variant="contained" onClick={() => setConfirmClear(true)} sx={{ mt: "4px" }}>
+                    <Button variant="contained" onClick={() => setConfirmClear(true)}>
                         Clear All Data
                     </Button>
                 ) : (
-                    <Box sx={{ mt: "4px" }}>
-                        <Typography sx={{ m: "0 0 6px", color: tc(0.5) }}>
-                            This will delete all todos, titles, and custom colors. Are you sure?
+                    <Box>
+                        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), mb: "6px" }}>
+                            This will delete all todos, titles, and custom colors.
                         </Typography>
-                        <Button
-                            variant="contained"
-                            onClick={() => {
-                                invoke("clear_all_data")
-                                    .then(() => {
-                                        setTodos([]);
-                                        setTitle("");
-                                        setDesktop((prev) => ({ ...prev, color: "#F5E6A3" }));
-                                        refreshSpaces();
-                                        setConfirmClear(false);
-                                    })
-                                    .catch(() => { });
-                            }}
-                            sx={{ mr: "6px" }}
-                        >
-                            Yes, clear everything
-                        </Button>
-                        <Button variant="contained" onClick={() => setConfirmClear(false)}>
-                            Cancel
-                        </Button>
+                        <Box sx={{ display: "flex", gap: "6px" }}>
+                            <Button
+                                variant="contained"
+                                onClick={() => {
+                                    invoke("clear_all_data")
+                                        .then(() => {
+                                            setTodos([]);
+                                            setTitle("");
+                                            setDesktop((prev) => ({ ...prev, color: "#F5E6A3" }));
+                                            refreshSpaces();
+                                            setConfirmClear(false);
+                                        })
+                                        .catch(() => { });
+                                }}
+                            >
+                                Yes, clear everything
+                            </Button>
+                            <Button variant="contained" onClick={() => setConfirmClear(false)}>
+                                Cancel
+                            </Button>
+                        </Box>
                     </Box>
                 )}
             </Box>

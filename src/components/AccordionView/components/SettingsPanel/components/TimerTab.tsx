@@ -17,7 +17,7 @@ export function TimerTab() {
     return (
         <>
             <Box sx={{ mb: "12px" }}>
-                <Box sx={{ display: "flex", gap: "8px", mb: "6px" }}>
+                <Box sx={{ display: "flex", gap: "8px", mb: "6px", justifyContent: "center" }}>
                     {timerPresets.map((p, i) => (
                         <Box key={i} sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
                             <Typography sx={{ fontSize: 10, color: tc(0.35) }}>

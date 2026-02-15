@@ -8,8 +8,14 @@ export const ANCHOR_POSITIONS: AnchorPosition[] = [
 
 export const ANCHOR_LABELS: Record<AnchorPosition, string> = {
   "top-left": "\u2196", "top-center": "\u2191", "top-right": "\u2197",
-  "middle-left": "\u2190", "middle-center": "\u25CF", "middle-right": "\u2192",
+  "middle-left": "\u2190", "middle-center": "\u2725", "middle-right": "\u2192",
   "bottom-left": "\u2199", "bottom-center": "\u2193", "bottom-right": "\u2198",
+};
+
+export const ANCHOR_NAMES: Record<AnchorPosition, string> = {
+  "top-left": "Top Left", "top-center": "Top Center", "top-right": "Top Right",
+  "middle-left": "Middle Left", "middle-center": "Free", "middle-right": "Middle Right",
+  "bottom-left": "Bottom Left", "bottom-center": "Bottom Center", "bottom-right": "Bottom Right",
 };
 
 export const THEMES: { name: string; colors: string[] }[] = [

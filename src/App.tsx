@@ -7,7 +7,7 @@ import { buildTheme } from "./theme";
 import { DEFAULT_BG } from "./constants";
 import { currentWindow, friendlyMonitorName, loadAnchor } from "./utils";
 import { changelog } from "./changelog";
-import type { DesktopInfo, DesktopSummary, Settings, ViewType } from "./types";
+import type { DesktopInfo, DesktopSummary, Settings } from "./types";
 
 import LoadingView from "./components/LoadingView";
 import SetupView from "./components/SetupView";
@@ -15,7 +15,10 @@ import SessionChooserView from "./components/SessionChooserView";
 import HistoryPickerView from "./components/HistoryPickerView";
 import AccordionView from "./components/AccordionView";
 import SettingsView from "./components/SettingsView";
+import InfoView from "./components/InfoView";
 import UpdateBanner from "./components/UpdateBanner";
+import HeaderNav from "./components/AccordionView/components/HeaderNav";
+import Layout from "./components/AccordionView/components/Layout";
 
 import { useTodoStore, useTimerStore, useUIStore, useDesktopStore, useSettingsStore } from "./stores";
 
@@ -30,13 +33,15 @@ function App() {
   const view = useUIStore((s) => s.view);
   const setView = useUIStore((s) => s.setView);
   const desktopColor = useDesktopStore((s) => s.desktop.color);
-  const expandedPanel = useUIStore((s) => s.expandedPanel);
+  const flashing = useTimerStore((s) => {
+    const t = s.timers[s.activeDesktop];
+    return t?.flashing ?? false;
+  });
 
   // ── Effective background for theme ──────────────────
   const effectiveBg = useMemo(() => {
-    const fixedViews: ViewType[] = ["loading", "setup", "session-chooser", "history-picker"];
-    return fixedViews.includes(view) ? DEFAULT_BG : desktopColor;
-  }, [view, desktopColor]);
+    return desktopColor || DEFAULT_BG;
+  }, [desktopColor]);
 
   const theme = useMemo(() => buildTheme(effectiveBg), [effectiveBg]);
 
@@ -122,12 +127,11 @@ function App() {
     return () => clearInterval(id);
   }, [view, displayIndex]);
 
-  // ── Anchor init ────────────────────────────────────────
+  // ── Anchor init (once on first load) ─────────────────────
   useEffect(() => {
-    if (view !== "todos") return;
     const saved = loadAnchor();
     if (saved !== "top-right") useUIStore.getState().snapToMonitor(saved);
-  }, [view]);
+  }, []);
 
   // ── What's New check ─────────────────────────────────
   useEffect(() => {
@@ -138,7 +142,7 @@ function App() {
     if (lastSeen !== latest.version) {
       localStorage.setItem("lastSeenVersion", latest.version);
       useUIStore.getState().setShowWhatsNew(true);
-      setView("settings");
+      setView("info");
     }
   }, [view, setView]);
 
@@ -180,13 +184,17 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {view === "loading" && <LoadingView />}
-      {view === "setup" && <SetupView />}
-      {view === "session-chooser" && <SessionChooserView />}
-      {view === "history-picker" && <HistoryPickerView />}
-      {view === "todos" && <AccordionView displayIndex={displayIndex} />}
-      {view === "settings" && <SettingsView />}
-      <UpdateBanner />
+      <Layout timerFlashing={flashing}>
+        {view === "loading" && <LoadingView />}
+        {view === "setup" && <SetupView />}
+        {view === "session-chooser" && <SessionChooserView />}
+        {view === "history-picker" && <HistoryPickerView />}
+        {(view === "todos" || view === "settings" || view === "info") && <HeaderNav />}
+        {view === "todos" && <AccordionView displayIndex={displayIndex} />}
+        {view === "settings" && <SettingsView />}
+        {view === "info" && <InfoView />}
+        <UpdateBanner />
+      </Layout>
     </ThemeProvider>
   );
 }
