@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect } from "react";
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { detectColorMode } from "../../../utils";
-import { useUIStore, useDesktopStore } from "../../../stores";
+import { useUIStore, useDesktopStore, useSettingsStore } from "../../../stores";
 
 interface DesktopsPanelProps {
   displayIndex: number;
@@ -12,6 +12,7 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
   const { tc, ui } = useTheme().custom;
   const { displayGroups } = useUIStore();
   const { desktop, switchDesktop } = useDesktopStore();
+  const accessibilityGranted = useSettingsStore((s) => s.accessibilityGranted);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const currentGroup = displayGroups.find((g) => g.display_index === displayIndex);
@@ -29,13 +30,14 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
   }, [desktop.space_id]);
 
   const handleClick = useCallback((spaceId: number, el: HTMLElement) => {
+    if (!accessibilityGranted) return;
     switchDesktop(displayIndex, spaceId);
     const container = scrollRef.current;
     if (container) {
       const scrollLeft = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2;
       container.scrollTo({ left: scrollLeft, behavior: "smooth" });
     }
-  }, [displayIndex, switchDesktop]);
+  }, [displayIndex, switchDesktop, accessibilityGranted]);
 
   return (
     <>
@@ -54,10 +56,12 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
           {desktops.map((d) => {
             const cardFg = detectColorMode(d.color) === "dark" ? "#000000" : "#ffffff";
             const isActive = d.space_id === desktop.space_id;
+            const disabled = !accessibilityGranted && !isActive;
             return (
               <ButtonBase
                 key={d.space_id}
                 data-active={isActive || undefined}
+                disabled={disabled}
                 onClick={(e) => handleClick(d.space_id, e.currentTarget)}
                 sx={{
                   flexShrink: 0,
@@ -71,6 +75,7 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
                   bgcolor: d.color,
                   scrollSnapAlign: "center",
                   transition: "border-color 0.15s",
+                  opacity: disabled ? 0.35 : 1,
                 }}
               >
                 <Typography
@@ -87,6 +92,25 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
             );
           })}
         </Box>
+      )}
+
+      {!accessibilityGranted && desktops.length > 0 && (
+        <Typography
+          sx={{
+            fontSize: ui.fontSize.xs,
+            color: tc(0.3),
+            textAlign: "center",
+            mt: "4px",
+            cursor: "pointer",
+            "&:hover": { color: tc(0.5) },
+          }}
+          onClick={() => {
+            useUIStore.getState().setSettingsTab(1);
+            useUIStore.getState().setView("settings");
+          }}
+        >
+          Grant accessibility to switch desktops
+        </Typography>
       )}
 
       {displayGroups.length === 0 && (

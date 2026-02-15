@@ -3,9 +3,11 @@ import { Tabs, Tab } from "@mui/material";
 import { ThemesTab } from "./components/ThemesTab";
 import { PermissionsTab } from "./components/PermissionsTab";
 import { TimerTab } from "./components/TimerTab";
+import { useUIStore } from "../../../../stores";
 
 export default function SettingsPanel() {
-    const [settingsTab, setSettingsTab] = useState(0);
+    const settingsTab = useUIStore((s) => s.settingsTab);
+    const setSettingsTab = useUIStore((s) => s.setSettingsTab);
     const [confirmClear, setConfirmClear] = useState(false);
 
     return (

@@ -18,6 +18,7 @@ import AccordionView from "./components/AccordionView";
 import SettingsView from "./components/SettingsView";
 import InfoView from "./components/InfoView";
 import UpdateBanner from "./components/UpdateBanner";
+import WhatsNewModal from "./components/WhatsNewModal";
 import HeaderNav from "./components/AccordionView/components/HeaderNav";
 import Layout from "./components/AccordionView/components/Layout";
 
@@ -50,24 +51,28 @@ function App() {
   useEffect(() => {
     invoke<Settings>("get_settings")
       .then(async (s) => {
+        info(`Settings loaded: setup_complete=${s.setup_complete}`);
         const settings = useSettingsStore.getState();
         settings.setDesktopCount(s.desktop_count);
         settings.setTimerPresets(() => s.timer_presets ?? [60, 300, 600]);
         settings.setNotifySystem(s.notify_system ?? true);
         settings.setNotifyFlash(s.notify_flash ?? true);
         if (!s.setup_complete) {
+          info("Showing setup view");
           setView("setup");
           return;
         }
         try {
           const desktops = await invoke<DesktopSummary[]>("list_all_desktops");
           const hasData = desktops.some((d) => d.title || d.todo_count > 0);
+          info(`Desktops loaded: hasData=${hasData}, showing ${hasData ? "session-chooser" : "todos"}`);
           setView(hasData ? "session-chooser" : "todos");
         } catch {
           setView("todos");
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        error(`Failed to load settings: ${err}`);
         setView("setup");
       });
   }, [setView]);
@@ -134,7 +139,7 @@ function App() {
     if (saved !== "top-right") useUIStore.getState().snapToMonitor(saved);
   }, []);
 
-  // ── What's New check ─────────────────────────────────
+  // ── What's New version tracking ─────────────────────
   useEffect(() => {
     if (view !== "todos") return;
     const latest = changelog[0];
@@ -143,9 +148,8 @@ function App() {
     if (lastSeen !== latest.version) {
       localStorage.setItem("lastSeenVersion", latest.version);
       useUIStore.getState().setShowWhatsNew(true);
-      setView("info");
     }
-  }, [view, setView]);
+  }, [view]);
 
   // ── Update check ────────────────────────────────────
   useEffect(() => {
@@ -178,7 +182,7 @@ function App() {
 
   // ── Accessibility check ──────────────────────────────
   useEffect(() => {
-    if (view === "setup" || view === "settings") {
+    if (view === "setup" || view === "settings" || view === "todos") {
       useSettingsStore.getState().checkAccessibility();
       const id = setInterval(() => {
         useSettingsStore.getState().checkAccessibility();
@@ -201,6 +205,7 @@ function App() {
         {view === "settings" && <SettingsView />}
         {view === "info" && <InfoView />}
         <UpdateBanner />
+        <WhatsNewModal />
       </Layout>
     </ThemeProvider>
   );
