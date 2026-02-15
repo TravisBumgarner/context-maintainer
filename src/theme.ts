@@ -71,6 +71,7 @@ export function buildTheme(bgColor: string): Theme {
           body: {
             overflow: "hidden",
             WebkitFontSmoothing: "antialiased",
+            backgroundColor: bgColor,
           },
         },
       },
