@@ -61,10 +61,10 @@ export default function TimerPanel() {
   };
 
   const timeSx = {
-    fontSize: ui.fontSize.xl,
+    fontSize: ui.fontSize.lg,
     fontWeight: ui.weights.normal,
     fontFamily: ui.timerFontFamily,
-    color: tc(1),
+    color: tc(0.5),
     fontVariantNumeric: "tabular-nums",
   };
 
