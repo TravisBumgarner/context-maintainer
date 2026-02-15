@@ -10,6 +10,7 @@ interface PerDesktopTimer {
   minutes: number;
   seconds: number;
   running: boolean;
+  paused: boolean;
   remaining: number;
   flashing: boolean;
   timerRef: ReturnType<typeof setInterval> | null;
@@ -20,6 +21,7 @@ const defaultTimer = (): PerDesktopTimer => ({
   minutes: 0,
   seconds: 0,
   running: false,
+  paused: false,
   remaining: 0,
   flashing: false,
   timerRef: null,
@@ -38,6 +40,9 @@ interface TimerState {
   setFlashing: (f: boolean) => void;
 
   startTimer: (notifySystem: boolean, notifyFlash: boolean) => void;
+  pauseTimer: () => void;
+  resumeTimer: (notifySystem: boolean, notifyFlash: boolean) => void;
+  resetTimer: () => void;
   cancelTimer: () => void;
   populateFromPreset: (seconds: number) => void;
   tick: (desktopId: number, notifySystem: boolean, notifyFlash: boolean) => void;
@@ -99,6 +104,55 @@ export const useTimerStore = create<TimerState>((set, get) => ({
         remaining: total,
         running: true,
         timerRef: intervalId,
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+      }),
+    });
+  },
+
+  pauseTimer: () => {
+    const { activeDesktop, timers } = get();
+    const timer = getTimer(timers, activeDesktop);
+    if (timer.timerRef) clearInterval(timer.timerRef);
+    set({
+      timers: updateTimer(timers, activeDesktop, {
+        running: false,
+        paused: true,
+        timerRef: null,
+      }),
+    });
+  },
+
+  resumeTimer: (notifySystem, notifyFlash) => {
+    const { activeDesktop, timers } = get();
+    const timer = getTimer(timers, activeDesktop);
+    if (!timer.paused || timer.remaining <= 0) return;
+
+    const desktopId = activeDesktop;
+    const intervalId = setInterval(() => {
+      get().tick(desktopId, notifySystem, notifyFlash);
+    }, 1000);
+
+    set({
+      timers: updateTimer(timers, activeDesktop, {
+        running: true,
+        paused: false,
+        timerRef: intervalId,
+      }),
+    });
+  },
+
+  resetTimer: () => {
+    const { activeDesktop, timers } = get();
+    const timer = getTimer(timers, activeDesktop);
+    if (timer.timerRef) clearInterval(timer.timerRef);
+    set({
+      timers: updateTimer(timers, activeDesktop, {
+        running: false,
+        paused: false,
+        remaining: 0,
+        timerRef: null,
       }),
     });
   },

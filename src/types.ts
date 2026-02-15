@@ -55,11 +55,19 @@ export interface DisplayGroup {
   desktops: DesktopSummary[];
 }
 
+export interface CompletedItem {
+  id: string;
+  text: string;
+  desktop_id: number;
+  completed_at: string;
+}
+
 export type ViewType =
   | "loading"
   | "setup"
   | "session-chooser"
   | "todos"
   | "history-picker"
+  | "history"
   | "settings"
   | "info";

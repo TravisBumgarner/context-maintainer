@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import type { TodoItem } from "../types";
+import { useHistoryStore } from "./useHistoryStore";
 
 interface TodoState {
   todos: TodoItem[];
@@ -93,8 +94,13 @@ export const useTodoStore = create<TodoState>((set, get) => ({
 
   toggleDone: (id, desktopId) => {
     const { todos, saveTodos, syncTitleFromTodos } = get();
-    const updated = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+    const item = todos.find((t) => t.id === id);
+    if (!item) return;
+
+    // Remove from todos and archive to history
+    const updated = todos.filter((t) => t.id !== id);
     set({ todos: updated });
+    useHistoryStore.getState().addCompleted(item.text, desktopId);
 
     const timer = get().saveTimer;
     if (timer) clearTimeout(timer);

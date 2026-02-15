@@ -6,6 +6,26 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.5.0",
+        date: "2026-02-15",
+        changes: [
+            {
+                category: "Added",
+                items: [
+                    "History page for completed tasks, grouped by desktop",
+                    "Updater manifest (latest.json) now included in releases",
+                ],
+            },
+            {
+                category: "Changed",
+                items: [
+                    "Completed tasks move to History instead of staying in queue",
+                    "Left sidebar styling with background and rounded corners",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.4.1",
         date: "2026-02-14",
         changes: [

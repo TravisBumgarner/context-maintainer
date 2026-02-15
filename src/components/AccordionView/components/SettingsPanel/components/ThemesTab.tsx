@@ -29,61 +29,51 @@ export function ThemesTab() {
 
     return (
         <>
-            <Box sx={{ mb: "12px" }}>
-                <Box
-                    sx={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: "3px",
-                    }}
-                >
-                    {THEMES.map((t) => (
-                        <Box
-                            key={t.name}
-                            component="button"
-                            onClick={() => {
-                                setExpandedTheme(t.name);
-                                setColorIndex(0);
-                            }}
-                            title={t.name}
-                            sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                gap: "3px",
-                                p: "5px 4px",
-                                border: `1px solid ${tc(0.1)}`,
-
-                                bgcolor: expandedTheme === t.name ? tc(0.15) : tc(0.03),
-                                cursor: "pointer",
-                                fontFamily: "inherit",
-                                "&:hover": { bgcolor: tc(0.08) },
-                            }}
-                        >
-                            <Box sx={{ display: "flex", gap: "2px" }}>
-                                {t.colors.slice(0, 5).map((c, i) => (
-                                    <Box
-                                        key={i}
-                                        sx={{
-                                            width: 14,
-                                            height: 14,
-            
-                                            border: `1px solid ${tc(0.12)}`,
-                                            bgcolor: c,
-                                        }}
-                                    />
-                                ))}
-                            </Box>
-                            <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.5), fontWeight: ui.weights.semibold }}>
-                                {t.name}
-                            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "auto" }}>
+                {THEMES.map((t) => (
+                    <Box
+                        key={t.name}
+                        component="button"
+                        onClick={() => {
+                            setExpandedTheme(t.name);
+                            setColorIndex(0);
+                            handleApplyTheme(t.colors);
+                        }}
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            p: "4px 6px",
+                            border: `1px solid ${tc(0.1)}`,
+                            bgcolor: expandedTheme === t.name ? tc(0.15) : tc(0.03),
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            width: "100%",
+                            "&:hover": { bgcolor: tc(0.08) },
+                        }}
+                    >
+                        <Box sx={{ display: "flex", gap: "2px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                            {t.colors.map((c, i) => (
+                                <Box
+                                    key={i}
+                                    sx={{
+                                        width: 12,
+                                        height: 12,
+                                        border: `1px solid ${tc(0.12)}`,
+                                        bgcolor: c,
+                                    }}
+                                />
+                            ))}
                         </Box>
-                    ))}
-                </Box>
+                        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), fontWeight: ui.weights.semibold, whiteSpace: "nowrap" }}>
+                            {t.name}
+                        </Typography>
+                    </Box>
+                ))}
             </Box>
 
             {selectedTheme && (
-                <Box sx={{ mb: "12px" }}>
+                <Box sx={{ mt: "8px" }}>
                     <Box sx={{ display: "flex", gap: "2px", flexWrap: "wrap" }}>
                         {selectedTheme.colors.map((c, i) => (
                             <Box
@@ -91,7 +81,6 @@ export function ThemesTab() {
                                 sx={{
                                     width: 20,
                                     height: 20,
-    
                                     border: i === colorIndex ? `2px solid ${tc(0.5)}` : `1px solid ${tc(0.12)}`,
                                     bgcolor: c,
                                     cursor: "pointer",

@@ -17,9 +17,9 @@ import HistoryPickerView from "./components/HistoryPickerView";
 import AccordionView from "./components/AccordionView";
 import SettingsView from "./components/SettingsView";
 import InfoView from "./components/InfoView";
+import HistoryView from "./components/HistoryView";
 import UpdateBanner from "./components/UpdateBanner";
 import WhatsNewModal from "./components/WhatsNewModal";
-import HeaderNav from "./components/AccordionView/components/HeaderNav";
 import Layout from "./components/AccordionView/components/Layout";
 
 import { useTodoStore, useTimerStore, useUIStore, useDesktopStore, useSettingsStore } from "./stores";
@@ -200,9 +200,9 @@ function App() {
         {view === "setup" && <SetupView />}
         {view === "session-chooser" && <SessionChooserView />}
         {view === "history-picker" && <HistoryPickerView />}
-        {(view === "todos" || view === "settings" || view === "info") && <HeaderNav />}
         {view === "todos" && <AccordionView displayIndex={displayIndex} />}
         {view === "settings" && <SettingsView />}
+        {view === "history" && <HistoryView />}
         {view === "info" && <InfoView />}
         <UpdateBanner />
         <WhatsNewModal />

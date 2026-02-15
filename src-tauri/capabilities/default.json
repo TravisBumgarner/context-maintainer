@@ -17,6 +17,7 @@
     "notification:allow-request-permission",
     "notification:allow-notify",
     "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
     "core:window:allow-hide",
     "core:window:allow-show",
     "updater:default",

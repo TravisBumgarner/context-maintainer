@@ -1,4 +1,5 @@
 import { Box, IconButton, InputBase, Typography } from "@mui/material";
+import { Add } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { Reorder } from "framer-motion";
 import TodoItem from "./TodoItem";
@@ -22,7 +23,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
   } = useTodoStore();
 
   const active = todos.filter((t) => !t.done);
-  const done = todos.filter((t) => t.done);
 
   return (
     <>
@@ -60,7 +60,7 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
             color: newText.trim() ? tc(0.45) : tc(0.15),
           }}
         >
-          +
+          <Add fontSize="inherit" />
         </IconButton>
       </Box>
 
@@ -103,50 +103,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
         ))}
       </Reorder.Group>
 
-      {done.length > 0 && (
-        <Box
-          component="details"
-          sx={{
-            flexShrink: 0,
-            borderTop: `1px solid ${tc(0.08)}`,
-            "& summary": {
-              fontSize: ui.fontSize.sm,
-              color: tc(0.35),
-              px: `${ui.spacing.itemPx}px`,
-              py: `${ui.spacing.itemPy}px`,
-              cursor: "pointer",
-              userSelect: "none",
-              listStyle: "none",
-              "&::-webkit-details-marker": { display: "none" },
-              "&::before": { content: '"\\25B6  "', fontSize: 8 },
-            },
-            "&[open] summary::before": { content: '"\\25BC  "' },
-          }}
-        >
-          <summary>Done ({done.length})</summary>
-          <Box
-            sx={{
-              maxHeight: 80,
-              overflowY: "auto",
-              "&::-webkit-scrollbar": { width: 4 },
-              "&::-webkit-scrollbar-thumb": {
-                background: tc(0.1),
-              },
-            }}
-          >
-            {done.map((item) => (
-              <TodoItem
-                key={item.id}
-                item={item}
-                isDone
-                onToggle={() => toggleDone(item.id, desktopId)}
-                onUpdate={(text) => updateText(item.id, text, desktopId)}
-                onDelete={() => deleteTodo(item.id, desktopId)}
-              />
-            ))}
-          </Box>
-        </Box>
-      )}
     </>
   );
 }

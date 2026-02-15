@@ -242,6 +242,14 @@ struct SavedContext {
 
 type ContextHistoryStore = HashMap<i64, Vec<SavedContext>>;
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct CompletedItem {
+    id: String,
+    text: String,
+    desktop_id: i64,
+    completed_at: String,
+}
+
 fn default_desktop_count() -> u32 { 10 }
 fn default_timer_presets() -> Vec<u32> { vec![60, 300, 600] }
 fn default_notify_system() -> bool { true }
@@ -285,6 +293,8 @@ struct PersistData {
     version: u32,
     #[serde(default)]
     context_history: ContextHistoryStore,
+    #[serde(default)]
+    completed: Vec<CompletedItem>,
 }
 
 struct AppState {
@@ -702,6 +712,36 @@ fn request_accessibility() -> bool {
     }
 }
 
+// ── Completed-item commands ────────────────────────────────────
+
+#[tauri::command]
+fn get_completed(state: tauri::State<'_, AppState>) -> Vec<CompletedItem> {
+    let data = state.data.lock().unwrap();
+    data.completed.clone()
+}
+
+#[tauri::command]
+fn add_completed(state: tauri::State<'_, AppState>, text: String, desktop_id: i64) {
+    let mut data = state.data.lock().unwrap();
+    let item = CompletedItem {
+        id: uuid::Uuid::new_v4().to_string(),
+        text,
+        desktop_id,
+        completed_at: chrono::Utc::now().to_rfc3339(),
+    };
+    data.completed.push(item);
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
+fn clear_completed(state: tauri::State<'_, AppState>) {
+    let mut data = state.data.lock().unwrap();
+    data.completed.clear();
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
 // ── Entry point ────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -837,7 +877,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, get_completed, add_completed, clear_completed])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

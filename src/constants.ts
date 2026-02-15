@@ -14,7 +14,7 @@ export const ANCHOR_LABELS: Record<AnchorPosition, string> = {
 
 export const ANCHOR_NAMES: Record<AnchorPosition, string> = {
   "top-left": "Top Left", "top-center": "Top Center", "top-right": "Top Right",
-  "middle-left": "Middle Left", "middle-center": "Free", "middle-right": "Middle Right",
+  "middle-left": "Middle Left", "middle-center": "Free Move", "middle-right": "Middle Right",
   "bottom-left": "Bottom Left", "bottom-center": "Bottom Center", "bottom-right": "Bottom Right",
 };
 
@@ -84,5 +84,5 @@ export const THEMES: { name: string; colors: string[] }[] = [
 export const DEFAULT_BG = "#F5E6A3";
 
 export const WINDOW_WIDTH = 290;
-export const WINDOW_HEIGHT_EXPANDED = 370;
+export const WINDOW_HEIGHT_EXPANDED = 220;
 export const WINDOW_HEIGHT_COLLAPSED = 56;

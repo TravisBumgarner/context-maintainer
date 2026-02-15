@@ -42,11 +42,31 @@ echo "  DMG: $DMG"
 echo "  Updater: $UPDATER"
 echo ""
 
+# Generate latest.json for the Tauri updater
+SIG_CONTENT=$(cat "$UPDATER_SIG")
+PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+LATEST_JSON="$BUNDLE_DIR/latest.json"
+cat > "$LATEST_JSON" <<EOF
+{
+  "version": "${VERSION}",
+  "notes": "Context Maintainer v${VERSION}",
+  "pub_date": "${PUB_DATE}",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "${SIG_CONTENT}",
+      "url": "https://github.com/TravisBumgarner/context-maintainer/releases/download/v${VERSION}/Context.Maintainer.app.tar.gz"
+    }
+  }
+}
+EOF
+echo "  latest.json: $LATEST_JSON"
+
 gh release create "v${VERSION}" \
   --title "Context Maintainer v${VERSION}" \
   --notes "See the assets below to download and install." \
   --draft \
   "$DMG" \
   "$UPDATER" \
-  "$UPDATER_SIG"
+  "$UPDATER_SIG" \
+  "$LATEST_JSON"
 echo "Draft release created!"
