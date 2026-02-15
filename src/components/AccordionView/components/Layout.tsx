@@ -105,7 +105,7 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
                 <History fontSize="inherit" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Info" arrow placement="right">
+            <Tooltip title="About" arrow placement="right">
               <IconButton onClick={() => setView("info")} sx={btnSx}>
                 <InfoOutline fontSize="inherit" />
               </IconButton>
