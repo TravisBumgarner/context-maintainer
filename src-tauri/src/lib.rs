@@ -9,6 +9,30 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 use tauri::Manager;
 
+// ── Hide macOS traffic lights ─────────────────────────────────
+#[cfg(target_os = "macos")]
+fn hide_traffic_lights(window: &tauri::WebviewWindow) {
+    #[link(name = "objc", kind = "dylib")]
+    extern "C" {
+        fn objc_msgSend(receiver: *const c_void, sel: *const c_void, ...) -> *const c_void;
+        fn sel_registerName(name: *const u8) -> *const c_void;
+    }
+
+    unsafe {
+        let ns_window = window.ns_window().unwrap() as *const c_void;
+        let sel_button = sel_registerName(b"standardWindowButton:\0".as_ptr());
+        let sel_set_hidden = sel_registerName(b"setHidden:\0".as_ptr());
+
+        // NSWindowButton: 0=close, 1=miniaturize, 2=zoom
+        for button_type in 0u64..3 {
+            let button: *const c_void = objc_msgSend(ns_window, sel_button, button_type);
+            if !button.is_null() {
+                objc_msgSend(button, sel_set_hidden, 1 as std::ffi::c_int);
+            }
+        }
+    }
+}
+
 // ── Color palette (subtle / muted pastels) ───────────────────
 const COLORS: &[&str] = &[
     "#F5E6A3", // muted yellow
@@ -222,7 +246,6 @@ fn default_desktop_count() -> u32 { 10 }
 fn default_timer_presets() -> Vec<u32> { vec![60, 300, 600] }
 fn default_notify_system() -> bool { true }
 fn default_notify_flash() -> bool { true }
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct Settings {
     custom_colors: HashMap<i64, String>,
@@ -783,6 +806,8 @@ pub fn run() {
                     .resizable(true)
                     .maximizable(false)
                     .visible_on_all_workspaces(true)
+                    .title_bar_style(tauri::TitleBarStyle::Overlay)
+                    .hidden_title(true)
                     .build()?;
 
                     // Position after creation — builder .position() doesn't
@@ -791,6 +816,18 @@ pub fn run() {
                         tauri::LogicalPosition::new(x, y),
                     )).ok();
                 }
+            }
+
+            // Hide traffic lights after a short delay so NSWindow buttons exist
+            #[cfg(target_os = "macos")]
+            {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    for window in app_handle.webview_windows().values() {
+                        hide_traffic_lights(window);
+                    }
+                });
             }
 
             Ok(())

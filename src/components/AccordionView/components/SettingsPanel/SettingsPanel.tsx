@@ -1,20 +1,11 @@
 import { useState } from "react";
-import { Box, Tabs, Tab } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Tabs, Tab } from "@mui/material";
 import { ThemesTab } from "./components/ThemesTab";
 import { PermissionsTab } from "./components/PermissionsTab";
 import { TimerTab } from "./components/TimerTab";
-import { WhatsNewTab } from "./components/WhatsNewTab";
 
-interface SettingsPanelProps {
-    initialTab?: number;
-}
-
-export default function SettingsPanel({ initialTab = 0 }: SettingsPanelProps) {
-    const theme = useTheme();
-    const tc = theme.custom.tc;
-
-    const [settingsTab, setSettingsTab] = useState(initialTab);
+export default function SettingsPanel() {
+    const [settingsTab, setSettingsTab] = useState(0);
     const [confirmClear, setConfirmClear] = useState(false);
 
     return (
@@ -22,19 +13,17 @@ export default function SettingsPanel({ initialTab = 0 }: SettingsPanelProps) {
             <Tabs
                 value={settingsTab}
                 onChange={(_, v) => setSettingsTab(v)}
-                sx={{ mb: "10px", borderBottom: `1px solid ${tc(0.12)}` }}
+                sx={{ mb: "10px" }}
             >
-                {["Themes", "Permissions", "Timer", "What's New"].map((label) => (
+                {["Themes", "Permissions", "Timer"].map((label) => (
                     <Tab
                         key={label}
                         label={label}
                         sx={{
-                            flexGrow: 0,
+                            flex: 1,
                             px: "10px",
-                            borderRadius: "8px 8px 0 0",
                             "&.Mui-selected": {
-                                flexGrow: 1,
-                                backgroundColor: tc(0.08),
+                                backgroundColor: "rgba(0,0,0,0.04)",
                             },
                         }}
                     />
@@ -48,8 +37,6 @@ export default function SettingsPanel({ initialTab = 0 }: SettingsPanelProps) {
             )}
 
             {settingsTab === 2 && <TimerTab />}
-
-            {settingsTab === 3 && <WhatsNewTab />}
         </>
     );
 }

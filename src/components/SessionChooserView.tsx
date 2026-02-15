@@ -21,7 +21,6 @@ export default function SessionChooserView() {
     py: "7px",
     color: theme.custom.tcInv(),
     bgcolor: tc(0.45),
-    borderRadius: "12px",
     textAlign: "center",
     "&:hover": { bgcolor: tc(0.6) },
   } as const;

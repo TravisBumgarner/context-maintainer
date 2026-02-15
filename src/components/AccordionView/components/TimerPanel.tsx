@@ -5,7 +5,7 @@ import { formatPreset, formatCountdown } from "../../../utils";
 import { useTimerStore, useSettingsStore } from "../../../stores";
 
 export default function TimerPanel() {
-  const tc = useTheme().custom.tc;
+  const { tc, ui } = useTheme().custom;
   const {
     startTimer,
     cancelTimer,
@@ -31,9 +31,9 @@ export default function TimerPanel() {
   const fieldInputSx = {
     width: 48,
     textAlign: "center",
-    fontSize: 20,
-    fontWeight: 700,
-    fontFamily: "inherit",
+    fontSize: ui.fontSize.xl,
+    fontWeight: ui.weights.bold,
+    fontFamily: ui.timerFontFamily,
     color: tc(0.7),
     bgcolor: "transparent",
     border: "none",
@@ -59,11 +59,12 @@ export default function TimerPanel() {
       >
         <Typography
           sx={{
-            fontSize: 32,
-            fontWeight: 700,
+            fontSize: ui.fontSize.timer,
+            fontWeight: ui.weights.bold,
+            fontFamily: ui.timerFontFamily,
             color: tc(0.7),
             fontVariantNumeric: "tabular-nums",
-            letterSpacing: "1px",
+            letterSpacing: ui.letterSpacing.wide,
           }}
         >
           {formatCountdown(remaining)}
@@ -100,7 +101,7 @@ export default function TimerPanel() {
         ].map((field, i) => (
           <Box key={field.label} sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
             {i > 0 && (
-              <Typography sx={{ fontSize: 20, fontWeight: 700, color: tc(0.35), pb: "14px" }}>:</Typography>
+              <Typography sx={{ fontSize: ui.fontSize.xl, fontWeight: ui.weights.bold, fontFamily: ui.timerFontFamily, color: tc(0.35), pb: "14px" }}>:</Typography>
             )}
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <Box
@@ -114,7 +115,7 @@ export default function TimerPanel() {
                 }
                 sx={fieldInputSx}
               />
-              <Typography sx={{ fontSize: 9, color: tc(0.35), mt: "2px", fontWeight: 600 }}>
+              <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35), mt: "2px", fontWeight: ui.weights.semibold }}>
                 {field.label}
               </Typography>
             </Box>

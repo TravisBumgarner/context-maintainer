@@ -61,4 +61,5 @@ export type ViewType =
   | "session-chooser"
   | "todos"
   | "history-picker"
-  | "settings";
+  | "settings"
+  | "info";

@@ -9,7 +9,7 @@ interface DesktopsPanelProps {
 }
 
 export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
-  const tc = useTheme().custom.tc;
+  const { tc, ui } = useTheme().custom;
   const { displayGroups } = useUIStore();
   const { desktop, switchDesktop } = useDesktopStore();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -63,8 +63,7 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
                   flexShrink: 0,
                   px: "12px",
                   py: "4px",
-                  border: isActive ? `2px solid ${cardFg}` : "2px solid transparent",
-                  borderRadius: "6px",
+                  border: isActive ? `1px solid rgba(0,0,0,0.15)` : "1px solid transparent",
                   display: "flex",
                   alignItems: "center",
                   gap: "4px",
@@ -76,35 +75,14 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
               >
                 <Typography
                   sx={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: cardFg,
-                    opacity: 0.6,
-                  }}
-                >
-                  {d.position}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: 10,
-                    fontWeight: 600,
+                    fontSize: ui.fontSize.sm,
+                    fontWeight: ui.weights.semibold,
                     color: cardFg,
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {d.title || d.name}
+                  {d.title || d.position + 1}
                 </Typography>
-                {d.todo_count > 0 && (
-                  <Typography
-                    sx={{
-                      fontSize: 9,
-                      fontWeight: 600,
-                      color: cardFg,
-                    }}
-                  >
-                    {d.todo_count}
-                  </Typography>
-                )}
               </ButtonBase>
             );
           })}
@@ -112,7 +90,7 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
       )}
 
       {displayGroups.length === 0 && (
-        <Typography sx={{ fontSize: 10, color: tc(0.25), px: "6px" }}>
+        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.25), px: "6px" }}>
           No desktops found
         </Typography>
       )}

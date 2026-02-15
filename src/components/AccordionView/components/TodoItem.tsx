@@ -20,16 +20,16 @@ export default function TodoItem({
   onDelete,
 }: TodoItemProps) {
   const theme = useTheme();
-  const tc = theme.custom.tc;
+  const { tc, ui } = theme.custom;
 
   return (
     <Box
       sx={{
         display: "flex",
         alignItems: "center",
-        px: "4px",
-        py: "2px",
-        gap: "4px",
+        px: `${ui.spacing.itemPx}px`,
+        py: `${ui.spacing.itemPy}px`,
+        gap: `${ui.spacing.gap}px`,
         transition: "background 0.1s",
         "&:hover .delete-btn": { opacity: 1 },
       }}

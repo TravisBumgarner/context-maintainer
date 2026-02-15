@@ -9,7 +9,7 @@ interface QueuePanelProps {
 }
 
 export default function QueuePanel({ desktopId }: QueuePanelProps) {
-  const tc = useTheme().custom.tc;
+  const { tc, ui } = useTheme().custom;
   const {
     todos,
     newText,
@@ -30,9 +30,9 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
         sx={{
           display: "flex",
           alignItems: "center",
-          px: "4px",
-          py: "2px",
-          gap: "4px",
+          px: `${ui.spacing.itemPx}px`,
+          py: `${ui.spacing.itemPy}px`,
+          gap: `${ui.spacing.gap}px`,
         }}
       >
         <InputBase
@@ -72,7 +72,7 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
                     flexShrink: 0,
                     cursor: "grab",
                     color: tc(0.2),
-                    fontSize: 10,
+                    fontSize: ui.fontSize.sm,
                     px: "2px",
                     userSelect: "none",
                     "&:active": { cursor: "grabbing" },
@@ -96,10 +96,10 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
             flexShrink: 0,
             borderTop: `1px solid ${tc(0.08)}`,
             "& summary": {
-              fontSize: 10,
+              fontSize: ui.fontSize.sm,
               color: tc(0.35),
-              px: "4px",
-              py: "4px",
+              px: `${ui.spacing.itemPx}px`,
+              py: `${ui.spacing.itemPy}px`,
               cursor: "pointer",
               userSelect: "none",
               listStyle: "none",
@@ -117,7 +117,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
               "&::-webkit-scrollbar": { width: 4 },
               "&::-webkit-scrollbar-thumb": {
                 background: tc(0.1),
-                borderRadius: "2px",
               },
             }}
           >
