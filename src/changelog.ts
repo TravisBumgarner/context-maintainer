@@ -12,7 +12,6 @@ export const changelog: ChangelogEntry[] = [
             {
                 category: "Changed",
                 items: [
-                    "Removed setup screen; app launches directly to home view",
                     "Desktop switcher grays out when accessibility not granted",
                     "Add task input now has a visible border and + button",
                     "App no longer redirects to What's New on startup",
