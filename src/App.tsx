@@ -11,6 +11,7 @@ import { changelog } from "./changelog";
 import type { DesktopInfo, DesktopSummary, Settings } from "./types";
 
 import LoadingView from "./components/LoadingView";
+import SetupView from "./components/SetupView";
 import SessionChooserView from "./components/SessionChooserView";
 import HistoryPickerView from "./components/HistoryPickerView";
 import AccordionView from "./components/AccordionView";
@@ -55,9 +56,10 @@ function App() {
         settings.setTimerPresets(() => s.timer_presets ?? [60, 300, 600]);
         settings.setNotifySystem(s.notify_system ?? true);
         settings.setNotifyFlash(s.notify_flash ?? true);
-        // Auto-complete setup if not already done
         if (!s.setup_complete) {
-          invoke("complete_setup").catch(() => {});
+          info("Showing setup view");
+          setView("setup");
+          return;
         }
         try {
           const desktops = await invoke<DesktopSummary[]>("list_all_desktops");
@@ -70,7 +72,7 @@ function App() {
       })
       .catch((err) => {
         error(`Failed to load settings: ${err}`);
-        setView("todos");
+        setView("setup");
       });
   }, [setView]);
 
@@ -178,12 +180,14 @@ function App() {
 
   // ── Accessibility check ──────────────────────────────
   useEffect(() => {
-    useSettingsStore.getState().checkAccessibility();
-    const id = setInterval(() => {
+    if (view === "setup" || view === "settings" || view === "todos") {
       useSettingsStore.getState().checkAccessibility();
-    }, 2000);
-    return () => clearInterval(id);
-  }, []);
+      const id = setInterval(() => {
+        useSettingsStore.getState().checkAccessibility();
+      }, 2000);
+      return () => clearInterval(id);
+    }
+  }, [view]);
 
   // ── View router ───────────────────────────────────────
   return (
@@ -191,6 +195,7 @@ function App() {
       <CssBaseline />
       <Layout timerFlashing={flashing}>
         {view === "loading" && <LoadingView />}
+        {view === "setup" && <SetupView />}
         {view === "session-chooser" && <SessionChooserView />}
         {view === "history-picker" && <HistoryPickerView />}
         {(view === "todos" || view === "settings" || view === "info") && <HeaderNav />}
