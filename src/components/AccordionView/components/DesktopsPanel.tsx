@@ -20,13 +20,16 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
 
   // Scroll active desktop to center when it changes
   useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const activeEl = container.querySelector("[data-active='true']") as HTMLElement | null;
-    if (activeEl) {
-      const scrollLeft = activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
-      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
-    }
+    const id = requestAnimationFrame(() => {
+      const container = scrollRef.current;
+      if (!container) return;
+      const activeEl = container.querySelector("[data-active='true']") as HTMLElement | null;
+      if (activeEl) {
+        const scrollLeft = activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
+        container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+      }
+    });
+    return () => cancelAnimationFrame(id);
   }, [desktop.space_id]);
 
   const handleClick = useCallback((spaceId: number, el: HTMLElement) => {
