@@ -11,7 +11,6 @@ import { changelog } from "./changelog";
 import type { DesktopInfo, DesktopSummary, Settings } from "./types";
 
 import LoadingView from "./components/LoadingView";
-import SetupView from "./components/SetupView";
 import SessionChooserView from "./components/SessionChooserView";
 import HistoryPickerView from "./components/HistoryPickerView";
 import AccordionView from "./components/AccordionView";
@@ -50,25 +49,28 @@ function App() {
   useEffect(() => {
     invoke<Settings>("get_settings")
       .then(async (s) => {
+        info(`Settings loaded: setup_complete=${s.setup_complete}`);
         const settings = useSettingsStore.getState();
         settings.setDesktopCount(s.desktop_count);
         settings.setTimerPresets(() => s.timer_presets ?? [60, 300, 600]);
         settings.setNotifySystem(s.notify_system ?? true);
         settings.setNotifyFlash(s.notify_flash ?? true);
+        // Auto-complete setup if not already done
         if (!s.setup_complete) {
-          setView("setup");
-          return;
+          invoke("complete_setup").catch(() => {});
         }
         try {
           const desktops = await invoke<DesktopSummary[]>("list_all_desktops");
           const hasData = desktops.some((d) => d.title || d.todo_count > 0);
+          info(`Desktops loaded: hasData=${hasData}, showing ${hasData ? "session-chooser" : "todos"}`);
           setView(hasData ? "session-chooser" : "todos");
         } catch {
           setView("todos");
         }
       })
-      .catch(() => {
-        setView("setup");
+      .catch((err) => {
+        error(`Failed to load settings: ${err}`);
+        setView("todos");
       });
   }, [setView]);
 
@@ -178,14 +180,12 @@ function App() {
 
   // ── Accessibility check ──────────────────────────────
   useEffect(() => {
-    if (view === "setup" || view === "settings") {
+    useSettingsStore.getState().checkAccessibility();
+    const id = setInterval(() => {
       useSettingsStore.getState().checkAccessibility();
-      const id = setInterval(() => {
-        useSettingsStore.getState().checkAccessibility();
-      }, 2000);
-      return () => clearInterval(id);
-    }
-  }, [view]);
+    }, 2000);
+    return () => clearInterval(id);
+  }, []);
 
   // ── View router ───────────────────────────────────────
   return (
@@ -193,7 +193,6 @@ function App() {
       <CssBaseline />
       <Layout timerFlashing={flashing}>
         {view === "loading" && <LoadingView />}
-        {view === "setup" && <SetupView />}
         {view === "session-chooser" && <SessionChooserView />}
         {view === "history-picker" && <HistoryPickerView />}
         {(view === "todos" || view === "settings" || view === "info") && <HeaderNav />}
