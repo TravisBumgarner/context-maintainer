@@ -1,7 +1,6 @@
 import { useRef, useCallback, useEffect } from "react";
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { invoke } from "@tauri-apps/api/core";
 import { detectColorMode } from "../../../utils";
 import { useUIStore, useDesktopStore, useSettingsStore } from "../../../stores";
 
@@ -106,7 +105,8 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
             "&:hover": { color: tc(0.5) },
           }}
           onClick={() => {
-            invoke("request_accessibility").catch(() => {});
+            useUIStore.getState().setSettingsTab(1);
+            useUIStore.getState().setView("settings");
           }}
         >
           Grant accessibility to switch desktops
