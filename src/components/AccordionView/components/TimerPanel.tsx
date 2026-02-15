@@ -36,18 +36,18 @@ export default function TimerPanel() {
   const hasTime = hours > 0 || minutes > 0 || seconds > 0;
 
   const fieldInputSx = {
-    width: 28,
+    width: 22,
     textAlign: "center",
-    fontSize: ui.fontSize.xl,
+    fontSize: ui.fontSize.lg,
     fontWeight: ui.weights.normal,
     fontFamily: ui.timerFontFamily,
-    color: tc(1),
+    color: tc(0.5),
     bgcolor: "transparent",
     border: "none",
     p: "4px 0",
     outline: "none",
     "&::placeholder": {
-      color: tc(1),
+      color: tc(0.5),
       opacity: 1,
     },
   } as const;
@@ -82,7 +82,7 @@ export default function TimerPanel() {
             ].map((field, i) => (
               <Box key={field.label} sx={{ display: "flex", alignItems: "center" }}>
                 {i > 0 && (
-                  <Typography sx={{ fontSize: ui.fontSize.xl, fontFamily: ui.timerFontFamily, color: tc(0.35) }}>:</Typography>
+                  <Typography sx={{ fontSize: ui.fontSize.lg, fontFamily: ui.timerFontFamily, color: tc(0.3) }}>:</Typography>
                 )}
                 <Box
                   component="input"
