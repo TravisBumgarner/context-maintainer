@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from "react";
-import { Box, ButtonBase, Typography } from "@mui/material";
+import { Box, ButtonBase, Link, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { detectColorMode } from "../../../utils";
 import { useUIStore, useDesktopStore, useSettingsStore } from "../../../stores";
@@ -41,94 +41,85 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
 
   return (
     <>
-      {desktops.length > 0 && (
-        <Box sx={{ position: "relative" }}>
-          <Box
-            ref={scrollRef}
+      {!accessibilityGranted ? (
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Link
+            component="button"
+            onClick={() => {
+              useUIStore.getState().setSettingsTab(1);
+              useUIStore.getState().setView("settings");
+            }}
             sx={{
-              display: "flex",
-              gap: "6px",
-              overflowX: "auto",
-              px: "calc(50% - 40px)",
-              scrollSnapType: "x mandatory",
-              "&::-webkit-scrollbar": { display: "none" },
-              filter: !accessibilityGranted ? "blur(2px)" : "none",
+              fontSize: ui.fontSize.sm,
+              color: tc(0.5),
+              fontWeight: ui.weights.semibold,
+              "&:hover": { color: tc(0.7) },
             }}
           >
-            {desktops.map((d) => {
-              const cardFg = detectColorMode(d.color) === "dark" ? "#000000" : "#ffffff";
-              const isActive = d.space_id === desktop.space_id;
-              return (
-                <ButtonBase
-                  key={d.space_id}
-                  data-active={isActive || undefined}
-                  disabled={!accessibilityGranted}
-                  onClick={(e) => handleClick(d.space_id, e.currentTarget)}
-                  sx={{
-                    flexShrink: 0,
-                    px: "12px",
-                    py: "4px",
-                    border: isActive ? `1px solid rgba(0,0,0,0.15)` : "1px solid transparent",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    fontFamily: "inherit",
-                    bgcolor: d.color,
-                    scrollSnapAlign: "center",
-                    transition: "border-color 0.15s",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: ui.fontSize.sm,
-                      fontWeight: ui.weights.semibold,
-                      color: cardFg,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {d.title || d.position + 1}
-                  </Typography>
-                </ButtonBase>
-              );
-            })}
-          </Box>
-
-          {!accessibilityGranted && (
-            <Box
-              onClick={() => {
-                useUIStore.getState().setSettingsTab(1);
-                useUIStore.getState().setView("settings");
-              }}
-              sx={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                bgcolor: `${tc(0.05)}`,
-              }}
-            >
-              <Typography
+            Grant accessibility to use desktop switcher
+          </Link>
+        </Box>
+      ) : desktops.length > 0 ? (
+        <Box
+          ref={scrollRef}
+          sx={{
+            display: "flex",
+            gap: "6px",
+            overflowX: "auto",
+            px: "calc(50% - 40px)",
+            scrollSnapType: "x mandatory",
+            "&::-webkit-scrollbar": { display: "none" },
+          }}
+        >
+          {desktops.map((d) => {
+            const cardFg = detectColorMode(d.color) === "dark" ? "#000000" : "#ffffff";
+            const isActive = d.space_id === desktop.space_id;
+            return (
+              <ButtonBase
+                key={d.space_id}
+                data-active={isActive || undefined}
+                onClick={(e) => handleClick(d.space_id, e.currentTarget)}
                 sx={{
-                  fontSize: ui.fontSize.sm,
-                  color: tc(0.5),
-                  fontWeight: ui.weights.semibold,
-                  "&:hover": { color: tc(0.7) },
+                  flexShrink: 0,
+                  px: "12px",
+                  py: "4px",
+                  border: isActive ? `1px solid rgba(0,0,0,0.15)` : "1px solid transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  fontFamily: "inherit",
+                  bgcolor: d.color,
+                  scrollSnapAlign: "center",
+                  transition: "border-color 0.15s",
                 }}
               >
-                Grant accessibility to switch desktops
-              </Typography>
-            </Box>
-          )}
+                <Typography
+                  sx={{
+                    fontSize: ui.fontSize.sm,
+                    fontWeight: ui.weights.semibold,
+                    color: cardFg,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {d.title || d.position + 1}
+                </Typography>
+              </ButtonBase>
+            );
+          })}
         </Box>
-      )}
-
-      {displayGroups.length === 0 && (
+      ) : displayGroups.length === 0 ? (
         <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.25), px: "6px" }}>
           No desktops found
         </Typography>
-      )}
+      ) : null}
     </>
   );
 }

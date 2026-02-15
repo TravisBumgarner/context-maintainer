@@ -21,17 +21,17 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", p: "4px", gap: "4px" }}>
       {/* ── Queue ── */}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: "8px", bgcolor: "rgba(0,0,0,0.04)" }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: "8px", bgcolor: "rgba(0,0,0,0.04)", borderTopRightRadius: 8 }}>
         <QueuePanel desktopId={desktop.space_id} />
       </Box>
 
       {/* ── Timer ── */}
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "auto", alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.04)" }}>
+      <Box sx={{ height: 60, display: "flex", flexShrink: 0, alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.04)" }}>
         <TimerPanel />
       </Box>
 
       {/* ── Desktops ── */}
-      <Box sx={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', px: "8px", flexShrink: 0, bgcolor: "rgba(0,0,0,0.04)" }}>
+      <Box sx={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', px: "8px", flexShrink: 0, bgcolor: "rgba(0,0,0,0.04)", borderBottomRightRadius: 8 }}>
         <DesktopsPanel displayIndex={displayIndex} />
       </Box>
     </Box>

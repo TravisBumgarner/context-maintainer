@@ -1,4 +1,5 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
+import { PlayArrow, Pause, Replay } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { useShallow } from "zustand/react/shallow";
 import { formatPreset, formatCountdown } from "../../../utils";
@@ -8,13 +9,15 @@ export default function TimerPanel() {
   const { tc, ui } = useTheme().custom;
   const {
     startTimer,
-    cancelTimer,
+    pauseTimer,
+    resumeTimer,
+    resetTimer,
     populateFromPreset,
     setHours,
     setMinutes,
     setSeconds,
   } = useTimerStore();
-  const { hours, minutes, seconds, running, remaining } = useTimerStore(
+  const { hours, minutes, seconds, running, paused, remaining } = useTimerStore(
     useShallow((s) => {
       const t = s.timers[s.activeDesktop];
       return {
@@ -22,139 +25,112 @@ export default function TimerPanel() {
         minutes: t?.minutes ?? 0,
         seconds: t?.seconds ?? 0,
         running: t?.running ?? false,
+        paused: t?.paused ?? false,
         remaining: t?.remaining ?? 0,
       };
     }),
   );
   const { timerPresets, notifySystem, notifyFlash } = useSettingsStore();
 
+  const active = running || paused;
+  const hasTime = hours > 0 || minutes > 0 || seconds > 0;
+
   const fieldInputSx = {
-    width: 48,
+    width: 28,
     textAlign: "center",
     fontSize: ui.fontSize.xl,
-    fontWeight: ui.weights.bold,
+    fontWeight: ui.weights.normal,
     fontFamily: ui.timerFontFamily,
-    color: tc(0.7),
+    color: tc(1),
     bgcolor: "transparent",
     border: "none",
-    p: "4px 2px",
+    p: "4px 0",
     outline: "none",
-    MozAppearance: "textfield",
-    "&::-webkit-inner-spin-button, &::-webkit-outer-spin-button": {
-      WebkitAppearance: "none",
-      margin: 0,
+    "&::placeholder": {
+      color: tc(1),
+      opacity: 1,
     },
   } as const;
 
-  if (running) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "14px",
-          mt: "10px",
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: ui.fontSize.timer,
-            fontWeight: ui.weights.bold,
-            fontFamily: ui.timerFontFamily,
-            color: tc(0.7),
-            fontVariantNumeric: "tabular-nums",
-            letterSpacing: ui.letterSpacing.wide,
-          }}
-        >
-          {formatCountdown(remaining)}
-        </Typography>
-        <Button
-          onClick={cancelTimer}
-          sx={{
-            px: "14px",
-            py: "4px",
-            "&:hover": { color: tc(0.7) },
-          }}
-        >
-          Cancel
-        </Button>
-      </Box>
-    );
-  }
+  const iconBtnSx = {
+    p: "4px",
+    fontSize: 18,
+    color: tc(0.45),
+    "&:hover": { color: tc(0.7) },
+    "&:disabled": { opacity: 0.3 },
+  };
+
+  const timeSx = {
+    fontSize: ui.fontSize.xl,
+    fontWeight: ui.weights.normal,
+    fontFamily: ui.timerFontFamily,
+    color: tc(1),
+    fontVariantNumeric: "tabular-nums",
+  };
 
   return (
-    <>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "4px",
-          mb: "12px",
-        }}
-      >
-        {[
-          { value: hours, set: setHours, max: 99, label: "HH" },
-          { value: minutes, set: setMinutes, max: 59, label: "MM" },
-          { value: seconds, set: setSeconds, max: 59, label: "SS" },
-        ].map((field, i) => (
-          <Box key={field.label} sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            {i > 0 && (
-              <Typography sx={{ fontSize: ui.fontSize.xl, fontWeight: ui.weights.bold, fontFamily: ui.timerFontFamily, color: tc(0.35), pb: "14px" }}>:</Typography>
-            )}
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <Box
-                component="input"
-                type="number"
-                min={0}
-                max={field.max}
-                value={field.value}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  field.set(Math.max(0, Math.min(field.max, parseInt(e.target.value) || 0)))
-                }
-                sx={fieldInputSx}
-              />
-              <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35), mt: "2px", fontWeight: ui.weights.semibold }}>
-                {field.label}
-              </Typography>
-            </Box>
-          </Box>
-        ))}
+    <Box sx={{ width: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+      {/* Row 1: time + action buttons */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          {active ? (
+            <Typography sx={timeSx}>{formatCountdown(remaining)}</Typography>
+          ) : (
+            [{value: hours, set: setHours, max: 99, label: "HH"},
+             {value: minutes, set: setMinutes, max: 59, label: "MM"},
+             {value: seconds, set: setSeconds, max: 59, label: "SS"},
+            ].map((field, i) => (
+              <Box key={field.label} sx={{ display: "flex", alignItems: "center" }}>
+                {i > 0 && (
+                  <Typography sx={{ fontSize: ui.fontSize.xl, fontFamily: ui.timerFontFamily, color: tc(0.35) }}>:</Typography>
+                )}
+                <Box
+                  component="input"
+                  type="text"
+                  inputMode="numeric"
+                  value={!hasTime ? "" : String(field.value).padStart(2, "0")}
+                  placeholder={field.label}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const num = parseInt(e.target.value) || 0;
+                    field.set(Math.max(0, Math.min(field.max, num)));
+                  }}
+                  sx={fieldInputSx}
+                />
+              </Box>
+            ))
+          )}
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", ml: "6px" }}>
+          {active && running ? (
+            <Tooltip title="Pause" arrow><IconButton onClick={pauseTimer} sx={iconBtnSx}><Pause fontSize="inherit" /></IconButton></Tooltip>
+          ) : active && paused ? (
+            <Tooltip title="Resume" arrow><IconButton onClick={() => resumeTimer(notifySystem, notifyFlash)} sx={iconBtnSx}><PlayArrow fontSize="inherit" /></IconButton></Tooltip>
+          ) : (
+            <Tooltip title="Start" arrow><span><IconButton onClick={() => startTimer(notifySystem, notifyFlash)} disabled={!hasTime} sx={iconBtnSx}><PlayArrow fontSize="inherit" /></IconButton></span></Tooltip>
+          )}
+          <Tooltip title="Reset" arrow><span><IconButton onClick={resetTimer} disabled={!active} sx={iconBtnSx}><Replay fontSize="inherit" /></IconButton></span></Tooltip>
+        </Box>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "center", gap: "6px", mb: "14px" }}>
-        {timerPresets.map((p, i) => (
-          <Button
-            key={i}
-            onClick={() => populateFromPreset(p)}
-            sx={{
-              px: "8px",
-              py: "2px",
-              "&:hover": { color: tc(0.7) },
-            }}
-          >
-            {formatPreset(p)}
-          </Button>
-        ))}
-      </Box>
-
-      <Button
-        onClick={() => startTimer(notifySystem, notifyFlash)}
-        disabled={hours === 0 && minutes === 0 && seconds === 0}
-        sx={{
-          display: "block",
-          mx: "auto",
-          px: "14px",
-          py: "4px",
-          fontSize: 12,
-          color: tc(0.55),
-          "&:hover": { color: tc(0.7) },
-          "&:disabled": { opacity: 0.4 },
-        }}
-      >
-        Start
-      </Button>
-    </>
+      {/* Row 2: presets */}
+      {!active && (
+        <Box sx={{ display: "flex", justifyContent: "center", gap: "6px", mt: "4px" }}>
+          {timerPresets.map((p, i) => (
+            <Button
+              key={i}
+              onClick={() => populateFromPreset(p)}
+              sx={{
+                px: "8px",
+                py: "2px",
+                "&:hover": { color: tc(0.7) },
+              }}
+            >
+              {formatPreset(p)}
+            </Button>
+          ))}
+        </Box>
+      )}
+    </Box>
   );
 }
