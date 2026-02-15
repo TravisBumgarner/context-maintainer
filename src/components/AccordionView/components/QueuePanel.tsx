@@ -1,4 +1,4 @@
-import { Box, InputBase, Typography } from "@mui/material";
+import { Box, IconButton, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Reorder } from "framer-motion";
 import TodoItem from "./TodoItem";
@@ -44,10 +44,24 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
             flex: 1,
             minWidth: 0,
             p: 0,
-            "& input": { p: 0 },
-            "& input::placeholder": { color: tc(0.3) },
+            border: `1px solid ${tc(0.2)}`,
+            px: "6px",
+            "& input": { p: "3px 0" },
+            "& input::placeholder": { color: tc(0.35) },
+            "&.Mui-focused": { borderColor: tc(0.45) },
           }}
         />
+        <IconButton
+          onClick={() => addTodo(desktopId)}
+          disabled={!newText.trim()}
+          sx={{
+            flex: "0 0 auto",
+            fontSize: ui.fontSize.lg,
+            color: newText.trim() ? tc(0.45) : tc(0.15),
+          }}
+        >
+          +
+        </IconButton>
       </Box>
 
       <Reorder.Group

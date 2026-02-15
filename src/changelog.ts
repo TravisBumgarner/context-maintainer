@@ -6,6 +6,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.4.1",
+        date: "2026-02-14",
+        changes: [
+            {
+                category: "Changed",
+                items: [
+                    "Removed setup screen; app launches directly to home view",
+                    "Desktop switcher grays out when accessibility not granted",
+                    "Add task input now has a visible border and + button",
+                    "App no longer redirects to What's New on startup",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.4.0",
         date: "2026-02-14",
         changes: [

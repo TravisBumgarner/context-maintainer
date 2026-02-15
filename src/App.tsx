@@ -136,7 +136,7 @@ function App() {
     if (saved !== "top-right") useUIStore.getState().snapToMonitor(saved);
   }, []);
 
-  // ── What's New check ─────────────────────────────────
+  // ── What's New version tracking ─────────────────────
   useEffect(() => {
     if (view !== "todos") return;
     const latest = changelog[0];
@@ -144,10 +144,8 @@ function App() {
     const lastSeen = localStorage.getItem("lastSeenVersion");
     if (lastSeen !== latest.version) {
       localStorage.setItem("lastSeenVersion", latest.version);
-      useUIStore.getState().setShowWhatsNew(true);
-      setView("info");
     }
-  }, [view, setView]);
+  }, [view]);
 
   // ── Update check ────────────────────────────────────
   useEffect(() => {
