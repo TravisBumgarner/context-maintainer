@@ -6,6 +6,34 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.5.1",
+        date: "2026-02-15",
+        changes: [
+            {
+                category: "Added",
+                items: [
+                    "Close (X) button in sidebar next to minimize",
+                    "Active page highlight in sidebar",
+                ],
+            },
+            {
+                category: "Changed",
+                items: [
+                    "About tab: inline links, shorter copy",
+                    "Settings tab switchers sized to content",
+                    "Timer inputs toned down (smaller, lighter)",
+                ],
+            },
+            {
+                category: "Fixed",
+                items: [
+                    "Desktop tab not centering on switch",
+                    "Setup view missing themed background",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.5.0",
         date: "2026-02-15",
         changes: [

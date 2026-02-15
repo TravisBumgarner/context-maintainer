@@ -4,10 +4,6 @@ import { useTheme } from "@mui/material/styles";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { changelog } from "../changelog";
 
-const links = [
-    { label: "GitHub", url: "https://github.com/TravisBumgarner/context-maintainer" },
-];
-
 export default function InfoView() {
     const { tc, ui } = useTheme().custom;
     const [expanded, setExpanded] = useState<string | null>(changelog[0]?.version ?? null);
@@ -21,48 +17,28 @@ export default function InfoView() {
                 py: "12px",
             }}
         >
-            <Link
-                component="button"
-                onClick={() => openUrl("https://www.linkedin.com/in/travisbumgarner")}
-                sx={{
-                    fontSize: ui.fontSize.sm,
-                    color: tc(0.4),
-                    mb: "12px",
-                    display: "block",
-                    "&:hover": { color: tc(0.6) },
-                }}
-            >
-                Built by Travis Bumgarner — open to new roles
-            </Link>
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "4px", mb: "16px" }}>
-                {links.map((link) => (
-                    <Box
-                        key={link.label}
-                        component="button"
-                        onClick={() => openUrl(link.url)}
-                        sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            p: "6px 8px",
-                            border: `1px solid ${tc(0.1)}`,
-                            bgcolor: "rgba(0,0,0,0.04)",
-                            cursor: "pointer",
-                            fontFamily: "inherit",
-                            textAlign: "left",
-                            "&:hover": { bgcolor: tc(0.08) },
-                        }}
-                    >
-                        <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: tc(0.6) }}>
-                            {link.label}
-                        </Typography>
-                        <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35) }}>
-                            {link.url.replace("https://", "")}
-                        </Typography>
-                    </Box>
-                ))}
-            </Box>
+            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), mb: "4px" }}>
+                Built by Travis Bumgarner (
+                <Link
+                    component="button"
+                    onClick={() => openUrl("https://www.linkedin.com/in/travisbumgarner")}
+                    sx={{ fontSize: "inherit", color: tc(0.4), "&:hover": { color: tc(0.6) }, verticalAlign: "baseline" }}
+                >
+                    hiring?
+                </Link>
+                )
+            </Typography>
+            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), mb: "16px" }}>
+                Open Source (
+                <Link
+                    component="button"
+                    onClick={() => openUrl("https://github.com/TravisBumgarner/context-maintainer")}
+                    sx={{ fontSize: "inherit", color: tc(0.4), "&:hover": { color: tc(0.6) }, verticalAlign: "baseline" }}
+                >
+                    GitHub
+                </Link>
+                )
+            </Typography>
 
             {changelog.map((entry) => {
                 const isOpen = expanded === entry.version;
