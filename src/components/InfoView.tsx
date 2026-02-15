@@ -22,8 +22,22 @@ export default function InfoView() {
                 py: "12px",
             }}
         >
-            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), mb: "12px" }}>
+            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), mb: "4px" }}>
                 Context Maintainer — per-desktop task lists for macOS.
+            </Typography>
+            <Typography
+                component="span"
+                onClick={() => openUrl("https://www.linkedin.com/in/travisbumgarner")}
+                sx={{
+                    fontSize: ui.fontSize.sm,
+                    color: tc(0.4),
+                    cursor: "pointer",
+                    mb: "12px",
+                    display: "block",
+                    "&:hover": { color: tc(0.6) },
+                }}
+            >
+                Built by Travis Bumgarner — open to new roles
             </Typography>
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: "4px", mb: "16px" }}>
