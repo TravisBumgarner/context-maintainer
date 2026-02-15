@@ -11,7 +11,25 @@ export const changelog: ChangelogEntry[] = [
         changes: [
             {
                 category: "Added",
-                items: ["Close (X) button in sidebar next to minimize"],
+                items: [
+                    "Close (X) button in sidebar next to minimize",
+                    "Active page highlight in sidebar",
+                ],
+            },
+            {
+                category: "Changed",
+                items: [
+                    "About tab: inline links, shorter copy",
+                    "Settings tab switchers sized to content",
+                    "Timer inputs toned down (smaller, lighter)",
+                ],
+            },
+            {
+                category: "Fixed",
+                items: [
+                    "Desktop tab not centering on switch",
+                    "Setup view missing themed background",
+                ],
             },
         ],
     },
