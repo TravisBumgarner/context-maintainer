@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, IconButton, Popover, Tooltip } from "@mui/material";
-import { InfoOutline, Tune, LightbulbOutline, Remove, Warning, OpenWith, History } from "@mui/icons-material";
+import { InfoOutline, Tune, LightbulbOutline, Remove, Close, Warning, OpenWith, History } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import type { ReactNode } from "react";
 import { useUIStore } from "../../../stores";
@@ -74,6 +74,11 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
         >
           {/* Row 1: minimize */}
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Tooltip title="Close" arrow placement="right">
+              <IconButton onClick={() => currentWindow.close()} sx={btnSx}>
+                <Close fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Hide" arrow placement="right">
               <IconButton onClick={() => currentWindow.hide()} sx={btnSx}>
                 <Remove fontSize="inherit" />
