@@ -1,7 +1,7 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
-import { useDesktopStore, useSettingsStore, useTodoStore, useUIStore } from "../../../../../stores";
+import { useDesktopStore, useSettingsStore, useTodoStore } from "../../../../../stores";
 
 interface PermissionsTabProps {
     confirmClear: boolean;
@@ -14,7 +14,6 @@ export function PermissionsTab({ confirmClear, setConfirmClear }: PermissionsTab
     const { desktop, setDesktop } = useDesktopStore();
     const { accessibilityGranted, setAccessibilityGranted, refreshSpaces } = useSettingsStore();
     const { setTodos, setTitle } = useTodoStore();
-    const { setView } = useUIStore();
 
     return (
         <>
@@ -44,19 +43,6 @@ export function PermissionsTab({ confirmClear, setConfirmClear }: PermissionsTab
                         </Button>
                     </Box>
                 )}
-            </Box>
-
-            {/* Setup */}
-            <Box sx={{ mb: "16px" }}>
-                <Typography sx={{ fontSize: ui.fontSize.xs, fontWeight: ui.weights.semibold, color: tc(0.4), mb: "6px", textTransform: "uppercase", letterSpacing: ui.letterSpacing.wide }}>
-                    Setup
-                </Typography>
-                <Button
-                    variant="contained"
-                    onClick={() => setView("setup")}
-                >
-                    Show Setup Again
-                </Button>
             </Box>
 
             {/* Data */}

@@ -57,7 +57,6 @@ export interface DisplayGroup {
 
 export type ViewType =
   | "loading"
-  | "setup"
   | "session-chooser"
   | "todos"
   | "history-picker"
