@@ -22,7 +22,7 @@ export default function SettingsPanel() {
                         key={label}
                         label={label}
                         sx={{
-                            flex: 1,
+                            minWidth: "unset",
                             px: "10px",
                             "&.Mui-selected": {
                                 backgroundColor: "rgba(0,0,0,0.04)",
