@@ -18,6 +18,7 @@ import AccordionView from "./components/AccordionView";
 import SettingsView from "./components/SettingsView";
 import InfoView from "./components/InfoView";
 import UpdateBanner from "./components/UpdateBanner";
+import WhatsNewModal from "./components/WhatsNewModal";
 import HeaderNav from "./components/AccordionView/components/HeaderNav";
 import Layout from "./components/AccordionView/components/Layout";
 
@@ -146,6 +147,7 @@ function App() {
     const lastSeen = localStorage.getItem("lastSeenVersion");
     if (lastSeen !== latest.version) {
       localStorage.setItem("lastSeenVersion", latest.version);
+      useUIStore.getState().setShowWhatsNew(true);
     }
   }, [view]);
 
@@ -203,6 +205,7 @@ function App() {
         {view === "settings" && <SettingsView />}
         {view === "info" && <InfoView />}
         <UpdateBanner />
+        <WhatsNewModal />
       </Layout>
     </ThemeProvider>
   );
