@@ -42,75 +42,86 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
   return (
     <>
       {desktops.length > 0 && (
-        <Box
-          ref={scrollRef}
-          sx={{
-            display: "flex",
-            gap: "6px",
-            overflowX: "auto",
-            px: "calc(50% - 40px)",
-            scrollSnapType: "x mandatory",
-            "&::-webkit-scrollbar": { display: "none" },
-          }}
-        >
-          {desktops.map((d) => {
-            const cardFg = detectColorMode(d.color) === "dark" ? "#000000" : "#ffffff";
-            const isActive = d.space_id === desktop.space_id;
-            const disabled = !accessibilityGranted && !isActive;
-            return (
-              <ButtonBase
-                key={d.space_id}
-                data-active={isActive || undefined}
-                disabled={disabled}
-                onClick={(e) => handleClick(d.space_id, e.currentTarget)}
-                sx={{
-                  flexShrink: 0,
-                  px: "12px",
-                  py: "4px",
-                  border: isActive ? `1px solid rgba(0,0,0,0.15)` : "1px solid transparent",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  fontFamily: "inherit",
-                  bgcolor: d.color,
-                  scrollSnapAlign: "center",
-                  transition: "border-color 0.15s",
-                  opacity: disabled ? 0.35 : 1,
-                }}
-              >
-                <Typography
+        <Box sx={{ position: "relative" }}>
+          <Box
+            ref={scrollRef}
+            sx={{
+              display: "flex",
+              gap: "6px",
+              overflowX: "auto",
+              px: "calc(50% - 40px)",
+              scrollSnapType: "x mandatory",
+              "&::-webkit-scrollbar": { display: "none" },
+              filter: !accessibilityGranted ? "blur(2px)" : "none",
+            }}
+          >
+            {desktops.map((d) => {
+              const cardFg = detectColorMode(d.color) === "dark" ? "#000000" : "#ffffff";
+              const isActive = d.space_id === desktop.space_id;
+              return (
+                <ButtonBase
+                  key={d.space_id}
+                  data-active={isActive || undefined}
+                  disabled={!accessibilityGranted}
+                  onClick={(e) => handleClick(d.space_id, e.currentTarget)}
                   sx={{
-                    fontSize: ui.fontSize.sm,
-                    fontWeight: ui.weights.semibold,
-                    color: cardFg,
-                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    px: "12px",
+                    py: "4px",
+                    border: isActive ? `1px solid rgba(0,0,0,0.15)` : "1px solid transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontFamily: "inherit",
+                    bgcolor: d.color,
+                    scrollSnapAlign: "center",
+                    transition: "border-color 0.15s",
                   }}
                 >
-                  {d.title || d.position + 1}
-                </Typography>
-              </ButtonBase>
-            );
-          })}
-        </Box>
-      )}
+                  <Typography
+                    sx={{
+                      fontSize: ui.fontSize.sm,
+                      fontWeight: ui.weights.semibold,
+                      color: cardFg,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {d.title || d.position + 1}
+                  </Typography>
+                </ButtonBase>
+              );
+            })}
+          </Box>
 
-      {!accessibilityGranted && desktops.length > 0 && (
-        <Typography
-          sx={{
-            fontSize: ui.fontSize.xs,
-            color: tc(0.3),
-            textAlign: "center",
-            mt: "4px",
-            cursor: "pointer",
-            "&:hover": { color: tc(0.5) },
-          }}
-          onClick={() => {
-            useUIStore.getState().setSettingsTab(1);
-            useUIStore.getState().setView("settings");
-          }}
-        >
-          Grant accessibility to switch desktops
-        </Typography>
+          {!accessibilityGranted && (
+            <Box
+              onClick={() => {
+                useUIStore.getState().setSettingsTab(1);
+                useUIStore.getState().setView("settings");
+              }}
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                bgcolor: `${tc(0.05)}`,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: ui.fontSize.sm,
+                  color: tc(0.5),
+                  fontWeight: ui.weights.semibold,
+                  "&:hover": { color: tc(0.7) },
+                }}
+              >
+                Grant accessibility to switch desktops
+              </Typography>
+            </Box>
+          )}
+        </Box>
       )}
 
       {displayGroups.length === 0 && (
