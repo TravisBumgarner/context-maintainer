@@ -14,7 +14,6 @@ export default function HeaderNav() {
     toggleMinimize,
     snapToMonitor,
     selectAnchor,
-    setView,
   } = useUIStore();
 
   const handleAnchorSelect = (pos: typeof anchorPos) => {
@@ -106,21 +105,6 @@ export default function HeaderNav() {
                 ))}
               </Box>
             </Popover>
-            <Tooltip title="Home" arrow>
-              <IconButton onClick={() => setView("todos")} sx={btnSx}>
-                ⌂
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Info" arrow>
-              <IconButton onClick={() => setView("info")} sx={btnSx}>
-                i
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Settings" arrow>
-              <IconButton onClick={() => setView("settings")} sx={btnSx}>
-                ⚙
-              </IconButton>
-            </Tooltip>
           </>
         )}
         <Tooltip title={collapsed ? "Expand" : "Collapse"} arrow>
