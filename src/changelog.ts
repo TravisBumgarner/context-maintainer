@@ -10,8 +10,12 @@ export const changelog: ChangelogEntry[] = [
         date: "2026-02-16",
         changes: [
             {
-                category: "Added",
-                items: [],
+                category: "Changed",
+                items: [
+                    "Instant desktop switching via native macOS event listener instead of 200ms polling",
+                    "Window position detection slowed to 2s interval (from 200ms)",
+                    "Dev and prod builds now use separate data files",
+                ],
             },
         ],
     },
