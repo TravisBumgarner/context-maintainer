@@ -26,7 +26,19 @@ source "$ENV_FILE"
 VERSION=$(grep '"version"' src-tauri/tauri.conf.json | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
 echo "Building Context Maintainer v${VERSION}..."
 
-# Build with Apple signing + updater signing
+# Validate Apple notarization credentials
+for var in APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+  if [ -z "${!var:-}" ]; then
+    echo "Error: $var not set in .env"
+    exit 1
+  fi
+done
+
+# Build with Apple code signing, notarization, and updater signing
+APPLE_SIGNING_IDENTITY="Developer ID Application: Travis Bumgarner (669MM5WVSV)" \
+APPLE_ID="${APPLE_ID}" \
+APPLE_PASSWORD="${APPLE_PASSWORD}" \
+APPLE_TEAM_ID="${APPLE_TEAM_ID}" \
 TAURI_SIGNING_PRIVATE_KEY=$(cat "$KEY_FILE") \
 TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" \
   npm run tauri build
