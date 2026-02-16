@@ -10,39 +10,9 @@ export const changelog: ChangelogEntry[] = [
         date: "2026-02-16",
         changes: [
             {
-                category: "Changed",
+                category: "Improved",
                 items: [
-                    "Instant desktop switching via native macOS event listener instead of 200ms polling",
-                    "Window position detection slowed to 2s interval (from 200ms)",
-                    "Dev and prod builds now use separate data files",
-                ],
-            },
-        ],
-    },
-    {
-        version: "0.5.1",
-        date: "2026-02-15",
-        changes: [
-            {
-                category: "Added",
-                items: [
-                    "Close (X) button in sidebar next to minimize",
-                    "Active page highlight in sidebar",
-                ],
-            },
-            {
-                category: "Changed",
-                items: [
-                    "About tab: inline links, shorter copy",
-                    "Settings tab switchers sized to content",
-                    "Timer inputs toned down (smaller, lighter)",
-                ],
-            },
-            {
-                category: "Fixed",
-                items: [
-                    "Desktop tab not centering on switch",
-                    "Setup view missing themed background",
+                    "Instant desktop switching with lower CPU usage",
                 ],
             },
         ],
@@ -54,42 +24,8 @@ export const changelog: ChangelogEntry[] = [
             {
                 category: "Added",
                 items: [
-                    "History page for completed tasks, grouped by desktop",
-                    "Updater manifest (latest.json) now included in releases",
-                ],
-            },
-            {
-                category: "Changed",
-                items: [
-                    "Completed tasks move to History instead of staying in queue",
-                    "Left sidebar styling with background and rounded corners",
-                ],
-            },
-        ],
-    },
-    {
-        version: "0.4.1",
-        date: "2026-02-14",
-        changes: [
-            {
-                category: "Changed",
-                items: [
-                    "Desktop switcher grays out when accessibility not granted",
-                    "Add task input now has a visible border and + button",
-                    "App no longer redirects to What's New on startup",
-                ],
-            },
-        ],
-    },
-    {
-        version: "0.4.0",
-        date: "2026-02-14",
-        changes: [
-            {
-                category: "Added",
-                items: [
-                    "File-based logging via tauri-plugin-log for debugging",
-                    "Updater check logging (success, failure, and version info)",
+                    "Task history — completed tasks saved and grouped by desktop",
+                    "Auto-updates",
                 ],
             },
         ],
@@ -99,63 +35,10 @@ export const changelog: ChangelogEntry[] = [
         date: "2026-02-14",
         changes: [
             {
-                category: "UI Redesign",
+                category: "Redesign",
                 items: [
-                    "Focus theme: dense monospace UI with sharp edges",
-                    "Replaced accordion layout with fixed three-panel view (queue, timer, desktops)",
-                    "Subtle panel backgrounds instead of horizontal dividers",
-                    "Square corners throughout via global MUI theme",
-                    "Unified header nav across all views",
-                    "Draggable header bar for window repositioning",
-                ],
-            },
-            {
-                category: "Changed",
-                items: [
-                    "Desktop labels now show the first active todo instead of a separate title",
-                    "Desktop bar shows only current monitor",
-                    "Merged What's New and About into a single Info page",
-                    "Setup view restyled to match the rest of the app",
-                    "Hidden macOS title bar traffic lights",
-                ],
-            },
-            {
-                category: "Removed",
-                items: [
-                    "Removed 'What is this screen about' input field",
-                    "Removed color cycle button from theme settings",
-                ],
-            },
-        ],
-    },
-    {
-        version: "0.2.2",
-        date: "2026-02-14",
-        changes: [
-            {
-                category: "Added",
-                items: [
-                    "Testing version bumps.",
-                ],
-            },
-        ],
-    },
-    {
-        version: "0.1.0",
-        date: "2025-01-01",
-        changes: [
-            {
-                category: "Added",
-                items: [
-                    "Per-desktop todo lists that automatically switch with macOS virtual desktops",
-                    "Automatic desktop detection via macOS CoreGraphics APIs",
-                    "Custom titles and color themes per desktop",
-                    "Drag-and-drop task reordering",
-                    "Window anchoring to 9 screen positions",
-                    "Collapsible window mode",
-                    "Multi-monitor support",
-                    "Desktop overview with task counts",
-                    "10 built-in color palettes",
+                    "New compact three-panel layout (queue, timer, desktops)",
+                    "Draggable window",
                 ],
             },
         ],
