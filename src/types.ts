@@ -48,6 +48,7 @@ export interface Settings {
   timer_presets: number[];
   notify_system: boolean;
   notify_flash: boolean;
+  hidden_panels: string[];
 }
 
 export interface DisplayGroup {
@@ -70,4 +71,5 @@ export type ViewType =
   | "history-picker"
   | "history"
   | "settings"
-  | "info";
+  | "info"
+  | "anchor";

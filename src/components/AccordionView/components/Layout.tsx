@@ -1,11 +1,9 @@
-import { useState } from "react";
-import { Box, IconButton, Popover, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { InfoOutline, Tune, LightbulbOutline, Remove, Close, Warning, OpenWith, History } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import type { ReactNode } from "react";
 import { useUIStore } from "../../../stores";
 import { currentWindow } from "../../../utils";
-import { ANCHOR_POSITIONS, ANCHOR_LABELS, ANCHOR_NAMES } from "../../../constants";
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,15 +13,9 @@ interface LayoutProps {
 export default function Layout({ children, timerFlashing }: LayoutProps) {
   const theme = useTheme();
   const { tc } = theme.custom;
-  const { view, offMonitor, anchorPos, setView, snapToMonitor, selectAnchor } = useUIStore();
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const { view, offMonitor, setView, snapToMonitor } = useUIStore();
 
-  const showSidebar = view === "todos" || view === "settings" || view === "info" || view === "history";
-
-  const handleAnchorSelect = (pos: typeof anchorPos) => {
-    selectAnchor(pos);
-    setAnchorEl(null);
-  };
+  const showSidebar = view === "todos" || view === "settings" || view === "info" || view === "history" || view === "anchor";
 
   const btnSx = {
     p: "2px",
@@ -115,58 +107,13 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
           {/* Row 3: anchor picker */}
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <Tooltip title="Anchor position" arrow placement="right">
-                <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={btnSx}>
+                <IconButton
+                  onClick={() => setView("anchor")}
+                  sx={{ ...btnSx, ...(view === "anchor" && { color: tc(0.7) }) }}
+                >
                   <OpenWith fontSize="inherit" />
                 </IconButton>
               </Tooltip>
-              <Popover
-                open={Boolean(anchorEl)}
-                anchorEl={anchorEl}
-                onClose={() => setAnchorEl(null)}
-                anchorOrigin={{ vertical: "center", horizontal: "right" }}
-                transformOrigin={{ vertical: "center", horizontal: "left" }}
-                slotProps={{
-                  paper: {
-                    sx: {
-                      p: "8px",
-                      bgcolor: tc(0.05),
-                    },
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: "2px",
-                  }}
-                >
-                  {ANCHOR_POSITIONS.map((pos) => (
-                    <Tooltip key={pos} title={ANCHOR_NAMES[pos]} arrow>
-                      <Box
-                        component="button"
-                        onClick={() => handleAnchorSelect(pos)}
-                        sx={{
-                          width: 36,
-                          height: 28,
-                          border: "none",
-                          background: "none",
-                          color: tc(pos === anchorPos ? 0.9 : 0.35),
-                          fontSize: 16,
-                          fontFamily: "inherit",
-                          cursor: "pointer",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          p: 0,
-                          "&:hover": { color: tc(0.7) },
-                        }}
-                      >
-                        {ANCHOR_LABELS[pos]}
-                      </Box>
-                    </Tooltip>
-                  ))}
-                </Box>
-              </Popover>
             </Box>
         </Box>
       )}

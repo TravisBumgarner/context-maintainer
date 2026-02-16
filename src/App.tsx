@@ -19,6 +19,7 @@ import AccordionView from "./components/AccordionView";
 import SettingsView from "./components/SettingsView";
 import InfoView from "./components/InfoView";
 import HistoryView from "./components/HistoryView";
+import AnchorView from "./components/AnchorView";
 import UpdateBanner from "./components/UpdateBanner";
 import WhatsNewModal from "./components/WhatsNewModal";
 import Layout from "./components/AccordionView/components/Layout";
@@ -58,6 +59,7 @@ function App() {
         settings.setTimerPresets(() => s.timer_presets ?? [60, 300, 600]);
         settings.setNotifySystem(s.notify_system ?? true);
         settings.setNotifyFlash(s.notify_flash ?? true);
+        settings.setHiddenPanels(s.hidden_panels ?? []);
         if (!s.setup_complete) {
           info("Showing setup view");
           setView("setup");
@@ -224,6 +226,7 @@ function App() {
         {view === "settings" && <SettingsView />}
         {view === "history" && <HistoryView />}
         {view === "info" && <InfoView />}
+        {view === "anchor" && <AnchorView />}
         <UpdateBanner />
         <WhatsNewModal />
       </Layout>

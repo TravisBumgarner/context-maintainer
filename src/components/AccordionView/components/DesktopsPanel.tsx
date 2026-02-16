@@ -20,17 +20,25 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
 
   // Scroll active desktop to center when it changes
   useEffect(() => {
+    // Double rAF ensures React has flushed the DOM update before we query
     const id = requestAnimationFrame(() => {
-      const container = scrollRef.current;
-      if (!container) return;
-      const activeEl = container.querySelector("[data-active='true']") as HTMLElement | null;
-      if (activeEl) {
-        const scrollLeft = activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
-        container.scrollTo({ left: scrollLeft, behavior: "smooth" });
-      }
+      const id2 = requestAnimationFrame(() => {
+        const container = scrollRef.current;
+        if (!container) return;
+        const activeEl = container.querySelector("[data-active='true']") as HTMLElement | null;
+        if (activeEl) {
+          const scrollLeft = activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
+          container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+        }
+      });
+      innerIdRef.current = id2;
     });
-    return () => cancelAnimationFrame(id);
-  }, [desktop.space_id]);
+    const innerIdRef = { current: 0 };
+    return () => {
+      cancelAnimationFrame(id);
+      cancelAnimationFrame(innerIdRef.current);
+    };
+  }, [desktop.space_id, desktops]);
 
   const handleClick = useCallback((spaceId: number, el: HTMLElement) => {
     if (!accessibilityGranted) return;

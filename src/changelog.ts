@@ -6,6 +6,27 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.6.1",
+        date: "2026-02-16",
+        changes: [
+            {
+                category: "Added",
+                items: [
+                    "General settings tab with panel visibility toggles",
+                    "Anchor position page replaces popover",
+                ],
+            },
+            {
+                category: "Improved",
+                items: [
+                    "Consistent panel backgrounds across all views",
+                    "Window snaps flush to monitor edges",
+                    "Active desktop centers reliably on switch",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.6.0",
         date: "2026-02-16",
         changes: [

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Tabs, Tab } from "@mui/material";
 import { ThemesTab } from "./components/ThemesTab";
 import { PermissionsTab } from "./components/PermissionsTab";
-import { TimerTab } from "./components/TimerTab";
+import { GeneralTab } from "./components/GeneralTab";
 import { useUIStore } from "../../../../stores";
 
 export default function SettingsPanel() {
@@ -17,7 +17,7 @@ export default function SettingsPanel() {
                 onChange={(_, v) => setSettingsTab(v)}
                 sx={{ mb: "10px" }}
             >
-                {["Themes", "Permissions", "Timer"].map((label) => (
+                {["General", "Themes", "Permissions"].map((label) => (
                     <Tab
                         key={label}
                         label={label}
@@ -32,13 +32,13 @@ export default function SettingsPanel() {
                 ))}
             </Tabs>
 
-            {settingsTab === 0 && <ThemesTab />}
+            {settingsTab === 0 && <GeneralTab />}
 
-            {settingsTab === 1 && (
+            {settingsTab === 1 && <ThemesTab />}
+
+            {settingsTab === 2 && (
                 <PermissionsTab confirmClear={confirmClear} setConfirmClear={setConfirmClear} />
             )}
-
-            {settingsTab === 2 && <TimerTab />}
         </>
     );
 }
