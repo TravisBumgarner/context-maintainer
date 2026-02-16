@@ -35,7 +35,7 @@ for var in APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
 done
 
 # Build with Apple code signing, notarization, and updater signing
-APPLE_SIGNING_IDENTITY="Developer ID Application: Travis Bumgarner (669MM5WVSV)" \
+APPLE_SIGNING_IDENTITY="F2302F8084F9EBB377CFB186E9236109F3C1F6D3" \
 APPLE_ID="${APPLE_ID}" \
 APPLE_PASSWORD="${APPLE_PASSWORD}" \
 APPLE_TEAM_ID="${APPLE_TEAM_ID}" \
