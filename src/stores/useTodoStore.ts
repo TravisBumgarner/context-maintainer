@@ -19,7 +19,6 @@ interface TodoState {
   saveTodos: (desktopId: number, items: TodoItem[]) => void;
   saveTitle: (desktopId: number, title: string) => void;
 
-  syncTitleFromTodos: (desktopId: number, items: TodoItem[]) => void;
   addTodo: (desktopId: number) => void;
   toggleDone: (id: string, desktopId: number) => void;
   updateText: (id: string, text: string, desktopId: number) => void;
@@ -65,18 +64,8 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     invoke("save_title", { desktop: desktopId, title }).catch(() => {});
   },
 
-  syncTitleFromTodos: (desktopId, items) => {
-    const firstActive = items.find((t) => !t.done);
-    const newTitle = firstActive?.text ?? "";
-    const { title, saveTitle } = get();
-    if (newTitle !== title) {
-      set({ title: newTitle });
-      saveTitle(desktopId, newTitle);
-    }
-  },
-
   addTodo: (desktopId) => {
-    const { newText, todos, saveTodos, syncTitleFromTodos } = get();
+    const { newText, todos, saveTodos } = get();
     const text = newText.trim();
     if (!text) return;
 
@@ -87,13 +76,12 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   toggleDone: (id, desktopId) => {
-    const { todos, saveTodos, syncTitleFromTodos } = get();
+    const { todos, saveTodos } = get();
     const item = todos.find((t) => t.id === id);
     if (!item) return;
 
@@ -106,13 +94,12 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   updateText: (id, text, desktopId) => {
-    const { todos, saveTodos, syncTitleFromTodos } = get();
+    const { todos, saveTodos } = get();
     const updated = todos.map((t) => (t.id === id ? { ...t, text } : t));
     set({ todos: updated });
 
@@ -120,13 +107,12 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   deleteTodo: (id, desktopId) => {
-    const { todos, saveTodos, syncTitleFromTodos } = get();
+    const { todos, saveTodos } = get();
     const updated = todos.filter((t) => t.id !== id);
     set({ todos: updated });
 
@@ -134,13 +120,12 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   reorderTodos: (reordered, desktopId) => {
-    const { todos, saveTodos, syncTitleFromTodos } = get();
+    const { todos, saveTodos } = get();
     const doneItems = todos.filter((t) => t.done);
     const updated = [...reordered, ...doneItems];
     set({ todos: updated });
@@ -149,7 +134,6 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },

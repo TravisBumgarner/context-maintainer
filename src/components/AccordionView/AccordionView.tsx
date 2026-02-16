@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Box } from "@mui/material";
+import DesktopNamePanel from "./components/DesktopNamePanel";
 import QueuePanel from "./components/QueuePanel";
 import TimerPanel from "./components/TimerPanel";
 import DesktopsPanel from "./components/DesktopsPanel";
@@ -20,8 +21,13 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", p: "4px", gap: "4px" }}>
+      {/* ── Desktop Name ── */}
+      <Box sx={{ display: "flex", alignItems: "center", flexShrink: 0, bgcolor: "rgba(0,0,0,0.04)", borderTopRightRadius: 8 }}>
+        <DesktopNamePanel desktopId={desktop.space_id} />
+      </Box>
+
       {/* ── Queue ── */}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: "8px", bgcolor: "rgba(0,0,0,0.04)", borderTopRightRadius: 8 }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: "8px", bgcolor: "rgba(0,0,0,0.04)" }}>
         <QueuePanel desktopId={desktop.space_id} />
       </Box>
 
