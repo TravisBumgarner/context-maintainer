@@ -4,18 +4,28 @@ import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "../../../../../stores";
 
-export function TimerTab() {
+const PANELS = ["Tasks", "Timer", "Desktops"] as const;
+
+export function GeneralTab() {
     const theme = useTheme();
     const tc = theme.custom.tc;
 
-    const { timerPresets, notifySystem, notifyFlash, setTimerPresets, setNotifySystem, setNotifyFlash } = useSettingsStore();
+    const { timerPresets, notifySystem, notifyFlash, hiddenPanels, setTimerPresets, setNotifySystem, setNotifyFlash, setHiddenPanels } = useSettingsStore();
 
     useEffect(() => {
         invoke("save_timer_presets", { presets: timerPresets }).catch(() => { });
     }, [timerPresets]);
 
+    const togglePanel = (panel: string) => {
+        const next = hiddenPanels.includes(panel)
+            ? hiddenPanels.filter((p) => p !== panel)
+            : [...hiddenPanels, panel];
+        setHiddenPanels(next);
+    };
+
     return (
         <>
+            {/* Timer presets */}
             <Box sx={{ mb: "12px" }}>
                 <Box sx={{ display: "flex", gap: "8px", mb: "6px", justifyContent: "center" }}>
                     {timerPresets.map((p, i) => (
@@ -57,6 +67,7 @@ export function TimerTab() {
                 </Box>
             </Box>
 
+            {/* Notifications */}
             <Box sx={{ mb: "12px", display: "flex", gap: "12px", alignItems: "center" }}>
                 <Box
                     sx={{
@@ -100,6 +111,31 @@ export function TimerTab() {
                     />
                     <Typography>In-app flash</Typography>
                 </Box>
+            </Box>
+
+            {/* Panel visibility */}
+            <Typography sx={{ fontSize: 11, color: tc(0.4), mb: "4px" }}>Panels</Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                {PANELS.map((panel) => (
+                    <Box
+                        key={panel}
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            py: "3px",
+                            cursor: "pointer",
+                        }}
+                        component="label"
+                    >
+                        <Switch
+                            size="small"
+                            checked={!hiddenPanels.includes(panel)}
+                            onChange={() => togglePanel(panel)}
+                        />
+                        <Typography>{panel}</Typography>
+                    </Box>
+                ))}
             </Box>
         </>
     );

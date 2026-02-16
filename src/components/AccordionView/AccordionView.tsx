@@ -4,7 +4,7 @@ import DesktopNamePanel from "./components/DesktopNamePanel";
 import QueuePanel from "./components/QueuePanel";
 import TimerPanel from "./components/TimerPanel";
 import DesktopsPanel from "./components/DesktopsPanel";
-import { useUIStore, useDesktopStore } from "../../stores";
+import { useUIStore, useDesktopStore, useSettingsStore } from "../../stores";
 
 interface AccordionViewProps {
   displayIndex: number;
@@ -13,6 +13,7 @@ interface AccordionViewProps {
 export default function AccordionView({ displayIndex }: AccordionViewProps) {
   const { refreshDisplayGroups } = useUIStore();
   const { desktop } = useDesktopStore();
+  const hiddenPanels = useSettingsStore((s) => s.hiddenPanels);
 
   // Refresh display groups on mount
   useEffect(() => {
@@ -27,19 +28,25 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
       </Box>
 
       {/* ── Queue ── */}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: "8px", bgcolor: "rgba(0,0,0,0.04)" }}>
-        <QueuePanel desktopId={desktop.space_id} />
-      </Box>
+      {!hiddenPanels.includes("Tasks") && (
+        <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: "8px", bgcolor: "rgba(0,0,0,0.04)" }}>
+          <QueuePanel desktopId={desktop.space_id} />
+        </Box>
+      )}
 
       {/* ── Timer ── */}
-      <Box sx={{ height: 60, display: "flex", flexShrink: 0, alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.04)" }}>
-        <TimerPanel />
-      </Box>
+      {!hiddenPanels.includes("Timer") && (
+        <Box sx={{ height: 60, display: "flex", flexShrink: 0, alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.04)" }}>
+          <TimerPanel />
+        </Box>
+      )}
 
       {/* ── Desktops ── */}
-      <Box sx={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', px: "8px", flexShrink: 0, bgcolor: "rgba(0,0,0,0.04)", borderBottomRightRadius: 8 }}>
-        <DesktopsPanel displayIndex={displayIndex} />
-      </Box>
+      {!hiddenPanels.includes("Desktops") && (
+        <Box sx={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', px: "8px", flexShrink: 0, bgcolor: "rgba(0,0,0,0.04)", borderBottomRightRadius: 8 }}>
+          <DesktopsPanel displayIndex={displayIndex} />
+        </Box>
+      )}
     </Box>
   );
 }

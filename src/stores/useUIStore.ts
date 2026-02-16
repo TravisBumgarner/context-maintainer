@@ -112,8 +112,8 @@ export const useUIStore = create<UIState>((set, get) => ({
     try {
       const size = await currentWindow.outerSize();
       const sf = m.scaleFactor;
-      const padding = Math.round(16 * sf);
-      const menuBar = Math.round(32 * sf);
+      const padding = 0;
+      const menuBar = Math.round(25 * sf);
       const mx = m.position.x;
       const my = m.position.y;
       const mw = m.size.width;

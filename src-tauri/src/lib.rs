@@ -266,6 +266,8 @@ struct Settings {
     notify_system: bool,
     #[serde(default = "default_notify_flash")]
     notify_flash: bool,
+    #[serde(default)]
+    hidden_panels: Vec<String>,
 }
 
 impl Default for Settings {
@@ -277,6 +279,7 @@ impl Default for Settings {
             timer_presets: default_timer_presets(),
             notify_system: true,
             notify_flash: true,
+            hidden_panels: Vec::new(),
         }
     }
 }
@@ -675,6 +678,14 @@ fn save_notify_settings(state: tauri::State<'_, AppState>, system: bool, flash: 
 }
 
 #[tauri::command]
+fn save_hidden_panels(state: tauri::State<'_, AppState>, panels: Vec<String>) {
+    let mut data = state.data.lock().unwrap();
+    data.settings.hidden_panels = panels;
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
 fn clear_all_data(state: tauri::State<'_, AppState>) {
     let mut data = state.data.lock().unwrap();
     data.notes.clear();
@@ -954,7 +965,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, get_completed, add_completed, clear_completed])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, get_completed, add_completed, clear_completed])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

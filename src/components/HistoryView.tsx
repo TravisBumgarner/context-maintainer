@@ -26,7 +26,7 @@ export default function HistoryView() {
   }
 
   return (
-    <Box sx={{ flex: 1, overflow: "auto", px: "10px", py: "12px" }}>
+    <Box sx={{ flex: 1, overflow: "auto", px: "10px", py: "12px", m: "4px", bgcolor: "rgba(0,0,0,0.04)", borderRadius: 2 }}>
       {items.length === 0 ? (
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
           <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.35), textAlign: "center" }}>
