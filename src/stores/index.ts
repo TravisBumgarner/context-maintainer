@@ -1,4 +1,4 @@
-export { useTodoStore } from "./useTodoStore";
+export { useTodoStore, EMPTY_TODOS } from "./useTodoStore";
 export { useTimerStore } from "./useTimerStore";
 export { useSettingsStore } from "./useSettingsStore";
 export { useUIStore } from "./useUIStore";

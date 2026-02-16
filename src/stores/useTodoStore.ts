@@ -2,24 +2,30 @@ import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import type { TodoItem } from "../types";
 import { useHistoryStore } from "./useHistoryStore";
+import { useUIStore } from "./useUIStore";
+
+export const EMPTY_TODOS: TodoItem[] = [];
 
 interface TodoState {
-  todos: TodoItem[];
-  title: string;
+  allTodos: Record<number, TodoItem[]>;
+  allTitles: Record<number, string>;
+  activeDesktopId: number;
   newText: string;
   saveTimer: ReturnType<typeof setTimeout> | null;
   titleTimer: ReturnType<typeof setTimeout> | null;
 
-  setTodos: (todos: TodoItem[]) => void;
-  setTitle: (title: string) => void;
+  todos: () => TodoItem[];
+  title: () => string;
   setNewText: (text: string) => void;
 
-  loadTodos: (desktopId: number) => Promise<void>;
-  loadTitle: (desktopId: number) => Promise<void>;
+  loadAll: (desktopIds: number[]) => Promise<void>;
+  switchTo: (desktopId: number) => void;
+  clearAll: () => void;
+  reloadDesktop: (desktopId: number) => Promise<void>;
+
   saveTodos: (desktopId: number, items: TodoItem[]) => void;
   saveTitle: (desktopId: number, title: string) => void;
 
-  syncTitleFromTodos: (desktopId: number, items: TodoItem[]) => void;
   addTodo: (desktopId: number) => void;
   toggleDone: (id: string, desktopId: number) => void;
   updateText: (id: string, text: string, desktopId: number) => void;
@@ -29,32 +35,59 @@ interface TodoState {
 }
 
 export const useTodoStore = create<TodoState>((set, get) => ({
-  todos: [],
-  title: "",
+  allTodos: {},
+  allTitles: {},
+  activeDesktopId: 0,
   newText: "",
   saveTimer: null,
   titleTimer: null,
 
-  setTodos: (todos) => set({ todos }),
-  setTitle: (title) => set({ title }),
+  todos: () => {
+    const { allTodos, activeDesktopId } = get();
+    return allTodos[activeDesktopId] ?? [];
+  },
+  title: () => {
+    const { allTitles, activeDesktopId } = get();
+    return allTitles[activeDesktopId] ?? "";
+  },
   setNewText: (text) => set({ newText: text }),
 
-  loadTodos: async (desktopId) => {
-    try {
-      const items = await invoke<TodoItem[]>("get_todos", { desktop: desktopId });
-      set({ todos: items });
-    } catch {
-      set({ todos: [] });
+  loadAll: async (desktopIds) => {
+    const results = await Promise.all(
+      desktopIds.map(async (id) => {
+        const [todos, title] = await Promise.all([
+          invoke<TodoItem[]>("get_todos", { desktop: id }).catch(() => [] as TodoItem[]),
+          invoke<string>("get_title", { desktop: id }).catch(() => ""),
+        ]);
+        return { id, todos, title };
+      })
+    );
+    const allTodos: Record<number, TodoItem[]> = {};
+    const allTitles: Record<number, string> = {};
+    for (const r of results) {
+      allTodos[r.id] = r.todos;
+      allTitles[r.id] = r.title;
     }
+    set({ allTodos, allTitles });
   },
 
-  loadTitle: async (desktopId) => {
-    try {
-      const t = await invoke<string>("get_title", { desktop: desktopId });
-      set({ title: t });
-    } catch {
-      set({ title: "" });
-    }
+  switchTo: (desktopId) => {
+    set({ activeDesktopId: desktopId });
+  },
+
+  clearAll: () => {
+    set({ allTodos: {}, allTitles: {} });
+  },
+
+  reloadDesktop: async (desktopId) => {
+    const [todos, title] = await Promise.all([
+      invoke<TodoItem[]>("get_todos", { desktop: desktopId }).catch(() => [] as TodoItem[]),
+      invoke<string>("get_title", { desktop: desktopId }).catch(() => ""),
+    ]);
+    set((state) => ({
+      allTodos: { ...state.allTodos, [desktopId]: todos },
+      allTitles: { ...state.allTitles, [desktopId]: title },
+    }));
   },
 
   saveTodos: (desktopId, items) => {
@@ -65,98 +98,111 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     invoke("save_title", { desktop: desktopId, title }).catch(() => {});
   },
 
-  syncTitleFromTodos: (desktopId, items) => {
-    const firstActive = items.find((t) => !t.done);
-    const newTitle = firstActive?.text ?? "";
-    const { title, saveTitle } = get();
-    if (newTitle !== title) {
-      set({ title: newTitle });
-      saveTitle(desktopId, newTitle);
-    }
-  },
-
   addTodo: (desktopId) => {
-    const { newText, todos, saveTodos, syncTitleFromTodos } = get();
+    const { newText, allTodos, saveTodos } = get();
     const text = newText.trim();
     if (!text) return;
 
-    const updated = [...todos, { id: crypto.randomUUID(), text, done: false }];
-    set({ todos: updated, newText: "" });
+    const current = allTodos[desktopId] ?? [];
+    const updated = [...current, { id: crypto.randomUUID(), text, done: false }];
+    set((state) => ({
+      allTodos: { ...state.allTodos, [desktopId]: updated },
+      newText: "",
+    }));
 
     const timer = get().saveTimer;
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   toggleDone: (id, desktopId) => {
-    const { todos, saveTodos, syncTitleFromTodos } = get();
-    const item = todos.find((t) => t.id === id);
+    const { allTodos, saveTodos } = get();
+    const current = allTodos[desktopId] ?? [];
+    const item = current.find((t) => t.id === id);
     if (!item) return;
 
-    // Remove from todos and archive to history
-    const updated = todos.filter((t) => t.id !== id);
-    set({ todos: updated });
+    const updated = current.filter((t) => t.id !== id);
+    set((state) => ({
+      allTodos: { ...state.allTodos, [desktopId]: updated },
+    }));
     useHistoryStore.getState().addCompleted(item.text, desktopId);
 
     const timer = get().saveTimer;
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   updateText: (id, text, desktopId) => {
-    const { todos, saveTodos, syncTitleFromTodos } = get();
-    const updated = todos.map((t) => (t.id === id ? { ...t, text } : t));
-    set({ todos: updated });
+    const { allTodos, saveTodos } = get();
+    const current = allTodos[desktopId] ?? [];
+    const updated = current.map((t) => (t.id === id ? { ...t, text } : t));
+    set((state) => ({
+      allTodos: { ...state.allTodos, [desktopId]: updated },
+    }));
 
     const timer = get().saveTimer;
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   deleteTodo: (id, desktopId) => {
-    const { todos, saveTodos, syncTitleFromTodos } = get();
-    const updated = todos.filter((t) => t.id !== id);
-    set({ todos: updated });
+    const { allTodos, saveTodos } = get();
+    const current = allTodos[desktopId] ?? [];
+    const updated = current.filter((t) => t.id !== id);
+    set((state) => ({
+      allTodos: { ...state.allTodos, [desktopId]: updated },
+    }));
 
     const timer = get().saveTimer;
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   reorderTodos: (reordered, desktopId) => {
-    const { todos, saveTodos, syncTitleFromTodos } = get();
-    const doneItems = todos.filter((t) => t.done);
+    const { allTodos, saveTodos } = get();
+    const current = allTodos[desktopId] ?? [];
+    const doneItems = current.filter((t) => t.done);
     const updated = [...reordered, ...doneItems];
-    set({ todos: updated });
+    set((state) => ({
+      allTodos: { ...state.allTodos, [desktopId]: updated },
+    }));
 
     const timer = get().saveTimer;
     if (timer) clearTimeout(timer);
     const newTimer = setTimeout(() => {
       saveTodos(desktopId, updated);
-      syncTitleFromTodos(desktopId, updated);
     }, 300);
     set({ saveTimer: newTimer });
   },
 
   updateTitle: (value, desktopId) => {
     const { saveTitle } = get();
-    set({ title: value });
+    set((state) => ({
+      allTitles: { ...state.allTitles, [desktopId]: value },
+    }));
+
+    // Optimistically update the tab strip
+    const ui = useUIStore.getState();
+    ui.setDisplayGroups(
+      ui.displayGroups.map((g) => ({
+        ...g,
+        desktops: g.desktops.map((d) =>
+          d.space_id === desktopId ? { ...d, title: value } : d
+        ),
+      }))
+    );
 
     const timer = get().titleTimer;
     if (timer) clearTimeout(timer);

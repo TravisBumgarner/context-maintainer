@@ -3,7 +3,7 @@ import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import Layout from "./AccordionView/components/Layout";
 import { formatRelativeTime } from "../utils";
-import { useUIStore, useDesktopStore, useSettingsStore } from "../stores";
+import { useUIStore, useDesktopStore, useSettingsStore, useTodoStore } from "../stores";
 import type { ContextHistory } from "../types";
 
 export default function HistoryPickerView() {
@@ -76,6 +76,7 @@ export default function HistoryPickerView() {
                         })
                           .then((ok) => {
                             if (ok) {
+                              useTodoStore.getState().reloadDesktop(space.space_id);
                               invoke<ContextHistory>("get_context_history")
                                 .then(setContextHistory)
                                 .catch(() => { });

@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::image::Image;
 use tauri::tray::TrayIconBuilder;
-use tauri::{WebviewUrl, WebviewWindowBuilder};
+use tauri::{Emitter, WebviewUrl, WebviewWindowBuilder};
 use tauri::Manager;
 
 // ── Hide macOS traffic lights ─────────────────────────────────
@@ -742,6 +742,78 @@ fn clear_completed(state: tauri::State<'_, AppState>) {
     persist_data(&path, &data);
 }
 
+// ── CFRunLoop (for background observer thread) ────────────────
+extern "C" {
+    fn CFRunLoopRun();
+}
+
+// ── NSWorkspace space-change observer ─────────────────────────
+
+/// Returns one DesktopInfo per display (indexed by display number),
+/// matching the same logic as the `get_desktop` command.
+fn build_desktop_infos(state: &AppState) -> Vec<DesktopInfo> {
+    let spaces = enumerate_spaces();
+    let display_count = spaces.iter().map(|&(_, d, _)| d).max().map_or(1, |m| m + 1);
+    let data = state.data.lock().unwrap();
+
+    (0..display_count)
+        .map(|disp| {
+            let (sid, space_type) = space_info_for_display(disp);
+            let position = spaces
+                .iter()
+                .position(|&(s, _, _)| s == sid)
+                .unwrap_or(0) as u32;
+            let color = data
+                .settings
+                .custom_colors
+                .get(&sid)
+                .cloned()
+                .unwrap_or_else(|| default_color(position));
+            DesktopInfo {
+                space_id: sid,
+                position,
+                name: format!("Desktop {}", position + 1),
+                color,
+                is_fullscreen: space_type != 0,
+            }
+        })
+        .collect()
+}
+
+fn start_space_observer(app_handle: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        unsafe {
+            use objc2_app_kit::NSWorkspace;
+            use block2::RcBlock;
+
+            let workspace = NSWorkspace::sharedWorkspace();
+            let nc = workspace.notificationCenter();
+
+            let name = objc2_foundation::NSString::from_str("NSWorkspaceActiveSpaceDidChangeNotification");
+
+            let handle = app_handle.clone();
+            let block = RcBlock::new(move |_notification: std::ptr::NonNull<objc2_foundation::NSNotification>| {
+                let state = handle.state::<AppState>();
+                let infos = build_desktop_infos(&state);
+                if let Err(e) = handle.emit("desktop-changed", &infos) {
+                    log::error!("Failed to emit desktop-changed: {}", e);
+                }
+            });
+
+            let _observer = nc.addObserverForName_object_queue_usingBlock(
+                Some(&name),
+                None,
+                None,
+                &block,
+            );
+
+            // Keep observer alive and run the run loop to receive notifications
+            // _observer is retained by the notification center as long as we don't remove it
+            CFRunLoopRun();
+        }
+    });
+}
+
 // ── Entry point ────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -752,10 +824,12 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
-            // Persistence setup
+            // Persistence setup — use a separate file in debug builds
+            // so dev and prod don't clobber each other's data.
             let data_dir = app.path().app_data_dir().expect("no app data dir");
             fs::create_dir_all(&data_dir).ok();
-            let data_path = data_dir.join("notes.json");
+            let data_file = if cfg!(debug_assertions) { "notes-dev.json" } else { "notes.json" };
+            let data_path = data_dir.join(data_file);
             let data_path_str = data_path.to_string_lossy().to_string();
             log::info!("App starting, data path: {}", data_path_str);
             let mut data = load_data(&data_path_str);
@@ -874,6 +948,9 @@ pub fn run() {
                     }
                 });
             }
+
+            // Start NSWorkspace observer for space changes
+            start_space_observer(app.handle().clone());
 
             Ok(())
         })
