@@ -8,7 +8,8 @@ interface DesktopNamePanelProps {
 
 export default function DesktopNamePanel({ desktopId }: DesktopNamePanelProps) {
   const { tc } = useTheme().custom;
-  const { title, updateTitle } = useTodoStore();
+  const title = useTodoStore((s) => s.allTitles[s.activeDesktopId] ?? "");
+  const updateTitle = useTodoStore((s) => s.updateTitle);
 
   return (
     <InputBase

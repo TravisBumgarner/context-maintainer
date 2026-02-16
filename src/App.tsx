@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { availableMonitors } from "@tauri-apps/api/window";
 import { info, error } from "@tauri-apps/plugin-log";
 import { ThemeProvider } from "@mui/material/styles";
@@ -66,6 +67,7 @@ function App() {
           const desktops = await invoke<DesktopSummary[]>("list_all_desktops");
           const hasData = desktops.some((d) => d.title || d.todo_count > 0);
           info(`Desktops loaded: hasData=${hasData}, showing ${hasData ? "session-chooser" : "todos"}`);
+          await useTodoStore.getState().loadAll(desktops.map((d) => d.space_id));
           setView(hasData ? "session-chooser" : "todos");
         } catch {
           setView("todos");
@@ -92,45 +94,63 @@ function App() {
     });
   }, [displayIndex]);
 
-  // ── Desktop polling ───────────────────────────────────
+  // ── Desktop detection (event-driven) + slow position poll ──
   useEffect(() => {
     if (view !== "todos") return;
 
     let prevId = useDesktopStore.getState().desktop.space_id;
 
-    // Initial load
-    useTimerStore.getState().setActiveDesktop(prevId);
-    useTodoStore.getState().loadTodos(prevId);
-    useTodoStore.getState().loadTitle(prevId);
-
-    const poll = async () => {
-      try {
-        const info = await invoke<DesktopInfo>("get_desktop", { display: displayIndex });
+    // Initial load: fetch current desktop via IPC
+    invoke<DesktopInfo>("get_desktop", { display: displayIndex })
+      .then((info) => {
         useDesktopStore.getState().setDesktop(() => info);
+        prevId = info.space_id;
+        useTimerStore.getState().setActiveDesktop(info.space_id);
+        useTodoStore.getState().switchTo(info.space_id);
+      })
+      .catch(() => {
+        // CGS API unavailable — fall back to whatever was in state
+        useTimerStore.getState().setActiveDesktop(prevId);
+        useTodoStore.getState().switchTo(prevId);
+      });
 
-        if (info.space_id !== prevId) {
-          // Flush pending save for old desktop
-          const todoState = useTodoStore.getState();
-          if (todoState.saveTimer) {
-            clearTimeout(todoState.saveTimer);
-            useTodoStore.setState({ saveTimer: null });
-          }
-          todoState.saveTodos(prevId, todoState.todos);
+    // Listen for space-change events from NSWorkspace observer
+    const unlisten = listen<DesktopInfo[]>("desktop-changed", (event) => {
+      const infos = event.payload;
+      const info = infos[displayIndex];
+      if (!info) return;
 
-          prevId = info.space_id;
-          useTimerStore.getState().setActiveDesktop(info.space_id);
-          await useTodoStore.getState().loadTodos(info.space_id);
-          await useTodoStore.getState().loadTitle(info.space_id);
+      useDesktopStore.getState().setDesktop(() => info);
+
+      if (info.space_id !== prevId) {
+        // Flush pending saves for old desktop
+        const todoState = useTodoStore.getState();
+        if (todoState.saveTimer) {
+          clearTimeout(todoState.saveTimer);
+          useTodoStore.setState({ saveTimer: null });
+          todoState.saveTodos(prevId, todoState.allTodos[prevId] ?? []);
         }
-      } catch {
-        // CGS API unavailable
-      }
-      useUIStore.getState().checkPosition();
-    };
+        if (todoState.titleTimer) {
+          clearTimeout(todoState.titleTimer);
+          useTodoStore.setState({ titleTimer: null });
+          todoState.saveTitle(prevId, todoState.allTitles[prevId] ?? "");
+        }
 
-    poll();
-    const id = setInterval(poll, 200);
-    return () => clearInterval(id);
+        prevId = info.space_id;
+        useTimerStore.getState().setActiveDesktop(info.space_id);
+        useTodoStore.getState().switchTo(info.space_id);
+      }
+    });
+
+    // Slow position poll — window drag/collapse detection only
+    const positionId = setInterval(() => {
+      useUIStore.getState().checkPosition();
+    }, 2000);
+
+    return () => {
+      unlisten.then((fn) => fn());
+      clearInterval(positionId);
+    };
   }, [view, displayIndex]);
 
   // ── Anchor init (once on first load) ─────────────────────

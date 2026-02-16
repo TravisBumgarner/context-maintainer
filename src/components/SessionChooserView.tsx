@@ -10,7 +10,7 @@ export default function SessionChooserView() {
   const tc = theme.custom.tc;
 
   const { setView } = useUIStore();
-  const { setTodos, setTitle } = useTodoStore();
+  const { clearAll } = useTodoStore();
   const { setContextHistory } = useDesktopStore();
   const { setAllSpaces } = useSettingsStore();
 
@@ -66,8 +66,7 @@ export default function SessionChooserView() {
             onClick={() => {
               invoke("start_new_session")
                 .then(() => {
-                  setTodos([]);
-                  setTitle("");
+                  clearAll();
                   setView("todos");
                 })
                 .catch(() => { });

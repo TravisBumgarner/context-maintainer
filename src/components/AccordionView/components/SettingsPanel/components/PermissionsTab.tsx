@@ -13,7 +13,7 @@ export function PermissionsTab({ confirmClear, setConfirmClear }: PermissionsTab
 
     const { desktop, setDesktop } = useDesktopStore();
     const { accessibilityGranted, setAccessibilityGranted, refreshSpaces } = useSettingsStore();
-    const { setTodos, setTitle } = useTodoStore();
+    const { clearAll } = useTodoStore();
     const { setView } = useUIStore();
 
     return (
@@ -79,8 +79,7 @@ export function PermissionsTab({ confirmClear, setConfirmClear }: PermissionsTab
                                 onClick={() => {
                                     invoke("clear_all_data")
                                         .then(() => {
-                                            setTodos([]);
-                                            setTitle("");
+                                            clearAll();
                                             setDesktop((prev) => ({ ...prev, color: "#F5E6A3" }));
                                             refreshSpaces();
                                             setConfirmClear(false);

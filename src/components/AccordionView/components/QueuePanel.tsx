@@ -3,7 +3,7 @@ import { Add } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { Reorder } from "framer-motion";
 import TodoItem from "./TodoItem";
-import { useTodoStore } from "../../../stores";
+import { useTodoStore, EMPTY_TODOS } from "../../../stores";
 
 interface QueuePanelProps {
   desktopId: number;
@@ -11,16 +11,14 @@ interface QueuePanelProps {
 
 export default function QueuePanel({ desktopId }: QueuePanelProps) {
   const { tc, ui } = useTheme().custom;
-  const {
-    todos,
-    newText,
-    setNewText,
-    addTodo,
-    toggleDone,
-    updateText,
-    deleteTodo,
-    reorderTodos,
-  } = useTodoStore();
+  const todos = useTodoStore((s) => s.allTodos[s.activeDesktopId] ?? EMPTY_TODOS);
+  const newText = useTodoStore((s) => s.newText);
+  const setNewText = useTodoStore((s) => s.setNewText);
+  const addTodo = useTodoStore((s) => s.addTodo);
+  const toggleDone = useTodoStore((s) => s.toggleDone);
+  const updateText = useTodoStore((s) => s.updateText);
+  const deleteTodo = useTodoStore((s) => s.deleteTodo);
+  const reorderTodos = useTodoStore((s) => s.reorderTodos);
 
   const active = todos.filter((t) => !t.done);
 
