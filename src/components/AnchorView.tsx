@@ -1,4 +1,4 @@
-import { Box, Tooltip, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useUIStore } from "../stores";
 import { ANCHOR_POSITIONS, ANCHOR_NAMES } from "../constants";
@@ -65,49 +65,46 @@ export default function AnchorView() {
           const isSelected = pos === anchorPos;
           const { row, col } = GRID[pos];
 
-          // Determine alignment within each grid cell
           const justifySelf =
             col === 0 ? "flex-start" : col === 2 ? "flex-end" : "center";
           const alignSelf =
             row === 0 ? "flex-start" : row === 2 ? "flex-end" : "center";
 
           return (
-            <Tooltip key={pos} title={ANCHOR_NAMES[pos]} arrow placement="top">
+            <Box
+              key={pos}
+              component="button"
+              onClick={() => handleSelect(pos)}
+              sx={{
+                display: "flex",
+                justifyContent: justifySelf,
+                alignItems: alignSelf,
+                border: "none",
+                bgcolor: "transparent",
+                p: 0,
+                cursor: "pointer",
+              }}
+            >
+              {/* Mini window rectangle */}
               <Box
-                component="button"
-                onClick={() => handleSelect(pos)}
                 sx={{
-                  // Grid cell fills its area
-                  display: "flex",
-                  justifyContent: justifySelf,
-                  alignItems: alignSelf,
-                  border: "none",
-                  bgcolor: "transparent",
-                  p: 0,
-                  cursor: "pointer",
+                  width: isSelected ? 28 : 8,
+                  height: isSelected ? 18 : 8,
+                  borderRadius: isSelected ? "3px" : "50%",
+                  bgcolor: isSelected ? tc(0.5) : tc(0.15),
+                  border: isSelected
+                    ? `1.5px solid ${tc(0.7)}`
+                    : "none",
+                  transition: "all 0.15s ease",
+                  "&:hover": {
+                    bgcolor: tc(0.35),
+                    width: 28,
+                    height: 18,
+                    borderRadius: "3px",
+                  },
                 }}
-              >
-                {/* Mini window rectangle */}
-                <Box
-                  sx={{
-                    width: isSelected ? 28 : 8,
-                    height: isSelected ? 18 : 8,
-                    borderRadius: isSelected ? "3px" : "50%",
-                    bgcolor: isSelected ? tc(0.5) : tc(0.15),
-                    border: isSelected
-                      ? `1.5px solid ${tc(0.7)}`
-                      : "none",
-                    transition: "all 0.15s ease",
-                    "&:hover": {
-                      bgcolor: tc(0.35),
-                      width: 28,
-                      height: 18,
-                      borderRadius: "3px",
-                    },
-                  }}
-                />
-              </Box>
-            </Tooltip>
+              />
+            </Box>
           );
         })}
       </Box>
@@ -131,6 +128,11 @@ export default function AnchorView() {
           mt: "1px",
         }}
       />
+
+      {/* Current position label */}
+      <Typography sx={{ fontSize: 10, color: tc(0.35), mt: "8px" }}>
+        {ANCHOR_NAMES[anchorPos]}
+      </Typography>
     </Box>
   );
 }

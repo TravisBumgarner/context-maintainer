@@ -81,14 +81,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       const mh = m.size.height;
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
 
-      if (!isOn) {
-        // Auto-snap back to the assigned monitor
-        info(`[checkPosition] window off monitor, snapping back: center=(${cx},${cy}) monitor=(${mx},${my},${mw},${mh})`);
-        get().snapToMonitor();
-        return;
-      }
-
-      // Detect user drag — if position changed and anchor isn't already free, switch to free
+      // Detect user drag — if position changed, switch to free move
       if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
         if (ignoreNextMove) {
           ignoreNextMove = false;
@@ -98,6 +91,13 @@ export const useUIStore = create<UIState>((set, get) => ({
         }
       }
       lastPos = { x: pos.x, y: pos.y };
+
+      // Auto-snap back only when anchored (not free move)
+      if (!isOn && get().anchorPos !== "middle-center") {
+        info(`[checkPosition] window off monitor, snapping back: center=(${cx},${cy}) monitor=(${mx},${my},${mw},${mh})`);
+        get().snapToMonitor();
+        return;
+      }
 
       const sf = m.scaleFactor;
       const logicalHeight = size.height / sf;
