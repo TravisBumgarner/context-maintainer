@@ -105,7 +105,7 @@ tasks:
       - When a macOS Space is added via Mission Control, it appears in the desktop strip within one space-switch
     depends_on: []
     effort: 1
-    status: implementing
+    status: completed
 
   - id: 3
     milestone: 3
