@@ -25,7 +25,7 @@ export default function SessionChooserView() {
     bgcolor: tc(0.45),
     textAlign: "center",
     "&:hover": { bgcolor: tc(0.6) },
-    "&.Mui-disabled": { color: tc(0.2), bgcolor: tc(0.2) },
+    "&.Mui-disabled": { color: tc(0.2), bgcolor: tc(0.15) },
   } as const;
 
   return (
