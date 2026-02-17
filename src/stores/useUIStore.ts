@@ -5,15 +5,16 @@ import {
   PhysicalPosition,
   type Monitor,
 } from "@tauri-apps/api/window";
+import { info, error as logError } from "@tauri-apps/plugin-log";
 import { currentWindow, loadAnchor, saveAnchor } from "../utils";
 import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED } from "../constants";
 import type { AnchorPosition, ViewType, DisplayGroup } from "../types";
+import { calculateSnapPosition } from "../snapPosition";
 import { useSettingsStore } from "./useSettingsStore";
 
 interface UIState {
   view: ViewType;
   collapsed: boolean;
-  offMonitor: boolean;
   anchorPos: AnchorPosition;
   displayGroups: DisplayGroup[];
   monitorRef: Monitor | null;
@@ -24,7 +25,6 @@ interface UIState {
 
   setView: (v: ViewType) => void;
   setCollapsed: (c: boolean) => void;
-  setOffMonitor: (o: boolean) => void;
   setAnchorPos: (p: AnchorPosition) => void;
   setDisplayGroups: (g: DisplayGroup[]) => void;
   setMonitorRef: (m: Monitor | null) => void;
@@ -47,7 +47,6 @@ let ignoreNextMove = false;
 export const useUIStore = create<UIState>((set, get) => ({
   view: "loading",
   collapsed: false,
-  offMonitor: false,
   anchorPos: loadAnchor(),
   displayGroups: [],
   monitorRef: null,
@@ -58,7 +57,6 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   setView: (v) => set({ view: v }),
   setCollapsed: (c) => set({ collapsed: c }),
-  setOffMonitor: (o) => set({ offMonitor: o }),
   setAnchorPos: (p) => set({ anchorPos: p }),
   setDisplayGroups: (g) => set({ displayGroups: g }),
   setMonitorRef: (m) => set({ monitorRef: m }),
@@ -82,7 +80,13 @@ export const useUIStore = create<UIState>((set, get) => ({
       const mw = m.size.width;
       const mh = m.size.height;
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
-      set({ offMonitor: !isOn });
+
+      if (!isOn) {
+        // Auto-snap back to the assigned monitor
+        info(`[checkPosition] window off monitor, snapping back: center=(${cx},${cy}) monitor=(${mx},${my},${mw},${mh})`);
+        get().snapToMonitor();
+        return;
+      }
 
       // Detect user drag — if position changed and anchor isn't already free, switch to free
       if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
@@ -99,8 +103,8 @@ export const useUIStore = create<UIState>((set, get) => ({
       const logicalHeight = size.height / sf;
       const threshold = (WINDOW_HEIGHT_COLLAPSED + WINDOW_HEIGHT_EXPANDED) / 2;
       set({ collapsed: logicalHeight < threshold });
-    } catch {
-      // ignore
+    } catch (err) {
+      logError(`[checkPosition] error: ${err}`);
     }
   },
 
@@ -111,30 +115,21 @@ export const useUIStore = create<UIState>((set, get) => ({
 
     try {
       const size = await currentWindow.outerSize();
-      const sf = m.scaleFactor;
-      const padding = 0;
-      const menuBar = Math.round(25 * sf);
-      const mx = m.position.x;
-      const my = m.position.y;
-      const mw = m.size.width;
-      const mh = m.size.height;
-      const ww = size.width;
-      const wh = size.height;
-
-      let x: number;
-      if (anchorPos.includes("left")) x = mx + padding;
-      else if (anchorPos.includes("center")) x = mx + Math.round((mw - ww) / 2);
-      else x = mx + mw - ww - padding;
-
-      let y: number;
-      if (anchorPos.startsWith("top")) y = my + menuBar;
-      else if (anchorPos.startsWith("middle")) y = my + Math.round((mh - wh) / 2);
-      else y = my + mh - wh - padding;
+      const { x, y } = calculateSnapPosition(
+        anchorPos,
+        {
+          x: m.position.x,
+          y: m.position.y,
+          width: m.size.width,
+          height: m.size.height,
+          scaleFactor: m.scaleFactor,
+        },
+        { width: size.width, height: size.height },
+      );
 
       ignoreNextMove = true;
       await currentWindow.setPosition(new PhysicalPosition(x, y));
       lastPos = { x, y };
-      set({ offMonitor: false });
     } catch {
       // ignore
     }

@@ -141,7 +141,7 @@ tasks:
       - Works correctly with external monitors at different positions/scales
     depends_on: []
     effort: 2
-    status: scoped
+    status: completed
 
   - id: 4
     milestone: 2

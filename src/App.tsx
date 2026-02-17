@@ -106,9 +106,13 @@ function App() {
   // ── Fetch monitor info once ───────────────────────────
   useEffect(() => {
     availableMonitors().then((monitors) => {
+      info(`[monitorRef] ${monitors.length} monitor(s) found, displayIndex=${displayIndex}`);
       const m = monitors[displayIndex];
       if (m) {
+        info(`[monitorRef] set for display ${displayIndex}: pos=(${m.position.x},${m.position.y}) size=(${m.size.width},${m.size.height}) scale=${m.scaleFactor}`);
         useUIStore.getState().setMonitorRef(m);
+      } else {
+        info(`[monitorRef] no monitor at index ${displayIndex}`);
       }
       const names: Record<number, string> = {};
       monitors.forEach((mon, i) => {
@@ -166,14 +170,20 @@ function App() {
       }
     });
 
-    // Slow position poll — window drag/collapse detection only
-    const positionId = setInterval(() => {
+    // Event-driven position check — auto-snaps back when dragged off monitor
+    const unlistenMoved = currentWindow.onMoved(() => {
+      useUIStore.getState().checkPosition();
+    });
+
+    // Slower poll for collapse detection only (resize doesn't fire onMoved)
+    const collapseId = setInterval(() => {
       useUIStore.getState().checkPosition();
     }, 2000);
 
     return () => {
       unlisten.then((fn) => fn());
-      clearInterval(positionId);
+      unlistenMoved.then((fn) => fn());
+      clearInterval(collapseId);
     };
   }, [view, displayIndex]);
 

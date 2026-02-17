@@ -1,5 +1,5 @@
 import { Box, IconButton, Tooltip } from "@mui/material";
-import { InfoOutline, Tune, LightbulbOutline, Remove, Close, Warning, OpenWith, History } from "@mui/icons-material";
+import { InfoOutline, Tune, LightbulbOutline, Remove, Close, OpenWith, History } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import type { ReactNode } from "react";
 import { useUIStore } from "../../../stores";
@@ -13,7 +13,7 @@ interface LayoutProps {
 export default function Layout({ children, timerFlashing }: LayoutProps) {
   const theme = useTheme();
   const { tc } = theme.custom;
-  const { view, offMonitor, setView, snapToMonitor } = useUIStore();
+  const { view, setView } = useUIStore();
 
   const showSidebar = view === "todos" || view === "settings" || view === "info" || view === "history" || view === "anchor";
 
@@ -76,13 +76,6 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
                 <Remove fontSize="inherit" />
               </IconButton>
             </Tooltip>
-            {offMonitor && (
-              <Tooltip title="Snap back to monitor" arrow placement="right">
-                <IconButton onClick={() => snapToMonitor()} sx={{ ...btnSx, color: tc(0.6), "&:hover": { color: tc(0.9) } }}>
-                  <Warning fontSize="inherit" />
-                </IconButton>
-              </Tooltip>
-            )}
           </Box>
 
           {/* Row 2: nav buttons */}
