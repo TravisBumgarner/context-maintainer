@@ -14,7 +14,7 @@ import assert from "node:assert/strict";
  * This defines the CONTRACT — the real code must match this behavior.
  */
 function calculateSnapPosition(anchor, monitor, window) {
-  const padding = Math.round(16 * monitor.scaleFactor);
+  const padding = 0;
   const menuBar = Math.round(25 * monitor.scaleFactor);
 
   let x;
@@ -46,20 +46,20 @@ const windowSize = { width: 580, height: 440 };
 const windowSize1x = { width: 290, height: 220 };
 
 describe("calculateSnapPosition", () => {
-  it("places window at top-right with padding on a Retina display", () => {
+  it("places window at top-right flush to edge on a Retina display", () => {
     const pos = calculateSnapPosition("top-right", retinaMonitor, windowSize);
-    // Should be inset by 16 logical px * 2 scale = 32 physical px from right
-    assert.equal(pos.x, 3024 - 580 - 32);
+    // Should be flush to right edge (no padding)
+    assert.equal(pos.x, 3024 - 580);
     // Should be below menu bar: 25 * 2 = 50 physical px
     assert.equal(pos.y, 50);
   });
 
-  it("places window at bottom-left with padding on an external 1x display", () => {
+  it("places window at bottom-left flush to edges on an external 1x display", () => {
     const pos = calculateSnapPosition("bottom-left", externalMonitor, windowSize1x);
-    // x: monitor.x + padding (16 * 1 = 16)
-    assert.equal(pos.x, 3024 + 16);
-    // y: monitor.y + height - windowHeight - padding
-    assert.equal(pos.y, 0 + 1080 - 220 - 16);
+    // x: monitor.x + 0 (flush to left edge)
+    assert.equal(pos.x, 3024);
+    // y: monitor.y + height - windowHeight - 0 (flush to bottom)
+    assert.equal(pos.y, 0 + 1080 - 220);
   });
 
   it("centers the window horizontally and vertically for middle-center", () => {

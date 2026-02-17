@@ -23,6 +23,7 @@
         "maximizable": false,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
+        "visible": false,
         "trafficLightPosition": {
           "x": -20,
           "y": -20

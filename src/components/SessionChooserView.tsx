@@ -11,6 +11,7 @@ export default function SessionChooserView() {
   const tc = theme.custom.tc;
 
   const { setView } = useUIStore();
+  const hasExistingSession = useUIStore((s) => s.hasExistingSession);
   const { clearAll } = useTodoStore();
   const { setContextHistory } = useDesktopStore();
   const { setAllSpaces } = useSettingsStore();
@@ -24,6 +25,7 @@ export default function SessionChooserView() {
     bgcolor: tc(0.45),
     textAlign: "center",
     "&:hover": { bgcolor: tc(0.6) },
+    "&.Mui-disabled": { color: tc(0.2), bgcolor: tc(0.15) },
   } as const;
 
   return (
@@ -56,11 +58,12 @@ export default function SessionChooserView() {
             textAlign: "center",
           }}
         >
-          You have an existing session.
+          {hasExistingSession ? "You have an existing session." : "Start a new session to get going."}
         </Typography>
         <Stack spacing={1} sx={{ width: "100%", maxWidth: 180 }}>
           <Button
             sx={btnSx}
+            disabled={!hasExistingSession}
             onClick={() => {
               setView("todos");
               emit("session-action", { action: "continue" });
@@ -84,6 +87,7 @@ export default function SessionChooserView() {
           </Button>
           <Button
             sx={btnSx}
+            disabled={!hasExistingSession}
             onClick={() => {
               Promise.all([
                 invoke<SpaceInfo[]>("list_all_spaces"),

@@ -22,6 +22,7 @@ interface UIState {
   updateAvailable: { version: string; body: string; downloadAndInstall: (onEvent?: (event: any) => void) => Promise<void> } | null;
   updateStatus: "idle" | "downloading" | "error";
   settingsTab: number;
+  hasExistingSession: boolean;
 
   setView: (v: ViewType) => void;
   setCollapsed: (c: boolean) => void;
@@ -32,16 +33,19 @@ interface UIState {
   setUpdateAvailable: (u: UIState["updateAvailable"]) => void;
   setUpdateStatus: (s: UIState["updateStatus"]) => void;
   setSettingsTab: (t: number) => void;
+  setHasExistingSession: (v: boolean) => void;
   dismissUpdate: () => void;
 
   checkPosition: () => Promise<void>;
   snapToMonitor: (overrideAnchor?: AnchorPosition) => Promise<void>;
   toggleMinimize: () => Promise<void>;
   selectAnchor: (pos: AnchorPosition) => void;
+  markDragged: () => void;
   refreshDisplayGroups: () => Promise<void>;
 }
 
 let lastPos: { x: number; y: number } | null = null;
+let snapping = false;
 
 export const useUIStore = create<UIState>((set, get) => ({
   view: "loading",
@@ -53,6 +57,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   updateAvailable: null,
   updateStatus: "idle",
   settingsTab: 0,
+  hasExistingSession: false,
 
   setView: (v) => set({ view: v }),
   setCollapsed: (c) => set({ collapsed: c }),
@@ -63,6 +68,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setUpdateAvailable: (u) => set({ updateAvailable: u }),
   setUpdateStatus: (s) => set({ updateStatus: s }),
   setSettingsTab: (t) => set({ settingsTab: t }),
+  setHasExistingSession: (v) => set({ hasExistingSession: v }),
   dismissUpdate: () => set({ updateAvailable: null, updateStatus: "idle" }),
 
   checkPosition: async () => {
@@ -80,8 +86,8 @@ export const useUIStore = create<UIState>((set, get) => ({
       const mh = m.size.height;
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
 
-      // Detect user drag — if position changed, switch to free move
-      if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
+      // Detect user drag — if position changed and we're not programmatically snapping
+      if (lastPos && !snapping && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
         if (get().anchorPos !== "middle-center") {
           set({ anchorPos: "middle-center" });
           saveAnchor("middle-center");
@@ -111,6 +117,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (!m) return;
 
     try {
+      snapping = true;
       const size = await currentWindow.outerSize();
       const { x, y } = calculateSnapPosition(
         anchorPos,
@@ -128,6 +135,8 @@ export const useUIStore = create<UIState>((set, get) => ({
       await currentWindow.setPosition(new PhysicalPosition(x, y));
     } catch {
       // ignore
+    } finally {
+      snapping = false;
     }
   },
 
@@ -156,6 +165,13 @@ export const useUIStore = create<UIState>((set, get) => ({
     set({ anchorPos: pos });
     saveAnchor(pos);
     if (pos !== "middle-center") get().snapToMonitor(pos);
+  },
+
+  markDragged: () => {
+    if (get().anchorPos !== "middle-center") {
+      set({ anchorPos: "middle-center" });
+      saveAnchor("middle-center");
+    }
   },
 
   refreshDisplayGroups: async () => {

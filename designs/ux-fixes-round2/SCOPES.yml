@@ -1,0 +1,159 @@
+project: UX Fixes Round 2
+design_file: null  # Issues provided inline by user
+scoping_date: 2026-02-16
+
+milestones:
+  - number: 1
+    title: "1. Startup, Drag, Snap & Tray Menu Fixes"
+    description: >
+      Fix session chooser centering on startup, drag-to-free-move detection,
+      snap position padding, and tray menu toggle behavior.
+    branch:
+      working: fix/ux-fixes-round2
+      base: main
+
+tasks:
+  - id: 1
+    milestone: 1
+    title: Center the session chooser window on screen at startup
+    description: |
+      **Problem**: When the app starts and shows the "You have an existing
+      session" chooser, the window appears wherever macOS places it or
+      wherever it was last positioned. The user wants it centered on screen
+      so it's immediately visible and prominent.
+
+      **Fix**:
+      In `App.tsx`, when the monitorRef is first set (inside `refreshMonitorRef`),
+      if the current view is `"loading"` or `"session-chooser"`, center the
+      window on the monitor using `currentWindow.setPosition()` with the
+      center coordinates calculated from the monitor bounds.
+
+      Alternatively, center it as part of the initial anchor snap: when
+      `refreshMonitorRef` runs for the first time, if the view is not yet
+      `"todos"`, center the window regardless of the saved anchor.
+
+      **Key file**: `src/App.tsx` (monitorRef effect, lines 106-142)
+    acceptance_criteria:
+      - On app start, the session chooser window appears centered on the monitor
+      - After choosing a session option and entering todos view, the window snaps to its saved anchor position
+    depends_on: []
+    effort: 1
+    status: scoped
+
+  - id: 2
+    milestone: 1
+    title: Fix drag-to-free-move so dragging always switches anchor to free move
+    description: |
+      **Problem**: After selecting an anchor position (e.g., "Bottom Right")
+      and then dragging the window, the anchor indicator stays at "Bottom
+      Right" instead of switching to "Free Move" (middle-center).
+
+      **Root cause**: The `onMoved` listener is only registered when
+      `view === "todos"` (App.tsx line 146). After `selectAnchor` is called
+      from AnchorView, the view is set to `"todos"` (in AnchorView's
+      `handleSelect`), which re-registers the onMoved listener. However,
+      `snapToMonitor` sets `lastPos = { x, y }` BEFORE calling
+      `await setPosition()`. If `setPosition` places the window at exactly
+      the coordinates in `lastPos`, then when the user drags and `onMoved`
+      fires, `checkPosition` correctly detects the position change.
+
+      The actual issue is likely that macOS native dragging via
+      `data-tauri-drag-region` only fires `onMoved` at the END of the drag
+      (mouse-up), not during it. Combined with the 2-second poll interval,
+      there's only ONE chance to detect the drag. If that single `onMoved`
+      event happens to have the same position as `lastPos` (e.g., if the
+      user drags and drops back to the same spot), it's missed.
+
+      A more robust approach: instead of comparing positions to detect drag,
+      listen for drag-start directly. Alternatively, always reset `lastPos`
+      to null when `onMoved` fires so the NEXT event is guaranteed to detect
+      a change.
+
+      **Simpler fix**: The `checkPosition` function currently compares
+      `pos.x !== lastPos.x || pos.y !== lastPos.y`. After a snap, `lastPos`
+      is set to the target position. But `outerPosition()` may return slightly
+      different values due to macOS window placement rounding. Add a tolerance
+      threshold (e.g., 5px) so that only significant moves (user drags) trigger
+      the free-move switch, while small rounding differences from programmatic
+      positioning are ignored.
+
+      Actually, the simplest and most reliable fix: do NOT set `lastPos` inside
+      `snapToMonitor`. Let `checkPosition` handle `lastPos` exclusively.
+      When `snapToMonitor` runs, the subsequent `onMoved`→`checkPosition`
+      call will see the position change and update `lastPos`. The next drag
+      by the user will then be detected as a real move.
+
+      But this causes snapToMonitor's position change to be detected as a
+      "drag". To prevent this: add a `snapping` flag that is set before
+      `setPosition` and cleared after. In `checkPosition`, if `snapping` is
+      true, just update `lastPos` without switching to free move.
+
+      **Key files**: `src/stores/useUIStore.ts` (checkPosition, snapToMonitor)
+    acceptance_criteria:
+      - After selecting any anchor position and then dragging the window, the anchor switches to "Free Move"
+      - Programmatic snaps (selecting an anchor, auto-snap) do NOT trigger the free move switch
+    depends_on: []
+    effort: 2
+    status: scoped
+
+  - id: 3
+    milestone: 1
+    title: Remove padding from snap positions so windows sit flush to screen edges
+    description: |
+      **Problem**: When snapping to edge positions (left, right, bottom),
+      there's a visible gap between the window and the screen edge. The user
+      wants the window to sit flush against the screen edges.
+
+      **Current behavior**: `calculateSnapPosition` in `snapPosition.ts` uses
+      `padding = Math.round(16 * monitor.scaleFactor)` for left, right, and
+      bottom edges. Top uses `menuBar = Math.round(25 * monitor.scaleFactor)`
+      which the user says is fine.
+
+      **Fix**: Change `padding` from `16 * scaleFactor` to `0`. Keep the
+      `menuBar` offset for top positions (to avoid the macOS menu bar).
+      Update the clamp to use `monitor.y` instead of `monitor.y + menuBar`
+      for the lower bound when not in a top position. Also update the
+      reference implementation in `snapPosition.test.mjs` to match.
+
+      **Key files**:
+      - `src/snapPosition.ts`
+      - `src/snapPosition.test.mjs`
+    acceptance_criteria:
+      - Windows snap flush to the left, right, and bottom edges of the screen with no gap
+      - Top positions still have the menu bar offset (no change)
+      - Tests are updated to reflect the new padding value
+    depends_on: []
+    effort: 1
+    status: scoped
+
+  - id: 4
+    milestone: 1
+    title: Make tray menu items toggle between hide/show instead of separate actions
+    description: |
+      **Problem**: The tray context menu currently has separate "Hide Entirely",
+      "Hide This Desktop", "Hide This Monitor", and "Show All" items. The user
+      wants each hide option to toggle — showing "Hide X" when visible and
+      "Show X" when hidden. "Show All" should be removed entirely.
+
+      **Fix**:
+      In `src-tauri/src/lib.rs`, the tray menu needs dynamic labels that
+      update based on window visibility state. Since Tauri 2's `MenuItem`
+      supports `set_text()`, the approach is:
+      1. Store references to the three menu items (hide_all, hide_desktop,
+         hide_monitor) so their text can be updated.
+      2. Before showing the menu (or after each click action), update each
+         item's text based on current visibility:
+         - If all windows are hidden → "Show Entirely" / "Show This Desktop" / "Show This Monitor"
+         - If windows are visible → "Hide Entirely" / "Hide This Desktop" / "Hide This Monitor"
+      3. Each click handler toggles: if currently hiding, show instead (and vice versa).
+      4. Remove the "Show All" menu item and its separator.
+
+      **Key file**: `src-tauri/src/lib.rs` (tray menu builder section)
+    acceptance_criteria:
+      - "Hide Entirely" toggles to "Show Entirely" after hiding, and vice versa
+      - "Hide This Desktop" toggles to "Show This Desktop" after hiding
+      - "Hide This Monitor" toggles to "Show This Monitor" after hiding
+      - "Show All" menu item is removed
+    depends_on: []
+    effort: 2
+    status: scoped

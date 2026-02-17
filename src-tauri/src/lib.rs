@@ -1094,19 +1094,15 @@ pub fn run() {
                 .or_else(|_| Image::from_path("src-tauri/icons/32x32.png"))
                 .unwrap_or_else(|_| Image::from_bytes(include_bytes!("../icons/32x32.png")).expect("embedded icon"));
 
-            let hide_all = MenuItem::with_id(app, "hide_all", "Hide Entirely", true, None::<&str>)?;
-            let hide_desktop = MenuItem::with_id(app, "hide_desktop", "Hide This Desktop", true, None::<&str>)?;
-            let hide_monitor = MenuItem::with_id(app, "hide_monitor", "Hide This Monitor", true, None::<&str>)?;
-            let show_all = MenuItem::with_id(app, "show_all", "Show All", true, None::<&str>)?;
+            let toggle_all = MenuItem::with_id(app, "toggle_all", "Hide Entirely", true, None::<&str>)?;
+            let toggle_desktop = MenuItem::with_id(app, "toggle_desktop", "Hide This Desktop", true, None::<&str>)?;
+            let toggle_monitor = MenuItem::with_id(app, "toggle_monitor", "Hide This Monitor", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let sep = PredefinedMenuItem::separator(app)?;
 
             let menu = Menu::with_items(app, &[
-                &hide_all,
-                &hide_desktop,
-                &hide_monitor,
-                &sep,
-                &show_all,
+                &toggle_all,
+                &toggle_desktop,
+                &toggle_monitor,
                 &PredefinedMenuItem::separator(app)?,
                 &quit,
             ])?;
@@ -1115,49 +1111,67 @@ pub fn run() {
                 .icon(icon)
                 .tooltip("Context Maintainer")
                 .menu(&menu)
-                .on_menu_event(|app, event| {
+                .on_menu_event(move |app, event| {
                     match event.id.as_ref() {
-                        "hide_all" => {
-                            for window in app.webview_windows().values() {
-                                window.hide().ok();
+                        "toggle_all" => {
+                            let windows = app.webview_windows();
+                            let any_visible = windows.values().any(|w| w.is_visible().unwrap_or(false));
+                            if any_visible {
+                                for window in windows.values() {
+                                    window.hide().ok();
+                                }
+                                toggle_all.set_text("Show Entirely").ok();
+                            } else {
+                                for window in windows.values() {
+                                    window.show().ok();
+                                    window.set_focus().ok();
+                                }
+                                toggle_all.set_text("Hide Entirely").ok();
                             }
                         }
-                        "hide_desktop" => {
-                            // Get the active space ID for each display, then hide
-                            // windows whose display is showing that same space
+                        "toggle_desktop" => {
                             let spaces = enumerate_spaces();
                             let display_count = spaces.iter().map(|&(_, d, _)| d).max().map_or(1, |m| m + 1);
 
-                            // Find the active space for each display
                             let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
                             for disp in 0..display_count {
                                 let (sid, _) = space_info_for_display(disp);
                                 active_space_per_display.insert(disp, sid);
                             }
 
-                            // The "current desktop" is the one the user is looking at.
-                            // On macOS, all displays share the same active space change,
-                            // so we use display 0's active space as reference.
                             let current_space = active_space_per_display.get(&0).copied().unwrap_or(0);
 
-                            for (label, window) in app.webview_windows() {
-                                let disp_idx = window_label_to_display_index(&label);
-                                let window_space = active_space_per_display.get(&disp_idx).copied().unwrap_or(0);
-                                if window_space == current_space {
+                            let windows = app.webview_windows();
+                            let desktop_windows: Vec<_> = windows.iter().filter(|(label, _)| {
+                                let disp_idx = window_label_to_display_index(label);
+                                active_space_per_display.get(&disp_idx).copied().unwrap_or(0) == current_space
+                            }).collect();
+
+                            let any_visible = desktop_windows.iter().any(|(_, w)| w.is_visible().unwrap_or(false));
+                            if any_visible {
+                                for (_, window) in &desktop_windows {
                                     window.hide().ok();
                                 }
+                                toggle_desktop.set_text("Show This Desktop").ok();
+                            } else {
+                                for (_, window) in &desktop_windows {
+                                    window.show().ok();
+                                    window.set_focus().ok();
+                                }
+                                toggle_desktop.set_text("Hide This Desktop").ok();
                             }
                         }
-                        "hide_monitor" => {
-                            // Hide only the window on the primary monitor (where the menu bar lives)
+                        "toggle_monitor" => {
                             if let Some(window) = app.get_webview_window("main") {
-                                window.hide().ok();
-                            }
-                        }
-                        "show_all" => {
-                            for window in app.webview_windows().values() {
-                                window.show().ok();
-                                window.set_focus().ok();
+                                let visible = window.is_visible().unwrap_or(false);
+                                if visible {
+                                    window.hide().ok();
+                                    toggle_monitor.set_text("Show This Monitor").ok();
+                                } else {
+                                    window.show().ok();
+                                    window.set_focus().ok();
+                                    toggle_monitor.set_text("Hide This Monitor").ok();
+                                }
                             }
                         }
                         "quit" => {
@@ -1194,15 +1208,11 @@ pub fn run() {
                 let y = logical_y + 32.0;
 
                 if i == 0 {
-                    // "main" already exists from tauri.conf.json — just position it
+                    // "main" already exists from tauri.conf.json — just set workspace visibility.
+                    // Position is handled by the frontend after monitorRef is available.
                     if let Some(window) = app.get_webview_window("main") {
                         window.set_visible_on_all_workspaces(true).ok();
-                        window
-                            .set_position(tauri::Position::Logical(
-                                tauri::LogicalPosition::new(x, y),
-                            ))
-                            .ok();
-                        log::info!("[startup] positioned existing window '{}' at ({:.0},{:.0})", label, x, y);
+                        log::info!("[startup] configured main window (frontend will position)");
                     }
                 } else {
                     // Create additional windows for extra monitors
@@ -1223,6 +1233,7 @@ pub fn run() {
                     .traffic_light_position(tauri::Position::Logical(
                         tauri::LogicalPosition::new(-20.0, -20.0),
                     ))
+                    .visible(false)
                     .build() {
                         Ok(window) => {
                             window.set_position(tauri::Position::Logical(

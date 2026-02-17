@@ -36,6 +36,7 @@ function App() {
 
   const view = useUIStore((s) => s.view);
   const setView = useUIStore((s) => s.setView);
+  const monitorRef = useUIStore((s) => s.monitorRef);
   const desktopColor = useDesktopStore((s) => s.desktop.color);
   const flashing = useTimerStore((s) => {
     const t = s.timers[s.activeDesktop];
@@ -68,11 +69,13 @@ function App() {
         try {
           const desktops = await invoke<DesktopSummary[]>("list_all_desktops");
           const hasData = desktops.some((d) => d.title || d.todo_count > 0);
-          info(`Desktops loaded: hasData=${hasData}, showing ${hasData ? "session-chooser" : "todos"}`);
+          info(`Desktops loaded: hasData=${hasData}`);
           await useTodoStore.getState().loadAll(desktops.map((d) => d.space_id));
-          setView(hasData ? "session-chooser" : "todos");
+          useUIStore.getState().setHasExistingSession(hasData);
+          setView("session-chooser");
         } catch {
-          setView("todos");
+          useUIStore.getState().setHasExistingSession(false);
+          setView("session-chooser");
         }
       })
       .catch((err) => {
@@ -112,12 +115,6 @@ function App() {
         if (m) {
           info(`[monitorRef] set for display ${displayIndex}: pos=(${m.position.x},${m.position.y}) size=(${m.size.width},${m.size.height}) scale=${m.scaleFactor}`);
           useUIStore.getState().setMonitorRef(m);
-
-          // Snap to saved anchor now that monitorRef is available
-          const saved = loadAnchor();
-          if (saved !== "middle-center") {
-            useUIStore.getState().snapToMonitor(saved);
-          }
         } else {
           info(`[monitorRef] no monitor at index ${displayIndex}`);
         }
@@ -140,6 +137,26 @@ function App() {
 
     return () => { unlisten.then((fn) => fn()); };
   }, [displayIndex]);
+
+  // ── Position window based on view, then reveal ──
+  useEffect(() => {
+    if (!monitorRef) return;
+
+    const position = async () => {
+      if (view === "session-chooser") {
+        await useUIStore.getState().snapToMonitor("middle-center");
+      } else if (view === "todos") {
+        const saved = loadAnchor();
+        if (saved !== "middle-center") {
+          await useUIStore.getState().snapToMonitor(saved);
+        }
+      } else {
+        return;
+      }
+      currentWindow.show();
+    };
+    position();
+  }, [view, monitorRef]);
 
   // ── Desktop detection (event-driven) + slow position poll ──
   useEffect(() => {
