@@ -137,16 +137,23 @@ function App() {
     return () => { unlisten.then((fn) => fn()); };
   }, [displayIndex]);
 
-  // ── Position window based on view ──
+  // ── Position window based on view, then reveal ──
   useEffect(() => {
-    if (view === "session-chooser") {
-      useUIStore.getState().snapToMonitor("middle-center");
-    } else if (view === "todos") {
-      const saved = loadAnchor();
-      if (saved !== "middle-center") {
-        useUIStore.getState().snapToMonitor(saved);
+    const position = async () => {
+      if (view === "session-chooser") {
+        await useUIStore.getState().snapToMonitor("middle-center");
+      } else if (view === "todos") {
+        const saved = loadAnchor();
+        if (saved !== "middle-center") {
+          await useUIStore.getState().snapToMonitor(saved);
+        }
+      } else {
+        return;
       }
-    }
+      // Show window after positioning to avoid flash
+      currentWindow.show();
+    };
+    position();
   }, [view]);
 
   // ── Desktop detection (event-driven) + slow position poll ──

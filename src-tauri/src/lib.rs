@@ -1237,6 +1237,7 @@ pub fn run() {
                     .traffic_light_position(tauri::Position::Logical(
                         tauri::LogicalPosition::new(-20.0, -20.0),
                     ))
+                    .visible(false)
                     .build() {
                         Ok(window) => {
                             window.set_position(tauri::Position::Logical(
