@@ -256,7 +256,7 @@ tasks:
       - If available_monitors() is unreliable, use CGGetActiveDisplayList as fallback
     depends_on: []
     effort: 2
-    status: scoped
+    status: completed
 
   # ── Milestone 5: System Tray Context Menu ──────────────────
 
@@ -298,4 +298,4 @@ tasks:
       - "Quit" exits the application
     depends_on: []
     effort: 3
-    status: scoped
+    status: completed

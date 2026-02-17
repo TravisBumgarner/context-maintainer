@@ -5,6 +5,7 @@ use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::image::Image;
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, WebviewUrl, WebviewWindowBuilder};
 use tauri::Manager;
@@ -33,6 +34,17 @@ fn hide_traffic_lights(window: &tauri::WebviewWindow) {
     }
 }
 
+/// Map a window label ("main", "monitor-1", etc.) to its display index.
+fn window_label_to_display_index(label: &str) -> usize {
+    if label == "main" {
+        0
+    } else if let Some(suffix) = label.strip_prefix("monitor-") {
+        suffix.parse().unwrap_or(0)
+    } else {
+        0
+    }
+}
+
 // ── Color palette (subtle / muted pastels) ───────────────────
 const COLORS: &[&str] = &[
     "#F5E6A3", // muted yellow
@@ -50,10 +62,53 @@ const COLORS: &[&str] = &[
 extern "C" {
     fn CGSMainConnectionID() -> i32;
     fn CGSCopyManagedDisplaySpaces(cid: i32) -> *const c_void;
+    fn CGGetActiveDisplayList(max: u32, displays: *mut u32, count: *mut u32) -> i32;
     fn CGDisplayRegisterReconfigurationCallback(
         callback: extern "C" fn(u32, u32, *mut c_void),
         user_info: *mut c_void,
     ) -> i32;
+}
+
+// ── Monitor enumeration with CG fallback ─────────────────────────
+/// Returns the list of monitors, retrying once if `available_monitors()`
+/// reports fewer displays than CoreGraphics `CGGetActiveDisplayList`.
+fn get_monitors_with_fallback(app: &tauri::App) -> Result<Vec<tauri::Monitor>, Box<dyn std::error::Error>> {
+    let cg_count = get_cg_display_count();
+    log::info!("[monitors] CGGetActiveDisplayList reports {} display(s)", cg_count);
+
+    let monitors = app.available_monitors()?;
+    log::info!("[monitors] available_monitors() returned {} monitor(s)", monitors.len());
+
+    if monitors.len() >= cg_count as usize || cg_count == 0 {
+        return Ok(monitors);
+    }
+
+    // Mismatch — CG sees more displays. Retry after a short delay.
+    log::warn!(
+        "[monitors] mismatch: CG={} vs Tauri={}. Retrying after 500ms...",
+        cg_count, monitors.len()
+    );
+    std::thread::sleep(std::time::Duration::from_millis(500));
+
+    let retry = app.available_monitors()?;
+    log::info!("[monitors] retry: available_monitors() returned {} monitor(s)", retry.len());
+
+    if retry.len() >= monitors.len() {
+        Ok(retry)
+    } else {
+        Ok(monitors)
+    }
+}
+
+/// Ask CoreGraphics how many active displays exist.
+fn get_cg_display_count() -> u32 {
+    let mut count: u32 = 0;
+    let err = unsafe { CGGetActiveDisplayList(0, std::ptr::null_mut(), &mut count) };
+    if err != 0 {
+        log::warn!("[monitors] CGGetActiveDisplayList failed with error {}", err);
+        return 0;
+    }
+    count
 }
 
 // ── CoreFoundation helpers ─────────────────────────────────────
@@ -1034,39 +1089,87 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
-            // System tray icon — click to toggle ALL windows
+            // System tray icon with context menu
             let icon = Image::from_path("icons/32x32.png")
                 .or_else(|_| Image::from_path("src-tauri/icons/32x32.png"))
                 .unwrap_or_else(|_| Image::from_bytes(include_bytes!("../icons/32x32.png")).expect("embedded icon"));
 
+            let hide_all = MenuItem::with_id(app, "hide_all", "Hide Entirely", true, None::<&str>)?;
+            let hide_desktop = MenuItem::with_id(app, "hide_desktop", "Hide This Desktop", true, None::<&str>)?;
+            let hide_monitor = MenuItem::with_id(app, "hide_monitor", "Hide This Monitor", true, None::<&str>)?;
+            let show_all = MenuItem::with_id(app, "show_all", "Show All", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let sep = PredefinedMenuItem::separator(app)?;
+
+            let menu = Menu::with_items(app, &[
+                &hide_all,
+                &hide_desktop,
+                &hide_monitor,
+                &sep,
+                &show_all,
+                &PredefinedMenuItem::separator(app)?,
+                &quit,
+            ])?;
+
             TrayIconBuilder::new()
                 .icon(icon)
                 .tooltip("Context Maintainer")
-                .on_tray_icon_event(|tray, event| {
-                    if let tauri::tray::TrayIconEvent::Click { button_state, .. } = event {
-                        // Only toggle on mouse-up to avoid double-firing
-                        if button_state != tauri::tray::MouseButtonState::Up {
-                            return;
-                        }
-                        let app = tray.app_handle();
-                        let windows = app.webview_windows();
-                        let any_visible = windows.values()
-                            .any(|w| w.is_visible().unwrap_or(false));
-                        for window in windows.values() {
-                            if any_visible {
+                .menu(&menu)
+                .on_menu_event(|app, event| {
+                    match event.id.as_ref() {
+                        "hide_all" => {
+                            for window in app.webview_windows().values() {
                                 window.hide().ok();
-                            } else {
+                            }
+                        }
+                        "hide_desktop" => {
+                            // Get the active space ID for each display, then hide
+                            // windows whose display is showing that same space
+                            let spaces = enumerate_spaces();
+                            let display_count = spaces.iter().map(|&(_, d, _)| d).max().map_or(1, |m| m + 1);
+
+                            // Find the active space for each display
+                            let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
+                            for disp in 0..display_count {
+                                let (sid, _) = space_info_for_display(disp);
+                                active_space_per_display.insert(disp, sid);
+                            }
+
+                            // The "current desktop" is the one the user is looking at.
+                            // On macOS, all displays share the same active space change,
+                            // so we use display 0's active space as reference.
+                            let current_space = active_space_per_display.get(&0).copied().unwrap_or(0);
+
+                            for (label, window) in app.webview_windows() {
+                                let disp_idx = window_label_to_display_index(&label);
+                                let window_space = active_space_per_display.get(&disp_idx).copied().unwrap_or(0);
+                                if window_space == current_space {
+                                    window.hide().ok();
+                                }
+                            }
+                        }
+                        "hide_monitor" => {
+                            // Hide only the window on the primary monitor (where the menu bar lives)
+                            if let Some(window) = app.get_webview_window("main") {
+                                window.hide().ok();
+                            }
+                        }
+                        "show_all" => {
+                            for window in app.webview_windows().values() {
                                 window.show().ok();
                                 window.set_focus().ok();
                             }
                         }
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => {}
                     }
                 })
                 .build(app)?;
 
-            // Create one window per monitor
-            let monitors = app.available_monitors()?;
-            log::info!("Found {} monitor(s)", monitors.len());
+            // Create one window per monitor, with CGGetActiveDisplayList fallback
+            let monitors = get_monitors_with_fallback(app)?;
             let win_w = 290.0_f64;
             let win_h = 220.0_f64;
 
@@ -1076,6 +1179,12 @@ pub fn run() {
                 let m_pos = monitor.position();
                 let m_size = monitor.size();
                 let scale = monitor.scale_factor();
+
+                log::info!(
+                    "[startup] monitor {}: name={:?} pos=({},{}) size={}x{} scale={}",
+                    i, monitor.name(), m_pos.x, m_pos.y,
+                    m_size.width, m_size.height, scale
+                );
 
                 let logical_x = m_pos.x as f64 / scale;
                 let logical_y = m_pos.y as f64 / scale;
@@ -1093,10 +1202,11 @@ pub fn run() {
                                 tauri::LogicalPosition::new(x, y),
                             ))
                             .ok();
+                        log::info!("[startup] positioned existing window '{}' at ({:.0},{:.0})", label, x, y);
                     }
                 } else {
                     // Create additional windows for extra monitors
-                    let window = WebviewWindowBuilder::new(
+                    match WebviewWindowBuilder::new(
                         app,
                         &label,
                         WebviewUrl::App("index.html".into()),
@@ -1113,15 +1223,27 @@ pub fn run() {
                     .traffic_light_position(tauri::Position::Logical(
                         tauri::LogicalPosition::new(-20.0, -20.0),
                     ))
-                    .build()?;
-
-                    // Position after creation — builder .position() doesn't
-                    // reliably place windows on secondary monitors on macOS.
-                    window.set_position(tauri::Position::Logical(
-                        tauri::LogicalPosition::new(x, y),
-                    )).ok();
+                    .build() {
+                        Ok(window) => {
+                            window.set_position(tauri::Position::Logical(
+                                tauri::LogicalPosition::new(x, y),
+                            )).ok();
+                            log::info!("[startup] created window '{}' at ({:.0},{:.0})", label, x, y);
+                        }
+                        Err(e) => {
+                            log::error!("[startup] failed to create window '{}': {}", label, e);
+                        }
+                    }
                 }
             }
+
+            // Post-creation diagnostic: log all windows
+            let all_windows = app.webview_windows();
+            log::info!(
+                "[startup] total windows created: {} (labels: {:?})",
+                all_windows.len(),
+                all_windows.keys().collect::<Vec<_>>()
+            );
 
             // Hide traffic lights with retries so all windows (including late-initialising
             // secondary monitors) have their NSWindow buttons hidden reliably.
