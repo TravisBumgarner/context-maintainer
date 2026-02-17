@@ -5,6 +5,7 @@ use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use tauri::image::Image;
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, WebviewUrl, WebviewWindowBuilder};
 use tauri::Manager;
@@ -30,6 +31,17 @@ fn hide_traffic_lights(window: &tauri::WebviewWindow) {
                 objc_msgSend(button, sel_set_hidden, 1 as std::ffi::c_int);
             }
         }
+    }
+}
+
+/// Map a window label ("main", "monitor-1", etc.) to its display index.
+fn window_label_to_display_index(label: &str) -> usize {
+    if label == "main" {
+        0
+    } else if let Some(suffix) = label.strip_prefix("monitor-") {
+        suffix.parse().unwrap_or(0)
+    } else {
+        0
     }
 }
 
@@ -861,32 +873,81 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
-            // System tray icon — click to toggle ALL windows
+            // System tray icon with context menu
             let icon = Image::from_path("icons/32x32.png")
                 .or_else(|_| Image::from_path("src-tauri/icons/32x32.png"))
                 .unwrap_or_else(|_| Image::from_bytes(include_bytes!("../icons/32x32.png")).expect("embedded icon"));
 
+            let hide_all = MenuItem::with_id(app, "hide_all", "Hide Entirely", true, None::<&str>)?;
+            let hide_desktop = MenuItem::with_id(app, "hide_desktop", "Hide This Desktop", true, None::<&str>)?;
+            let hide_monitor = MenuItem::with_id(app, "hide_monitor", "Hide This Monitor", true, None::<&str>)?;
+            let show_all = MenuItem::with_id(app, "show_all", "Show All", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let sep = PredefinedMenuItem::separator(app)?;
+
+            let menu = Menu::with_items(app, &[
+                &hide_all,
+                &hide_desktop,
+                &hide_monitor,
+                &sep,
+                &show_all,
+                &PredefinedMenuItem::separator(app)?,
+                &quit,
+            ])?;
+
             TrayIconBuilder::new()
                 .icon(icon)
                 .tooltip("Context Maintainer")
-                .on_tray_icon_event(|tray, event| {
-                    if let tauri::tray::TrayIconEvent::Click { button_state, .. } = event {
-                        // Only toggle on mouse-up to avoid double-firing
-                        if button_state != tauri::tray::MouseButtonState::Up {
-                            return;
-                        }
-                        let app = tray.app_handle();
-                        let windows = app.webview_windows();
-                        let any_visible = windows.values()
-                            .any(|w| w.is_visible().unwrap_or(false));
-                        for window in windows.values() {
-                            if any_visible {
+                .menu(&menu)
+                .on_menu_event(|app, event| {
+                    match event.id.as_ref() {
+                        "hide_all" => {
+                            for window in app.webview_windows().values() {
                                 window.hide().ok();
-                            } else {
+                            }
+                        }
+                        "hide_desktop" => {
+                            // Get the active space ID for each display, then hide
+                            // windows whose display is showing that same space
+                            let spaces = enumerate_spaces();
+                            let display_count = spaces.iter().map(|&(_, d, _)| d).max().map_or(1, |m| m + 1);
+
+                            // Find the active space for each display
+                            let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
+                            for disp in 0..display_count {
+                                let (sid, _) = space_info_for_display(disp);
+                                active_space_per_display.insert(disp, sid);
+                            }
+
+                            // The "current desktop" is the one the user is looking at.
+                            // On macOS, all displays share the same active space change,
+                            // so we use display 0's active space as reference.
+                            let current_space = active_space_per_display.get(&0).copied().unwrap_or(0);
+
+                            for (label, window) in app.webview_windows() {
+                                let disp_idx = window_label_to_display_index(&label);
+                                let window_space = active_space_per_display.get(&disp_idx).copied().unwrap_or(0);
+                                if window_space == current_space {
+                                    window.hide().ok();
+                                }
+                            }
+                        }
+                        "hide_monitor" => {
+                            // Hide only the window on the primary monitor (where the menu bar lives)
+                            if let Some(window) = app.get_webview_window("main") {
+                                window.hide().ok();
+                            }
+                        }
+                        "show_all" => {
+                            for window in app.webview_windows().values() {
                                 window.show().ok();
                                 window.set_focus().ok();
                             }
                         }
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => {}
                     }
                 })
                 .build(app)?;
