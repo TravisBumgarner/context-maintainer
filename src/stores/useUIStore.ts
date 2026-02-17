@@ -22,6 +22,7 @@ interface UIState {
   updateAvailable: { version: string; body: string; downloadAndInstall: (onEvent?: (event: any) => void) => Promise<void> } | null;
   updateStatus: "idle" | "downloading" | "error";
   settingsTab: number;
+  hasExistingSession: boolean;
 
   setView: (v: ViewType) => void;
   setCollapsed: (c: boolean) => void;
@@ -32,6 +33,7 @@ interface UIState {
   setUpdateAvailable: (u: UIState["updateAvailable"]) => void;
   setUpdateStatus: (s: UIState["updateStatus"]) => void;
   setSettingsTab: (t: number) => void;
+  setHasExistingSession: (v: boolean) => void;
   dismissUpdate: () => void;
 
   checkPosition: () => Promise<void>;
@@ -54,6 +56,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   updateAvailable: null,
   updateStatus: "idle",
   settingsTab: 0,
+  hasExistingSession: false,
 
   setView: (v) => set({ view: v }),
   setCollapsed: (c) => set({ collapsed: c }),
@@ -64,6 +67,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setUpdateAvailable: (u) => set({ updateAvailable: u }),
   setUpdateStatus: (s) => set({ updateStatus: s }),
   setSettingsTab: (t) => set({ settingsTab: t }),
+  setHasExistingSession: (v) => set({ hasExistingSession: v }),
   dismissUpdate: () => set({ updateAvailable: null, updateStatus: "idle" }),
 
   checkPosition: async () => {

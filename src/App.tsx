@@ -68,11 +68,13 @@ function App() {
         try {
           const desktops = await invoke<DesktopSummary[]>("list_all_desktops");
           const hasData = desktops.some((d) => d.title || d.todo_count > 0);
-          info(`Desktops loaded: hasData=${hasData}, showing ${hasData ? "session-chooser" : "todos"}`);
+          info(`Desktops loaded: hasData=${hasData}`);
           await useTodoStore.getState().loadAll(desktops.map((d) => d.space_id));
-          setView(hasData ? "session-chooser" : "todos");
+          useUIStore.getState().setHasExistingSession(hasData);
+          setView("session-chooser");
         } catch {
-          setView("todos");
+          useUIStore.getState().setHasExistingSession(false);
+          setView("session-chooser");
         }
       })
       .catch((err) => {
