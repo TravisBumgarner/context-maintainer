@@ -50,6 +50,10 @@ const COLORS: &[&str] = &[
 extern "C" {
     fn CGSMainConnectionID() -> i32;
     fn CGSCopyManagedDisplaySpaces(cid: i32) -> *const c_void;
+    fn CGDisplayRegisterReconfigurationCallback(
+        callback: extern "C" fn(u32, u32, *mut c_void),
+        user_info: *mut c_void,
+    ) -> i32;
 }
 
 // ── CoreFoundation helpers ─────────────────────────────────────
@@ -825,6 +829,175 @@ fn start_space_observer(app_handle: tauri::AppHandle) {
     });
 }
 
+// ── Monitor connect/disconnect observer ───────────────────────
+
+// Flags from CGDisplayChangeSummaryFlags
+const K_CG_DISPLAY_BEGIN_CONFIGURATION_FLAG: u32 = 1 << 0;
+
+/// Store the app handle globally so the CG callback can access it.
+static MONITOR_APP_HANDLE: Mutex<Option<tauri::AppHandle>> = Mutex::new(None);
+
+extern "C" fn display_reconfiguration_callback(_display: u32, flags: u32, _user_info: *mut c_void) {
+    // Ignore the "begin" notification — only act on the completion notification
+    if flags & K_CG_DISPLAY_BEGIN_CONFIGURATION_FLAG != 0 {
+        return;
+    }
+
+    log::info!("[monitors] display reconfiguration detected (flags=0x{:x})", flags);
+
+    let handle = {
+        let guard = MONITOR_APP_HANDLE.lock().unwrap();
+        match guard.as_ref() {
+            Some(h) => h.clone(),
+            None => return,
+        }
+    };
+
+    // Delay briefly to let macOS settle its display list
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        sync_windows_to_monitors(&handle);
+    });
+}
+
+fn sync_windows_to_monitors(handle: &tauri::AppHandle) {
+    let monitors = match handle.available_monitors() {
+        Ok(m) => m,
+        Err(e) => {
+            log::error!("[monitors] failed to enumerate monitors: {}", e);
+            return;
+        }
+    };
+
+    let existing = handle.webview_windows();
+    let monitor_count = monitors.len();
+    let win_w = 290.0_f64;
+    let win_h = 220.0_f64;
+
+    log::info!(
+        "[monitors] sync: {} monitor(s), {} existing window(s) ({:?})",
+        monitor_count,
+        existing.len(),
+        existing.keys().collect::<Vec<_>>()
+    );
+
+    // Build expected labels for each monitor index
+    let expected_labels: Vec<String> = (0..monitor_count)
+        .map(|i| if i == 0 { "main".to_string() } else { format!("monitor-{}", i) })
+        .collect();
+
+    // Create windows for new monitors
+    for (i, monitor) in monitors.iter().enumerate() {
+        let label = &expected_labels[i];
+        if existing.contains_key(label.as_str()) {
+            continue;
+        }
+
+        let m_pos = monitor.position();
+        let m_size = monitor.size();
+        let scale = monitor.scale_factor();
+
+        let logical_x = m_pos.x as f64 / scale;
+        let logical_y = m_pos.y as f64 / scale;
+        let logical_w = m_size.width as f64 / scale;
+
+        let x = logical_x + logical_w - win_w - 16.0;
+        let y = logical_y + 32.0;
+
+        log::info!("[monitors] creating window '{}' for new monitor {}", label, i);
+
+        match WebviewWindowBuilder::new(
+            handle,
+            label.as_str(),
+            WebviewUrl::App("index.html".into()),
+        )
+        .title("Context Maintainer")
+        .inner_size(win_w, win_h)
+        .min_inner_size(180.0, 100.0)
+        .always_on_top(true)
+        .resizable(true)
+        .maximizable(false)
+        .visible_on_all_workspaces(true)
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true)
+        .traffic_light_position(tauri::Position::Logical(
+            tauri::LogicalPosition::new(-20.0, -20.0),
+        ))
+        .build() {
+            Ok(window) => {
+                window.set_position(tauri::Position::Logical(
+                    tauri::LogicalPosition::new(x, y),
+                )).ok();
+
+                #[cfg(target_os = "macos")]
+                {
+                    std::thread::sleep(std::time::Duration::from_millis(200));
+                    hide_traffic_lights(&window);
+                }
+
+                log::info!("[monitors] created window '{}' at ({:.0},{:.0})", label, x, y);
+            }
+            Err(e) => {
+                log::error!("[monitors] failed to create window '{}': {}", label, e);
+            }
+        }
+    }
+
+    // Close windows for removed monitors
+    for (label, window) in &existing {
+        if label.as_str() == "main" {
+            // Never close the main window — if its monitor was removed,
+            // it will be repositioned to the primary display below
+            continue;
+        }
+        if !expected_labels.contains(&label.to_string()) {
+            log::info!("[monitors] closing window '{}' (monitor removed)", label);
+            window.close().ok();
+        }
+    }
+
+    // If the main window's monitor (index 0) changed, reposition it
+    if let Some(main_window) = handle.get_webview_window("main") {
+        if let Some(monitor) = monitors.first() {
+            let m_pos = monitor.position();
+            let m_size = monitor.size();
+            let scale = monitor.scale_factor();
+            let logical_x = m_pos.x as f64 / scale;
+            let logical_y = m_pos.y as f64 / scale;
+            let logical_w = m_size.width as f64 / scale;
+            let x = logical_x + logical_w - win_w - 16.0;
+            let y = logical_y + 32.0;
+            main_window.set_position(tauri::Position::Logical(
+                tauri::LogicalPosition::new(x, y),
+            )).ok();
+        }
+    }
+
+    // Notify frontend to refresh monitor references
+    if let Err(e) = handle.emit("monitors-changed", monitor_count) {
+        log::error!("[monitors] failed to emit monitors-changed: {}", e);
+    }
+}
+
+fn start_monitor_observer(app_handle: tauri::AppHandle) {
+    {
+        let mut guard = MONITOR_APP_HANDLE.lock().unwrap();
+        *guard = Some(app_handle);
+    }
+
+    unsafe {
+        let result = CGDisplayRegisterReconfigurationCallback(
+            display_reconfiguration_callback,
+            std::ptr::null_mut(),
+        );
+        if result != 0 {
+            log::error!("[monitors] CGDisplayRegisterReconfigurationCallback failed: {}", result);
+        } else {
+            log::info!("[monitors] registered display reconfiguration callback");
+        }
+    }
+}
+
 // ── Entry point ────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -973,6 +1146,9 @@ pub fn run() {
 
             // Start NSWorkspace observer for space changes
             start_space_observer(app.handle().clone());
+
+            // Start monitor connect/disconnect observer
+            start_monitor_observer(app.handle().clone());
 
             Ok(())
         })

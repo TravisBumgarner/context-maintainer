@@ -217,7 +217,7 @@ tasks:
       - Frontend monitor references are refreshed after changes
     depends_on: []
     effort: 3
-    status: scoped
+    status: implementing
 
   # ── Milestone 4: Window Count Bug ──────────────────────────
 
