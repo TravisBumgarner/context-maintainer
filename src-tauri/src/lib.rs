@@ -34,33 +34,6 @@ fn hide_traffic_lights(window: &tauri::WebviewWindow) {
     }
 }
 
-// ── Allow window to overlay full-screen apps ─────────────────
-// Must be called on the main thread (NSWindow requirement).
-#[cfg(target_os = "macos")]
-fn set_fullscreen_overlay(window: &tauri::WebviewWindow) {
-    #[link(name = "objc", kind = "dylib")]
-    extern "C" {
-        fn objc_msgSend(receiver: *const c_void, sel: *const c_void, ...) -> *const c_void;
-        fn sel_registerName(name: *const u8) -> *const c_void;
-    }
-
-    unsafe {
-        let ns_window = window.ns_window().unwrap() as *const c_void;
-
-        // Use typed function pointer for the getter to avoid ARM64 variadic ABI issues
-        let get_behavior: unsafe extern "C" fn(*const c_void, *const c_void) -> u64 =
-            std::mem::transmute(objc_msgSend as unsafe extern "C" fn(*const c_void, *const c_void, ...) -> *const c_void);
-        let sel_get = sel_registerName(b"collectionBehavior\0".as_ptr());
-        let current = get_behavior(ns_window, sel_get);
-
-        // OR in fullScreenAuxiliary (1 << 8) to preserve existing flags
-        let updated = current | (1u64 << 8);
-
-        let sel_set = sel_registerName(b"setCollectionBehavior:\0".as_ptr());
-        objc_msgSend(ns_window, sel_set, updated);
-    }
-}
-
 /// Map a window label ("main", "monitor-1", etc.) to its display index.
 fn window_label_to_display_index(label: &str) -> usize {
     if label == "main" {

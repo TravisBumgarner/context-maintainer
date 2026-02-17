@@ -19,6 +19,7 @@
         "minWidth": 180,
         "minHeight": 30,
         "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
         "resizable": true,
         "maximizable": false,
         "titleBarStyle": "Overlay",
