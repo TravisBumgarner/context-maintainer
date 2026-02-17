@@ -895,7 +895,7 @@ pub fn run() {
             let monitors = app.available_monitors()?;
             log::info!("Found {} monitor(s)", monitors.len());
             let win_w = 290.0_f64;
-            let win_h = 370.0_f64;
+            let win_h = 220.0_f64;
 
             for (i, monitor) in monitors.iter().enumerate() {
                 let label = if i == 0 { "main".to_string() } else { format!("monitor-{}", i) };

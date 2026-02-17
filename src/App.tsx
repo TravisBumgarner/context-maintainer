@@ -103,7 +103,7 @@ function App() {
     return () => { unlisten.then((fn) => fn()); };
   }, [setView]);
 
-  // ── Fetch monitor info once ───────────────────────────
+  // ── Fetch monitor info once, then snap to saved anchor ──
   useEffect(() => {
     availableMonitors().then((monitors) => {
       info(`[monitorRef] ${monitors.length} monitor(s) found, displayIndex=${displayIndex}`);
@@ -111,6 +111,12 @@ function App() {
       if (m) {
         info(`[monitorRef] set for display ${displayIndex}: pos=(${m.position.x},${m.position.y}) size=(${m.size.width},${m.size.height}) scale=${m.scaleFactor}`);
         useUIStore.getState().setMonitorRef(m);
+
+        // Snap to saved anchor now that monitorRef is available
+        const saved = loadAnchor();
+        if (saved !== "middle-center") {
+          useUIStore.getState().snapToMonitor(saved);
+        }
       } else {
         info(`[monitorRef] no monitor at index ${displayIndex}`);
       }
@@ -186,12 +192,6 @@ function App() {
       clearInterval(collapseId);
     };
   }, [view, displayIndex]);
-
-  // ── Anchor init (once on first load) ─────────────────────
-  useEffect(() => {
-    const saved = loadAnchor();
-    if (saved !== "top-right") useUIStore.getState().snapToMonitor(saved);
-  }, []);
 
   // ── What's New version tracking ─────────────────────
   useEffect(() => {

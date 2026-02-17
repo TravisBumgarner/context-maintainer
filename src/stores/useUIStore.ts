@@ -42,7 +42,6 @@ interface UIState {
 }
 
 let lastPos: { x: number; y: number } | null = null;
-let ignoreNextMove = false;
 
 export const useUIStore = create<UIState>((set, get) => ({
   view: "loading",
@@ -83,9 +82,7 @@ export const useUIStore = create<UIState>((set, get) => ({
 
       // Detect user drag — if position changed, switch to free move
       if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
-        if (ignoreNextMove) {
-          ignoreNextMove = false;
-        } else if (get().anchorPos !== "middle-center") {
+        if (get().anchorPos !== "middle-center") {
           set({ anchorPos: "middle-center" });
           saveAnchor("middle-center");
         }
@@ -127,9 +124,8 @@ export const useUIStore = create<UIState>((set, get) => ({
         { width: size.width, height: size.height },
       );
 
-      ignoreNextMove = true;
-      await currentWindow.setPosition(new PhysicalPosition(x, y));
       lastPos = { x, y };
+      await currentWindow.setPosition(new PhysicalPosition(x, y));
     } catch {
       // ignore
     }
