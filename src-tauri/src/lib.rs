@@ -34,9 +34,9 @@ fn hide_traffic_lights(window: &tauri::WebviewWindow) {
     }
 }
 
-// ── Set window level above full-screen apps ──────────────────
+// ── Allow window to appear alongside full-screen apps ────────
 #[cfg(target_os = "macos")]
-fn set_above_fullscreen(window: &tauri::WebviewWindow) {
+fn allow_over_fullscreen(window: &tauri::WebviewWindow) {
     #[link(name = "objc", kind = "dylib")]
     extern "C" {
         fn objc_msgSend(receiver: *const c_void, sel: *const c_void, ...) -> *const c_void;
@@ -45,10 +45,17 @@ fn set_above_fullscreen(window: &tauri::WebviewWindow) {
 
     unsafe {
         let ns_window = window.ns_window().unwrap() as *const c_void;
-        let sel_set_level = sel_registerName(b"setLevel:\0".as_ptr());
-        // NSScreenSaverWindowLevel (1000) floats above full-screen apps
-        let level: i64 = 1000;
-        objc_msgSend(ns_window, sel_set_level, level);
+
+        // Read current collectionBehavior
+        let sel_get = sel_registerName(b"collectionBehavior\0".as_ptr());
+        let current = objc_msgSend(ns_window, sel_get) as u64;
+
+        // Add fullScreenAuxiliary (1 << 8) so window can appear on full-screen Spaces
+        let full_screen_auxiliary: u64 = 1 << 8;
+        let updated = current | full_screen_auxiliary;
+
+        let sel_set = sel_registerName(b"setCollectionBehavior:\0".as_ptr());
+        objc_msgSend(ns_window, sel_set, updated);
     }
 }
 
@@ -1332,7 +1339,7 @@ pub fn run() {
                         );
                         for window in windows.values() {
                             hide_traffic_lights(window);
-                            set_above_fullscreen(window);
+                            allow_over_fullscreen(window);
                         }
                     }
                 });
