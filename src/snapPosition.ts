@@ -24,7 +24,7 @@ export function calculateSnapPosition(
   monitor: MonitorBounds,
   win: WindowSize,
 ): { x: number; y: number } {
-  const padding = Math.round(16 * monitor.scaleFactor);
+  const padding = 0;
   const menuBar = Math.round(25 * monitor.scaleFactor);
 
   let x: number;

@@ -42,6 +42,7 @@ interface UIState {
 }
 
 let lastPos: { x: number; y: number } | null = null;
+let snapping = false;
 
 export const useUIStore = create<UIState>((set, get) => ({
   view: "loading",
@@ -80,8 +81,8 @@ export const useUIStore = create<UIState>((set, get) => ({
       const mh = m.size.height;
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
 
-      // Detect user drag — if position changed, switch to free move
-      if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
+      // Detect user drag — if position changed and we're not programmatically snapping
+      if (lastPos && !snapping && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
         if (get().anchorPos !== "middle-center") {
           set({ anchorPos: "middle-center" });
           saveAnchor("middle-center");
@@ -111,6 +112,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (!m) return;
 
     try {
+      snapping = true;
       const size = await currentWindow.outerSize();
       const { x, y } = calculateSnapPosition(
         anchorPos,
@@ -128,6 +130,8 @@ export const useUIStore = create<UIState>((set, get) => ({
       await currentWindow.setPosition(new PhysicalPosition(x, y));
     } catch {
       // ignore
+    } finally {
+      snapping = false;
     }
   },
 
