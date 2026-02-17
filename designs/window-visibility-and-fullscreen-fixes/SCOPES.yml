@@ -1,0 +1,148 @@
+project: Window Visibility & Fullscreen Fixes
+design_file: null  # User-reported issues, no formal design file
+scoping_date: 2026-02-17
+
+milestones:
+  - number: 1
+    title: "1. Tray Menu Hide/Show Sync"
+    description: >
+      Fix the system tray menu labels so they stay in sync with actual window
+      visibility, including when a window is hidden from the in-app sidebar
+      button rather than the tray menu.
+    branch:
+      working: fix/tray-menu-visibility-sync
+      base: main
+
+  - number: 2
+    title: "2. Refresh Desktop List on Space Changes"
+    description: >
+      Ensure the frontend desktop strip updates when macOS Spaces are
+      added or removed while the app is running.
+    branch:
+      working: fix/refresh-desktops-on-change
+      base: main
+
+  - number: 3
+    title: "3. Full-Screen Space Support"
+    description: >
+      Include full-screen app Spaces in enumeration so they appear in the
+      desktop strip and the overlay works normally on them.
+    branch:
+      working: feat/fullscreen-space-support
+      base: main
+
+tasks:
+  - id: 1
+    milestone: 1
+    title: Sync tray menu labels when windows are hidden from the sidebar
+    description: |
+      **Problem:** When the user clicks the "Hide" button in the app's sidebar
+      (`Layout.tsx` line 81, calls `currentWindow.hide()`), the system tray menu
+      items still say "Hide Entirely" / "Hide This Desktop" / "Hide This Monitor"
+      because the tray label state is only updated inside the tray menu event
+      handler — it has no knowledge of hides triggered from the frontend.
+
+      **Root cause:** The tray menu labels (`toggle_all`, `toggle_desktop`,
+      `toggle_monitor`) are set only when the corresponding tray menu action
+      fires. There is no mechanism to detect that a window was hidden by other
+      means and update labels accordingly.
+
+      **Fix approach:** Rather than trying to keep label state in sync
+      proactively, change the tray menu handler to always compute label text
+      from actual `window.is_visible()` state at the moment the menu is opened
+      or an action fires. The current code already reads `any_visible` before
+      acting, so the labels are correct *after* acting — the issue is only the
+      *initial* label when the menu is opened after an external hide.
+
+      Use Tauri's `on_tray_icon_event` or re-check visibility and update all
+      three labels each time the tray icon is clicked (before the menu is
+      shown). Alternatively, emit a `"window-hidden"` event from the frontend
+      when the sidebar hide button is clicked, and listen for it in the Rust
+      backend to update labels.
+
+      **Key files:**
+      - `src-tauri/src/lib.rs` lines 1088–1180 (tray setup + event handler)
+      - `src/components/AccordionView/components/Layout.tsx` line 81
+    acceptance_criteria:
+      - After clicking "Hide" in the sidebar, the tray menu "toggle_all" item reads "Show Entirely" (not "Hide Entirely")
+      - After showing via the tray, the label flips back to "Hide Entirely"
+      - The toggle_desktop and toggle_monitor labels also stay correct after sidebar hides
+    depends_on: []
+    effort: 2
+    status: scoped
+
+  - id: 2
+    milestone: 2
+    title: Refresh displayGroups when desktops are added or removed
+    description: |
+      **Problem:** When the user adds or removes a macOS Space (desktop) via
+      Mission Control while the app is running, the desktop strip in the
+      frontend does not update. Removed desktops continue to appear; new
+      desktops are missing.
+
+      **Root cause:** `refreshDisplayGroups()` (which calls `invoke("list_desktops_grouped")`)
+      is only called once on `AccordionView` mount. The `"desktop-changed"`
+      event listener in `App.tsx` (line 182) updates the *active* desktop but
+      never re-fetches the full list of desktops.
+
+      **Fix:** In the `"desktop-changed"` event listener in `App.tsx`, call
+      `useUIStore.getState().refreshDisplayGroups()` after updating the active
+      desktop. This ensures that any time macOS notifies us of a space change
+      (which fires when spaces are added/removed too), we refresh the full
+      desktop list.
+
+      Be mindful of performance — `list_desktops_grouped` calls
+      `enumerate_spaces()` which queries CGS APIs. It's already called on
+      mount, so calling it on each space change is acceptable since space
+      changes are infrequent (user-initiated).
+
+      **Key files:**
+      - `src/App.tsx` line 182 (`"desktop-changed"` listener)
+      - `src/stores/useUIStore.ts` (`refreshDisplayGroups`)
+      - `src/components/AccordionView/AccordionView.tsx` (current mount-only call)
+    acceptance_criteria:
+      - When a macOS Space is removed via Mission Control, the desktop strip updates to remove it within one space-switch
+      - When a macOS Space is added via Mission Control, it appears in the desktop strip within one space-switch
+    depends_on: []
+    effort: 1
+    status: implementing
+
+  - id: 3
+    milestone: 3
+    title: Include full-screen Spaces in enumerate_spaces and desktop list
+    description: |
+      **Problem:** Full-screen app Spaces are excluded from `enumerate_spaces()`
+      (line 243: `if stype != 0 { continue; }`), so they never appear in the
+      desktop strip and the app cannot show notes/todos for them.
+
+      **What we want:** Treat full-screen Spaces like regular desktops — show
+      the overlay normally, include them in the desktop strip, allow
+      notes/todos.
+
+      **Fix:**
+      1. In `enumerate_spaces()` (`lib.rs` line 243), remove the
+         `if stype != 0 { continue; }` filter so full-screen Spaces are
+         included in enumeration results.
+      2. Add `is_fullscreen` field to the TypeScript `DesktopInfo` interface
+         in `src/types.ts` (the Rust struct already has it and serializes it).
+      3. Add `is_fullscreen` to `DesktopSummary` in `types.ts` and ensure
+         `list_desktops_grouped` includes it in the response (check the Rust
+         `DesktopSummary` struct too).
+      4. Verify that `switch_desktop` (which uses Ctrl+Arrow simulation) can
+         navigate to/from full-screen Spaces, or if a different approach is
+         needed for full-screen Spaces. If Ctrl+Arrow doesn't work for
+         full-screen, document the limitation.
+
+      **Key files:**
+      - `src-tauri/src/lib.rs` line 243 (`enumerate_spaces`)
+      - `src-tauri/src/lib.rs` lines 413–420 (`DesktopInfo` struct)
+      - `src/types.ts` (`DesktopInfo`, `DesktopSummary` interfaces)
+      - `src-tauri/src/lib.rs` lines 523–554 (`list_desktops_grouped`)
+    acceptance_criteria:
+      - Full-screen app Spaces appear in the desktop strip alongside regular desktops
+      - The `is_fullscreen` field is available in the TypeScript `DesktopInfo` type
+      - The overlay shows normally when switching to a full-screen Space
+      - Switching desktops via the desktop strip still works correctly for both regular and full-screen Spaces
+    depends_on: []
+    effort: 2
+    status: scoped
