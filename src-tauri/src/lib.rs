@@ -1249,43 +1249,37 @@ pub fn run() {
                 let x = logical_x + logical_w - win_w - 16.0;
                 let y = logical_y + 32.0;
 
-                if i == 0 {
-                    // "main" already exists from tauri.conf.json — just set workspace visibility.
-                    // Position is handled by the frontend after monitorRef is available.
-                    if let Some(window) = app.get_webview_window("main") {
-                        window.set_visible_on_all_workspaces(true).ok();
-                        log::info!("[startup] configured main window (frontend will position)");
-                    }
-                } else {
-                    // Create additional windows for extra monitors
-                    match WebviewWindowBuilder::new(
-                        app,
-                        &label,
-                        WebviewUrl::App("index.html".into()),
-                    )
-                    .title("Context Maintainer")
-                    .inner_size(win_w, win_h)
-                    .min_inner_size(180.0, 100.0)
-                    .always_on_top(true)
-                    .resizable(true)
-                    .maximizable(false)
-                    .visible_on_all_workspaces(true)
-                    .title_bar_style(tauri::TitleBarStyle::Overlay)
-                    .hidden_title(true)
-                    .traffic_light_position(tauri::Position::Logical(
-                        tauri::LogicalPosition::new(-20.0, -20.0),
-                    ))
-                    .visible(false)
-                    .build() {
-                        Ok(window) => {
+                // Create all windows via the builder so they get the same
+                // collectionBehavior flags (including fullScreenAuxiliary).
+                match WebviewWindowBuilder::new(
+                    app,
+                    &label,
+                    WebviewUrl::App("index.html".into()),
+                )
+                .title("Context Maintainer")
+                .inner_size(win_w, win_h)
+                .min_inner_size(180.0, 100.0)
+                .always_on_top(true)
+                .resizable(true)
+                .maximizable(false)
+                .visible_on_all_workspaces(true)
+                .title_bar_style(tauri::TitleBarStyle::Overlay)
+                .hidden_title(true)
+                .traffic_light_position(tauri::Position::Logical(
+                    tauri::LogicalPosition::new(-20.0, -20.0),
+                ))
+                .visible(false)
+                .build() {
+                    Ok(window) => {
+                        if i > 0 {
                             window.set_position(tauri::Position::Logical(
                                 tauri::LogicalPosition::new(x, y),
                             )).ok();
-                            log::info!("[startup] created window '{}' at ({:.0},{:.0})", label, x, y);
                         }
-                        Err(e) => {
-                            log::error!("[startup] failed to create window '{}': {}", label, e);
-                        }
+                        log::info!("[startup] created window '{}'", label);
+                    }
+                    Err(e) => {
+                        log::error!("[startup] failed to create window '{}': {}", label, e);
                     }
                 }
             }
