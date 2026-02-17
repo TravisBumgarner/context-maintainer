@@ -170,14 +170,20 @@ function App() {
       }
     });
 
-    // Slow position poll — window drag/collapse detection only
-    const positionId = setInterval(() => {
+    // Event-driven position check — auto-snaps back when dragged off monitor
+    const unlistenMoved = currentWindow.onMoved(() => {
+      useUIStore.getState().checkPosition();
+    });
+
+    // Slower poll for collapse detection only (resize doesn't fire onMoved)
+    const collapseId = setInterval(() => {
       useUIStore.getState().checkPosition();
     }, 2000);
 
     return () => {
       unlisten.then((fn) => fn());
-      clearInterval(positionId);
+      unlistenMoved.then((fn) => fn());
+      clearInterval(collapseId);
     };
   }, [view, displayIndex]);
 

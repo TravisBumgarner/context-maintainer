@@ -72,10 +72,7 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   checkPosition: async () => {
     const m = get().monitorRef;
-    if (!m) {
-      info("[checkPosition] no monitorRef, skipping");
-      return;
-    }
+    if (!m) return;
 
     try {
       const pos = await currentWindow.outerPosition();
@@ -88,10 +85,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       const mh = m.size.height;
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
 
-      if (!isOn && !get().offMonitor) {
-        info(`[checkPosition] window OFF monitor: center=(${cx},${cy}) monitor=(${mx},${my},${mw},${mh})`);
+      if (!isOn) {
+        // Auto-snap back to the assigned monitor
+        info(`[checkPosition] window off monitor, snapping back: center=(${cx},${cy}) monitor=(${mx},${my},${mw},${mh})`);
+        get().snapToMonitor();
+        return;
       }
-      set({ offMonitor: !isOn });
+
+      set({ offMonitor: false });
 
       // Detect user drag — if position changed and anchor isn't already free, switch to free
       if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {

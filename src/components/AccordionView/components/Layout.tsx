@@ -77,15 +77,7 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
               </IconButton>
             </Tooltip>
             <Tooltip title="Snap to anchor position" arrow placement="right">
-              <IconButton
-                onClick={() => snapToMonitor()}
-                sx={{
-                  ...btnSx,
-                  ...(offMonitor
-                    ? { color: tc(0.6), "&:hover": { color: tc(0.9) } }
-                    : {}),
-                }}
-              >
+              <IconButton onClick={() => snapToMonitor()} sx={btnSx}>
                 <Warning fontSize="inherit" />
               </IconButton>
             </Tooltip>
