@@ -6,11 +6,6 @@ export const ANCHOR_POSITIONS: AnchorPosition[] = [
   "bottom-left", "bottom-center", "bottom-right",
 ];
 
-export const ANCHOR_LABELS: Record<AnchorPosition, string> = {
-  "top-left": "\u2196", "top-center": "\u2191", "top-right": "\u2197",
-  "middle-left": "\u2190", "middle-center": "\u2725", "middle-right": "\u2192",
-  "bottom-left": "\u2199", "bottom-center": "\u2193", "bottom-right": "\u2198",
-};
 
 export const ANCHOR_NAMES: Record<AnchorPosition, string> = {
   "top-left": "Top Left", "top-center": "Top Center", "top-right": "Top Right",

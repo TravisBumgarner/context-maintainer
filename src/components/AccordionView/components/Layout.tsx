@@ -62,6 +62,7 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
             bgcolor: "rgba(0,0,0,0.04)",
             borderTopLeftRadius: 8,
             borderBottomLeftRadius: 8,
+            cursor: "move",
           }}
         >
           {/* Row 1: minimize */}

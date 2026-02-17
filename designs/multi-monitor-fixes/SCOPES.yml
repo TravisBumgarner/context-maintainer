@@ -171,7 +171,7 @@ tasks:
       - The visual is clear enough that users intuitively understand what "snap to monitor" means
     depends_on: []
     effort: 2
-    status: scoped
+    status: completed
 
   # ── Milestone 3: Dynamic Monitor Detection ─────────────────
 
