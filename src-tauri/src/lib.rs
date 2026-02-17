@@ -937,6 +937,9 @@ pub fn run() {
                     .visible_on_all_workspaces(true)
                     .title_bar_style(tauri::TitleBarStyle::Overlay)
                     .hidden_title(true)
+                    .traffic_light_position(tauri::Position::Logical(
+                        tauri::LogicalPosition::new(-20.0, -20.0),
+                    ))
                     .build()?;
 
                     // Position after creation — builder .position() doesn't
@@ -947,15 +950,23 @@ pub fn run() {
                 }
             }
 
-            // Hide traffic lights after a short delay so NSWindow buttons exist
+            // Hide traffic lights with retries so all windows (including late-initialising
+            // secondary monitors) have their NSWindow buttons hidden reliably.
             #[cfg(target_os = "macos")]
             {
                 let app_handle = app.handle().clone();
                 std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_millis(500));
-                    log::info!("Hiding traffic lights on {} window(s)", app_handle.webview_windows().len());
-                    for window in app_handle.webview_windows().values() {
-                        hide_traffic_lights(window);
+                    for attempt in 0..3 {
+                        std::thread::sleep(std::time::Duration::from_millis(500));
+                        let windows = app_handle.webview_windows();
+                        log::info!(
+                            "Hiding traffic lights (attempt {}): {} window(s)",
+                            attempt + 1,
+                            windows.len()
+                        );
+                        for window in windows.values() {
+                            hide_traffic_lights(window);
+                        }
                     }
                 });
             }

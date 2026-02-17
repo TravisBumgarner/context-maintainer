@@ -1,0 +1,301 @@
+project: Multi-Monitor Fixes & Tray Menu
+design_file: null  # Issues provided inline by user
+scoping_date: 2026-02-16
+
+milestones:
+  - number: 1
+    title: "1. Traffic Lights & Session Sync"
+    description: >
+      Fix per-window inconsistencies: traffic lights showing on some windows,
+      and session chooser state not syncing across windows.
+    branch:
+      working: fix/traffic-lights-and-session-sync
+      base: main
+
+  - number: 2
+    title: "2. Snap-to-Monitor & Anchor UX"
+    description: >
+      Fix snap-to-monitor positioning bug and improve the anchor view to show
+      a monitor preview with the window position for clearer feedback.
+    branch:
+      working: fix/snap-to-monitor-ux
+      base: main
+
+  - number: 3
+    title: "3. Dynamic Monitor Detection"
+    description: >
+      Detect monitor connect/disconnect events at runtime and create or destroy
+      windows accordingly, instead of only enumerating monitors at startup.
+    branch:
+      working: feat/dynamic-monitor-detection
+      base: main
+
+  - number: 4
+    title: "4. Window Count Bug Investigation"
+    description: >
+      Fix the intermittent bug where not all open application windows are
+      accounted for by the app (e.g. 3 windows open but only 2 tracked).
+    branch:
+      working: fix/window-count-tracking
+      base: main
+
+  - number: 5
+    title: "5. System Tray Context Menu"
+    description: >
+      Replace the simple tray click-toggle with a proper right-click context
+      menu offering hide-entirely, hide-this-desktop, and hide-this-monitor options.
+    branch:
+      working: feat/tray-context-menu
+      base: main
+
+tasks:
+  # ── Milestone 1: Traffic Lights & Session Sync ──────────────
+
+  - id: 1
+    milestone: 1
+    title: Ensure traffic lights are hidden on all windows including dynamically created ones
+    description: |
+      **Problem**: The "main" window defined in `tauri.conf.json` has
+      `trafficLightPosition: {x: -20, y: -20}` which moves traffic lights
+      off-screen. But secondary windows created via `WebviewWindowBuilder`
+      in `lib.rs:926-940` do NOT get this config. The `hide_traffic_lights()`
+      function runs on all windows after 500ms, but there may be a race
+      condition where secondary windows aren't fully initialized yet.
+
+      **Fix**:
+      1. In the `WebviewWindowBuilder` for secondary monitors (lib.rs ~line 926),
+         add `.traffic_light_position(tauri::Position::Logical(
+         tauri::LogicalPosition::new(-20.0, -20.0)))` to match the main window config.
+      2. Increase the delay or add a retry mechanism in the `hide_traffic_lights`
+         thread to ensure all windows have their NSWindow buttons available.
+      3. Consider calling `hide_traffic_lights()` per-window right after each
+         window is created (with appropriate delay) rather than batch-calling
+         after a single 500ms wait.
+    acceptance_criteria:
+      - Traffic lights (close/minimize/zoom) are never visible on any window, including secondary monitor windows
+      - The fix applies both to the initial "main" window and any dynamically created windows
+    depends_on: []
+    effort: 1
+    status: implementing
+
+  - id: 2
+    milestone: 1
+    title: Sync session chooser state across all windows via Tauri events
+    description: |
+      **Problem**: Each window runs its own React instance with independent
+      Zustand stores. When the user clicks "Continue Session" in one window,
+      only that window's `useUIStore.view` changes to `"todos"`. Other windows
+      remain stuck on `"session-chooser"`.
+
+      **Fix**:
+      1. When the user clicks any session chooser button (Continue, New Session,
+         Pick from History) in `SessionChooserView.tsx`, emit a Tauri event
+         (e.g., `"session-action"`) with the chosen action.
+      2. All windows listen for this event. On receipt, each window performs the
+         same state transition (set view to "todos", clear todos if new session, etc.).
+      3. This ensures clicking "Continue Session" once in ANY window resolves
+         the prompt in ALL windows simultaneously.
+
+      **Key files**: `src/components/SessionChooserView.tsx`, `src/App.tsx`
+
+      **Pattern**: Use `emit()` from `@tauri-apps/api/event` to broadcast, and
+      `listen()` in `App.tsx` to receive. The event payload should include the
+      action type so each window knows what transition to make.
+    acceptance_criteria:
+      - Clicking "Continue Session" in any window dismisses the session chooser in all open windows
+      - Clicking "New Session" in any window clears data and transitions all windows to todos view
+      - Clicking "Pick from History" navigates the clicked window to history-picker while other windows wait or transition appropriately
+    depends_on: []
+    effort: 2
+    status: scoped
+
+  # ── Milestone 2: Snap-to-Monitor & Anchor UX ───────────────
+
+  - id: 3
+    milestone: 2
+    title: Fix snap-to-monitor positioning so the window lands visibly on-screen
+    description: |
+      **Problem**: Clicking "snap back to monitor" positions the window almost
+      completely off-screen. The `snapToMonitor()` function in
+      `useUIStore.ts:107-141` calculates position using physical coordinates
+      with `padding = 0` and a `menuBar = 25 * scaleFactor` offset.
+
+      **Investigation needed**:
+      - The `monitorRef` stores physical positions and sizes from the Tauri
+        monitor API. Verify these are correct for multi-monitor setups,
+        especially with mixed-DPI displays.
+      - The `setPosition()` call uses `PhysicalPosition` — confirm that the
+        monitor position/size from `monitorRef` are also in physical units
+        (they should be, since `Monitor.position` returns physical coordinates).
+      - Check if the menu bar height assumption (25 logical px) is correct for
+        all macOS configurations (e.g., notched MacBooks report different values).
+
+      **Fix**: Add a reasonable padding (e.g., 16px logical) so the window
+      doesn't sit flush against edges. Ensure the calculation produces
+      coordinates that place the window fully within the visible monitor area.
+      Add bounds clamping to guarantee the window is always at least partially
+      visible.
+    acceptance_criteria:
+      - Snap-to-monitor places the window fully visible within the target monitor bounds
+      - Works correctly on both Retina (2x) and non-Retina displays
+      - Works correctly with external monitors at different positions/scales
+    depends_on: []
+    effort: 2
+    status: scoped
+
+  - id: 4
+    milestone: 2
+    title: Redesign anchor view to show a monitor preview with window position indicator
+    description: |
+      **Problem**: The current anchor view (`AnchorView.tsx`) shows a 3x3 grid
+      of abstract position icons. The user wants the anchor picker to display a
+      visual representation of the monitor with the window shown at the selected
+      position, making it more intuitive and jarring/obvious when selecting a
+      snap-back position.
+
+      **Design**:
+      - Replace the 3x3 icon grid with a visual monitor rectangle (rounded rect
+        with bezel styling).
+      - Inside the monitor rect, show a small rectangle representing the app
+        window at each of the 9 anchor positions.
+      - Clicking a position selects it and visually highlights the window at
+        that position.
+      - The selected position should show the window rectangle in a prominent
+        color; unselected positions show subtle dot indicators or ghost rectangles.
+
+      **Key file**: `src/components/AnchorView.tsx`
+    acceptance_criteria:
+      - Anchor view shows a monitor-shaped preview area instead of abstract icons
+      - The app window position is visually indicated within the monitor preview
+      - Clicking a position snaps the window and updates the visual indicator
+      - The visual is clear enough that users intuitively understand what "snap to monitor" means
+    depends_on: []
+    effort: 2
+    status: scoped
+
+  # ── Milestone 3: Dynamic Monitor Detection ─────────────────
+
+  - id: 5
+    milestone: 3
+    title: Add monitor connect/disconnect detection and dynamic window creation/destruction
+    description: |
+      **Problem**: Windows are only created at app startup based on
+      `app.available_monitors()` (lib.rs:895). If a monitor is connected or
+      disconnected after launch, the app doesn't respond — no new windows
+      appear for new monitors, and windows for disconnected monitors linger.
+
+      **Implementation**:
+      1. Register a macOS display reconfiguration callback using
+         `CGDisplayRegisterReconfigurationCallback` in `lib.rs`. This fires
+         whenever displays are added, removed, or reconfigured.
+      2. In the callback, compare the new monitor list against existing windows:
+         - **New monitor detected**: Create a new window for it (same logic as
+           startup, positioned at top-right of new monitor).
+         - **Monitor removed**: Close and destroy the window associated with it.
+      3. Emit a Tauri event (e.g., `"monitors-changed"`) so the frontend can
+         update its monitor references and display groups.
+      4. Handle the edge case where the "main" window's monitor is disconnected
+         — reassign it to the primary display.
+
+      **macOS API**:
+      ```rust
+      extern "C" {
+          fn CGDisplayRegisterReconfigurationCallback(
+              callback: extern "C" fn(u32, u32, *mut c_void),
+              user_info: *mut c_void
+          ) -> i32;
+      }
+      ```
+      The callback receives `display` ID and `flags` (kCGDisplayAddFlag,
+      kCGDisplayRemoveFlag, etc.).
+
+      **Key file**: `src-tauri/src/lib.rs`
+    acceptance_criteria:
+      - When an external monitor is connected, a new app window appears on it automatically
+      - When a monitor is disconnected, the corresponding app window is closed
+      - The remaining windows continue functioning normally after monitor changes
+      - Frontend monitor references are refreshed after changes
+    depends_on: []
+    effort: 3
+    status: scoped
+
+  # ── Milestone 4: Window Count Bug ──────────────────────────
+
+  - id: 6
+    milestone: 4
+    title: Investigate and fix intermittent window count mismatch
+    description: |
+      **Problem**: The user reports having 3 application windows open but the
+      app only accounts for 2. This is intermittent — it works most of the time.
+
+      **Investigation areas**:
+      1. **Monitor enumeration at startup**: `app.available_monitors()` (lib.rs:895)
+         may not always return all connected monitors. Log the count and details
+         of each monitor found. macOS may not report built-in display + 2
+         externals consistently.
+      2. **Window creation failures**: The `WebviewWindowBuilder::build()` call
+         (lib.rs:940) returns a `Result` but errors are propagated with `?`. If
+         a window fails to build, the app crashes — but a silent failure in
+         positioning could make a window exist but be invisible/off-screen.
+      3. **Display index mapping**: The frontend maps window labels to display
+         indices (App.tsx:30-34). If monitor ordering changes between runs,
+         a window might map to the wrong monitor and appear stacked on another.
+      4. **Race condition**: Windows are created sequentially in the for loop
+         but the delay thread for hiding traffic lights runs on all windows
+         found at 500ms. If a window takes longer to initialize, it might be
+         missed.
+
+      **Fix**: Add comprehensive logging of monitor count, window creation
+      success/failure, and window label assignment. Add a startup diagnostic
+      that logs all created windows and their assigned monitors. If the root
+      cause is `available_monitors()` inconsistency, add a retry or fallback
+      using CoreGraphics `CGGetActiveDisplayList`.
+    acceptance_criteria:
+      - All connected monitors get a corresponding app window at startup
+      - Add diagnostic logging for monitor enumeration and window creation
+      - If available_monitors() is unreliable, use CGGetActiveDisplayList as fallback
+    depends_on: []
+    effort: 2
+    status: scoped
+
+  # ── Milestone 5: System Tray Context Menu ──────────────────
+
+  - id: 7
+    milestone: 5
+    title: Add a context menu to the system tray icon with hide options
+    description: |
+      **Problem**: Currently the tray icon only responds to clicks by toggling
+      all windows on/off (lib.rs:872-891). The user wants a proper context
+      menu (left-click on macOS shows a dropdown) with granular hide options.
+
+      **Implementation**:
+      1. Replace the simple click handler with a `MenuBuilder`-based tray menu.
+      2. Add menu items:
+         - **"Hide Entirely"**: Hides all windows across all monitors and desktops.
+         - **"Hide This Desktop"**: Hides all windows on the currently active
+           desktop/Space only. Other desktops' windows remain visible.
+         - **"Hide This Monitor"**: Hides only the window on the monitor where
+           the menu bar (and thus tray icon) resides.
+         - A separator.
+         - **"Show All"**: Shows all windows on all monitors.
+         - **"Quit"**: Exits the app.
+      3. Use Tauri's `Menu` and `MenuItem` APIs for the tray menu.
+      4. For "Hide This Desktop", the backend needs to track which windows
+         are on which desktop and emit events to hide/show specific windows.
+      5. For "Hide This Monitor", identify which monitor the menu bar is on
+         (typically the primary display on macOS) and hide only that window.
+
+      **Note on macOS behavior**: Left-click on a tray icon with a menu attached
+      will show the menu dropdown. This is the standard macOS convention.
+
+      **Key file**: `src-tauri/src/lib.rs` (tray builder section, lines 864-892)
+    acceptance_criteria:
+      - Left-clicking the tray icon shows a dropdown menu (standard macOS behavior)
+      - "Hide Entirely" hides all app windows
+      - "Hide This Desktop" hides windows only on the current Space/desktop
+      - "Hide This Monitor" hides the window on the primary monitor only
+      - "Show All" makes all windows visible again
+      - "Quit" exits the application
+    depends_on: []
+    effort: 3
+    status: scoped
