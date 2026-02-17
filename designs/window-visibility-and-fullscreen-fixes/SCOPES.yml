@@ -69,7 +69,7 @@ tasks:
       - The toggle_desktop and toggle_monitor labels also stay correct after sidebar hides
     depends_on: []
     effort: 2
-    status: scoped
+    status: implementing
 
   - id: 2
     milestone: 2
