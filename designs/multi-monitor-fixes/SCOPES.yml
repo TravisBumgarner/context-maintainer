@@ -298,4 +298,4 @@ tasks:
       - "Quit" exits the application
     depends_on: []
     effort: 3
-    status: implementing
+    status: completed
