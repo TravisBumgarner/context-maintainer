@@ -34,6 +34,31 @@ fn hide_traffic_lights(window: &tauri::WebviewWindow) {
     }
 }
 
+// ── Allow window to overlay full-screen apps ─────────────────
+// Must be called on the main thread (NSWindow requirement).
+#[cfg(target_os = "macos")]
+fn set_fullscreen_overlay(window: &tauri::WebviewWindow) {
+    #[link(name = "objc", kind = "dylib")]
+    extern "C" {
+        fn objc_msgSend(receiver: *const c_void, sel: *const c_void, ...) -> *const c_void;
+        fn sel_registerName(name: *const u8) -> *const c_void;
+    }
+
+    unsafe {
+        let ns_window = window.ns_window().unwrap() as *const c_void;
+
+        // Read current collectionBehavior
+        let sel_get = sel_registerName(b"collectionBehavior\0".as_ptr());
+        let current = objc_msgSend(ns_window, sel_get) as u64;
+
+        // Add fullScreenAuxiliary (1 << 8) so window can appear on full-screen Spaces
+        let updated = current | (1u64 << 8);
+
+        let sel_set = sel_registerName(b"setCollectionBehavior:\0".as_ptr());
+        objc_msgSend(ns_window, sel_set, updated);
+    }
+}
+
 /// Map a window label ("main", "monitor-1", etc.) to its display index.
 fn window_label_to_display_index(label: &str) -> usize {
     if label == "main" {
@@ -1297,6 +1322,13 @@ pub fn run() {
                 all_windows.len(),
                 all_windows.keys().collect::<Vec<_>>()
             );
+
+            // Set collection behavior on the main thread so windows can appear
+            // over full-screen apps (NSWindow calls must happen on main thread).
+            #[cfg(target_os = "macos")]
+            for window in all_windows.values() {
+                set_fullscreen_overlay(window);
+            }
 
             // Hide traffic lights with retries so all windows (including late-initialising
             // secondary monitors) have their NSWindow buttons hidden reliably.
