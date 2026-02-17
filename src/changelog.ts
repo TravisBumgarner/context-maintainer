@@ -6,6 +6,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.7.0",
+        date: "2026-02-17",
+        changes: [
+            {
+                category: "Improved",
+                items: [
+                    "UI Improvements",
+                    "Tray menu items toggle between Hide and Show",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.6.1",
         date: "2026-02-16",
         changes: [
