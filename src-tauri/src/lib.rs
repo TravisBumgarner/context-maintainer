@@ -50,6 +50,49 @@ const COLORS: &[&str] = &[
 extern "C" {
     fn CGSMainConnectionID() -> i32;
     fn CGSCopyManagedDisplaySpaces(cid: i32) -> *const c_void;
+    fn CGGetActiveDisplayList(max: u32, displays: *mut u32, count: *mut u32) -> i32;
+}
+
+// ── Monitor enumeration with CG fallback ─────────────────────────
+/// Returns the list of monitors, retrying once if `available_monitors()`
+/// reports fewer displays than CoreGraphics `CGGetActiveDisplayList`.
+fn get_monitors_with_fallback(app: &tauri::App) -> Result<Vec<tauri::Monitor>, Box<dyn std::error::Error>> {
+    let cg_count = get_cg_display_count();
+    log::info!("[monitors] CGGetActiveDisplayList reports {} display(s)", cg_count);
+
+    let monitors = app.available_monitors()?;
+    log::info!("[monitors] available_monitors() returned {} monitor(s)", monitors.len());
+
+    if monitors.len() >= cg_count as usize || cg_count == 0 {
+        return Ok(monitors);
+    }
+
+    // Mismatch — CG sees more displays. Retry after a short delay.
+    log::warn!(
+        "[monitors] mismatch: CG={} vs Tauri={}. Retrying after 500ms...",
+        cg_count, monitors.len()
+    );
+    std::thread::sleep(std::time::Duration::from_millis(500));
+
+    let retry = app.available_monitors()?;
+    log::info!("[monitors] retry: available_monitors() returned {} monitor(s)", retry.len());
+
+    if retry.len() >= monitors.len() {
+        Ok(retry)
+    } else {
+        Ok(monitors)
+    }
+}
+
+/// Ask CoreGraphics how many active displays exist.
+fn get_cg_display_count() -> u32 {
+    let mut count: u32 = 0;
+    let err = unsafe { CGGetActiveDisplayList(0, std::ptr::null_mut(), &mut count) };
+    if err != 0 {
+        log::warn!("[monitors] CGGetActiveDisplayList failed with error {}", err);
+        return 0;
+    }
+    count
 }
 
 // ── CoreFoundation helpers ─────────────────────────────────────
@@ -891,9 +934,8 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Create one window per monitor
-            let monitors = app.available_monitors()?;
-            log::info!("Found {} monitor(s)", monitors.len());
+            // Create one window per monitor, with CGGetActiveDisplayList fallback
+            let monitors = get_monitors_with_fallback(app)?;
             let win_w = 290.0_f64;
             let win_h = 220.0_f64;
 
@@ -903,6 +945,12 @@ pub fn run() {
                 let m_pos = monitor.position();
                 let m_size = monitor.size();
                 let scale = monitor.scale_factor();
+
+                log::info!(
+                    "[startup] monitor {}: name={:?} pos=({},{}) size={}x{} scale={}",
+                    i, monitor.name(), m_pos.x, m_pos.y,
+                    m_size.width, m_size.height, scale
+                );
 
                 let logical_x = m_pos.x as f64 / scale;
                 let logical_y = m_pos.y as f64 / scale;
@@ -920,10 +968,11 @@ pub fn run() {
                                 tauri::LogicalPosition::new(x, y),
                             ))
                             .ok();
+                        log::info!("[startup] positioned existing window '{}' at ({:.0},{:.0})", label, x, y);
                     }
                 } else {
                     // Create additional windows for extra monitors
-                    let window = WebviewWindowBuilder::new(
+                    match WebviewWindowBuilder::new(
                         app,
                         &label,
                         WebviewUrl::App("index.html".into()),
@@ -940,15 +989,27 @@ pub fn run() {
                     .traffic_light_position(tauri::Position::Logical(
                         tauri::LogicalPosition::new(-20.0, -20.0),
                     ))
-                    .build()?;
-
-                    // Position after creation — builder .position() doesn't
-                    // reliably place windows on secondary monitors on macOS.
-                    window.set_position(tauri::Position::Logical(
-                        tauri::LogicalPosition::new(x, y),
-                    )).ok();
+                    .build() {
+                        Ok(window) => {
+                            window.set_position(tauri::Position::Logical(
+                                tauri::LogicalPosition::new(x, y),
+                            )).ok();
+                            log::info!("[startup] created window '{}' at ({:.0},{:.0})", label, x, y);
+                        }
+                        Err(e) => {
+                            log::error!("[startup] failed to create window '{}': {}", label, e);
+                        }
+                    }
                 }
             }
+
+            // Post-creation diagnostic: log all windows
+            let all_windows = app.webview_windows();
+            log::info!(
+                "[startup] total windows created: {} (labels: {:?})",
+                all_windows.len(),
+                all_windows.keys().collect::<Vec<_>>()
+            );
 
             // Hide traffic lights with retries so all windows (including late-initialising
             // secondary monitors) have their NSWindow buttons hidden reliably.
