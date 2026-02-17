@@ -5,6 +5,7 @@ import {
   PhysicalPosition,
   type Monitor,
 } from "@tauri-apps/api/window";
+import { info, error as logError } from "@tauri-apps/plugin-log";
 import { currentWindow, loadAnchor, saveAnchor } from "../utils";
 import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED } from "../constants";
 import type { AnchorPosition, ViewType, DisplayGroup } from "../types";
@@ -71,7 +72,10 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   checkPosition: async () => {
     const m = get().monitorRef;
-    if (!m) return;
+    if (!m) {
+      info("[checkPosition] no monitorRef, skipping");
+      return;
+    }
 
     try {
       const pos = await currentWindow.outerPosition();
@@ -83,6 +87,10 @@ export const useUIStore = create<UIState>((set, get) => ({
       const mw = m.size.width;
       const mh = m.size.height;
       const isOn = cx >= mx && cx < mx + mw && cy >= my && cy < my + mh;
+
+      if (!isOn && !get().offMonitor) {
+        info(`[checkPosition] window OFF monitor: center=(${cx},${cy}) monitor=(${mx},${my},${mw},${mh})`);
+      }
       set({ offMonitor: !isOn });
 
       // Detect user drag — if position changed and anchor isn't already free, switch to free
@@ -100,8 +108,8 @@ export const useUIStore = create<UIState>((set, get) => ({
       const logicalHeight = size.height / sf;
       const threshold = (WINDOW_HEIGHT_COLLAPSED + WINDOW_HEIGHT_EXPANDED) / 2;
       set({ collapsed: logicalHeight < threshold });
-    } catch {
-      // ignore
+    } catch (err) {
+      logError(`[checkPosition] error: ${err}`);
     }
   },
 

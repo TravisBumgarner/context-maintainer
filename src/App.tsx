@@ -106,9 +106,13 @@ function App() {
   // ── Fetch monitor info once ───────────────────────────
   useEffect(() => {
     availableMonitors().then((monitors) => {
+      info(`[monitorRef] ${monitors.length} monitor(s) found, displayIndex=${displayIndex}`);
       const m = monitors[displayIndex];
       if (m) {
+        info(`[monitorRef] set for display ${displayIndex}: pos=(${m.position.x},${m.position.y}) size=(${m.size.width},${m.size.height}) scale=${m.scaleFactor}`);
         useUIStore.getState().setMonitorRef(m);
+      } else {
+        info(`[monitorRef] no monitor at index ${displayIndex}`);
       }
       const names: Record<number, string> = {};
       monitors.forEach((mon, i) => {

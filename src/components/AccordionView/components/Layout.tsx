@@ -76,13 +76,19 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
                 <Remove fontSize="inherit" />
               </IconButton>
             </Tooltip>
-            {offMonitor && (
-              <Tooltip title="Snap back to monitor" arrow placement="right">
-                <IconButton onClick={() => snapToMonitor()} sx={{ ...btnSx, color: tc(0.6), "&:hover": { color: tc(0.9) } }}>
-                  <Warning fontSize="inherit" />
-                </IconButton>
-              </Tooltip>
-            )}
+            <Tooltip title="Snap to anchor position" arrow placement="right">
+              <IconButton
+                onClick={() => snapToMonitor()}
+                sx={{
+                  ...btnSx,
+                  ...(offMonitor
+                    ? { color: tc(0.6), "&:hover": { color: tc(0.9) } }
+                    : {}),
+                }}
+              >
+                <Warning fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
           </Box>
 
           {/* Row 2: nav buttons */}
