@@ -76,7 +76,7 @@ tasks:
       - The fix applies both to the initial "main" window and any dynamically created windows
     depends_on: []
     effort: 1
-    status: implementing
+    status: completed
 
   - id: 2
     milestone: 1
