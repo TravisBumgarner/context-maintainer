@@ -31,7 +31,13 @@ export default function SessionChooserView() {
   return (
     <Layout>
       <Box
+        data-tauri-drag-region
+        onPointerDown={(e) => {
+          if ((e.target as HTMLElement).closest("button")) return;
+          useUIStore.getState().markDragged();
+        }}
         sx={{
+          cursor: "move",
           p: "16px 14px",
           display: "flex",
           flexDirection: "column",
