@@ -81,6 +81,28 @@ function App() {
       });
   }, [setView]);
 
+  // ── Cross-window session action sync ─────────────────
+  useEffect(() => {
+    const unlisten = listen<{ action: string }>("session-action", (event) => {
+      const currentView = useUIStore.getState().view;
+      if (currentView !== "session-chooser") return;
+
+      const { action } = event.payload;
+      if (action === "continue") {
+        setView("todos");
+      } else if (action === "new") {
+        useTodoStore.getState().clearAll();
+        setView("todos");
+      } else if (action === "history") {
+        // The initiating window loads history data and navigates to history-picker.
+        // Other windows just transition to todos since they can't share the loaded data.
+        setView("todos");
+      }
+    });
+
+    return () => { unlisten.then((fn) => fn()); };
+  }, [setView]);
+
   // ── Fetch monitor info once ───────────────────────────
   useEffect(() => {
     availableMonitors().then((monitors) => {
