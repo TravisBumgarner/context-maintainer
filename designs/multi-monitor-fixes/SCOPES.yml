@@ -107,7 +107,7 @@ tasks:
       - Clicking "Pick from History" navigates the clicked window to history-picker while other windows wait or transition appropriately
     depends_on: []
     effort: 2
-    status: scoped
+    status: completed
 
   # ── Milestone 2: Snap-to-Monitor & Anchor UX ───────────────
 

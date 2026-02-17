@@ -1,6 +1,7 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 import Layout from "./AccordionView/components/Layout";
 import { useUIStore, useTodoStore, useDesktopStore, useSettingsStore } from "../stores";
 import type { SpaceInfo, ContextHistory } from "../types";
@@ -58,7 +59,13 @@ export default function SessionChooserView() {
           You have an existing session.
         </Typography>
         <Stack spacing={1} sx={{ width: "100%", maxWidth: 180 }}>
-          <Button sx={btnSx} onClick={() => setView("todos")}>
+          <Button
+            sx={btnSx}
+            onClick={() => {
+              setView("todos");
+              emit("session-action", { action: "continue" });
+            }}
+          >
             Continue Session
           </Button>
           <Button
@@ -68,6 +75,7 @@ export default function SessionChooserView() {
                 .then(() => {
                   clearAll();
                   setView("todos");
+                  emit("session-action", { action: "new" });
                 })
                 .catch(() => { });
             }}
@@ -85,6 +93,7 @@ export default function SessionChooserView() {
                   setAllSpaces(spaces);
                   setContextHistory(history);
                   setView("history-picker");
+                  emit("session-action", { action: "history" });
                 })
                 .catch(() => { });
             }}
