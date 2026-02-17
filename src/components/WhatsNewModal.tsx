@@ -16,9 +16,9 @@ export default function WhatsNewModal() {
       <Box
         sx={{
           position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
+          inset: 0,
+          margin: "auto",
+          height: "fit-content",
           width: "85%",
           maxHeight: "70%",
           overflow: "auto",
