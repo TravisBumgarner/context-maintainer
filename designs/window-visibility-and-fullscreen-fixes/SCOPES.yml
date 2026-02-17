@@ -145,4 +145,4 @@ tasks:
       - Switching desktops via the desktop strip still works correctly for both regular and full-screen Spaces
     depends_on: []
     effort: 2
-    status: implementing
+    status: completed
