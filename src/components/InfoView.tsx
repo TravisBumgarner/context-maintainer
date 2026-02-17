@@ -17,7 +17,7 @@ export default function InfoView() {
                 py: "12px",
                 m: "4px",
                 bgcolor: "rgba(0,0,0,0.04)",
-                borderRadius: 2,
+                borderRadius: '0 10px 10px 0'
             }}
         >
             <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), mb: "4px" }}>

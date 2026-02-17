@@ -72,6 +72,13 @@ export function buildTheme(bgColor: string): Theme {
             overflow: "hidden",
             WebkitFontSmoothing: "antialiased",
             backgroundColor: bgColor,
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            cursor: "default",
+          },
+          "input, textarea, [contenteditable]": {
+            userSelect: "text",
+            WebkitUserSelect: "text",
           },
         },
       },
