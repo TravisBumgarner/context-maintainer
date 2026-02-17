@@ -6,6 +6,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.6.2",
+        date: "2026-02-17",
+        changes: [
+            {
+                category: "Improved",
+                items: [
+                    "Startup screen always shown with clear session options",
+                    "Window appears smoothly without flickering on launch",
+                    "Dragging the window now correctly switches to free move",
+                    "Anchor picker shows position name on hover",
+                    "Tray menu items toggle between Hide and Show",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.6.1",
         date: "2026-02-16",
         changes: [
