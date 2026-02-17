@@ -8,6 +8,7 @@ import {
 import { currentWindow, loadAnchor, saveAnchor } from "../utils";
 import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED } from "../constants";
 import type { AnchorPosition, ViewType, DisplayGroup } from "../types";
+import { calculateSnapPosition } from "../snapPosition";
 import { useSettingsStore } from "./useSettingsStore";
 
 interface UIState {
@@ -111,25 +112,17 @@ export const useUIStore = create<UIState>((set, get) => ({
 
     try {
       const size = await currentWindow.outerSize();
-      const sf = m.scaleFactor;
-      const padding = 0;
-      const menuBar = Math.round(25 * sf);
-      const mx = m.position.x;
-      const my = m.position.y;
-      const mw = m.size.width;
-      const mh = m.size.height;
-      const ww = size.width;
-      const wh = size.height;
-
-      let x: number;
-      if (anchorPos.includes("left")) x = mx + padding;
-      else if (anchorPos.includes("center")) x = mx + Math.round((mw - ww) / 2);
-      else x = mx + mw - ww - padding;
-
-      let y: number;
-      if (anchorPos.startsWith("top")) y = my + menuBar;
-      else if (anchorPos.startsWith("middle")) y = my + Math.round((mh - wh) / 2);
-      else y = my + mh - wh - padding;
+      const { x, y } = calculateSnapPosition(
+        anchorPos,
+        {
+          x: m.position.x,
+          y: m.position.y,
+          width: m.size.width,
+          height: m.size.height,
+          scaleFactor: m.scaleFactor,
+        },
+        { width: size.width, height: size.height },
+      );
 
       ignoreNextMove = true;
       await currentWindow.setPosition(new PhysicalPosition(x, y));
