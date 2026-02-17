@@ -185,6 +185,7 @@ function App() {
       if (!info) return;
 
       useDesktopStore.getState().setDesktop(() => info);
+      useUIStore.getState().refreshDisplayGroups();
 
       if (info.space_id !== prevId) {
         // Flush pending saves for old desktop
