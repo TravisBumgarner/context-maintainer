@@ -212,7 +212,7 @@ fn space_info_for_display(target_display: usize) -> (i64, i32) {
 
 // ── Space enumeration (space_id, display, local_1based) ───
 
-fn enumerate_spaces() -> Vec<(i64, usize, u32)> {
+fn enumerate_spaces() -> Vec<(i64, usize, u32, bool)> {
     let mut result = Vec::new();
     unsafe {
         let conn = CGSMainConnectionID();
@@ -240,7 +240,6 @@ fn enumerate_spaces() -> Vec<(i64, usize, u32)> {
                 if !type_ptr.is_null() {
                     CFNumberGetValue(type_ptr, CF_NUMBER_SINT32, &mut stype as *mut _ as *mut c_void);
                 }
-                if stype != 0 { continue; }
 
                 let id_ptr = CFDictionaryGetValue(space, key_id);
                 let mut sid: i64 = 0;
@@ -248,7 +247,8 @@ fn enumerate_spaces() -> Vec<(i64, usize, u32)> {
                     CFNumberGetValue(id_ptr, CF_NUMBER_SINT64, &mut sid as *mut _ as *mut c_void);
                 }
 
-                result.push((sid, d, local));
+                let is_fullscreen = stype != 0;
+                result.push((sid, d, local, is_fullscreen));
                 local += 1;
             }
         }
@@ -388,7 +388,7 @@ fn migrate_v0_to_v1(data: &mut PersistData) {
     let pos_to_sid: HashMap<i64, i64> = spaces
         .iter()
         .enumerate()
-        .map(|(pos, &(sid, _disp, _local))| (pos as i64, sid))
+        .map(|(pos, &(sid, _disp, _local, _fs))| (pos as i64, sid))
         .collect();
 
     fn rekey<V: Clone>(old: &HashMap<i64, V>, mapping: &HashMap<i64, i64>) -> HashMap<i64, V> {
@@ -425,11 +425,12 @@ fn default_color(position: u32) -> String {
 
 #[tauri::command]
 fn get_desktop(state: tauri::State<'_, AppState>, display: u32) -> DesktopInfo {
-    let (sid, space_type) = space_info_for_display(display as usize);
+    let (sid, _space_type) = space_info_for_display(display as usize);
     let spaces = enumerate_spaces();
-    let position = spaces.iter()
-        .position(|&(s, _, _)| s == sid)
-        .unwrap_or(0) as u32;
+    let (position, is_fullscreen) = spaces.iter()
+        .position(|&(s, _, _, _)| s == sid)
+        .map(|pos| (pos as u32, spaces[pos].3))
+        .unwrap_or((0, false));
     let data = state.data.lock().unwrap();
     let color = data.settings.custom_colors.get(&sid)
         .cloned()
@@ -439,7 +440,7 @@ fn get_desktop(state: tauri::State<'_, AppState>, display: u32) -> DesktopInfo {
         position,
         name: format!("Desktop {}", position + 1),
         color,
-        is_fullscreen: space_type != 0,
+        is_fullscreen,
     }
 }
 
@@ -483,6 +484,7 @@ struct DesktopSummary {
     title: String,
     color: String,
     todo_count: usize,
+    is_fullscreen: bool,
 }
 
 #[tauri::command]
@@ -492,7 +494,7 @@ fn list_all_desktops(state: tauri::State<'_, AppState>) -> Vec<DesktopSummary> {
     spaces
         .iter()
         .enumerate()
-        .map(|(pos, &(sid, _disp, _local))| {
+        .map(|(pos, &(sid, _disp, _local, is_fullscreen))| {
             let position = pos as u32;
             let todos = data.notes.get(&sid);
             let active_count = todos
@@ -508,6 +510,7 @@ fn list_all_desktops(state: tauri::State<'_, AppState>) -> Vec<DesktopSummary> {
                 title: data.titles.get(&sid).cloned().unwrap_or_default(),
                 color,
                 todo_count: active_count,
+                is_fullscreen,
             }
         })
         .collect()
@@ -527,7 +530,7 @@ fn list_desktops_grouped(state: tauri::State<'_, AppState>) -> Vec<DisplayGroup>
     let mut groups: std::collections::BTreeMap<usize, Vec<DesktopSummary>> = std::collections::BTreeMap::new();
     let mut global_pos: u32 = 0;
 
-    for &(sid, disp, _local) in &spaces {
+    for &(sid, disp, _local, is_fullscreen) in &spaces {
         let position = global_pos;
         let todos = data.notes.get(&sid);
         let active_count = todos
@@ -543,6 +546,7 @@ fn list_desktops_grouped(state: tauri::State<'_, AppState>) -> Vec<DisplayGroup>
             title: data.titles.get(&sid).cloned().unwrap_or_default(),
             color,
             todo_count: active_count,
+            is_fullscreen,
         };
         groups.entry(disp).or_default().push(summary);
         global_pos += 1;
@@ -560,8 +564,8 @@ fn switch_desktop(display: u32, target: i64) -> bool {
 
     // Find positions of current and target on the same display
     let display_spaces: Vec<i64> = spaces.iter()
-        .filter(|&&(_, disp, _)| disp == display as usize)
-        .map(|&(sid, _, _)| sid)
+        .filter(|&&(_, disp, _, _)| disp == display as usize)
+        .map(|&(sid, _, _, _)| sid)
         .collect();
 
     let current_pos = display_spaces.iter().position(|&s| s == current_sid);
@@ -681,7 +685,7 @@ fn list_all_spaces(state: tauri::State<'_, AppState>) -> Vec<SpaceInfo> {
     spaces
         .iter()
         .enumerate()
-        .map(|(pos, &(sid, _disp, _local))| {
+        .map(|(pos, &(sid, _disp, _local, _fs))| {
             let position = pos as u32;
             let color = data.settings.custom_colors.get(&sid)
                 .cloned()
@@ -710,7 +714,7 @@ fn apply_theme(state: tauri::State<'_, AppState>, colors: Vec<String>) {
     let spaces = enumerate_spaces();
     let mut data = state.data.lock().unwrap();
     data.settings.custom_colors.clear();
-    for (i, &(sid, _disp, _local)) in spaces.iter().enumerate() {
+    for (i, &(sid, _disp, _local, _fs)) in spaces.iter().enumerate() {
         if i < colors.len() {
             data.settings.custom_colors.insert(sid, colors[i].clone());
         }
@@ -823,16 +827,17 @@ extern "C" {
 /// matching the same logic as the `get_desktop` command.
 fn build_desktop_infos(state: &AppState) -> Vec<DesktopInfo> {
     let spaces = enumerate_spaces();
-    let display_count = spaces.iter().map(|&(_, d, _)| d).max().map_or(1, |m| m + 1);
+    let display_count = spaces.iter().map(|&(_, d, _, _)| d).max().map_or(1, |m| m + 1);
     let data = state.data.lock().unwrap();
 
     (0..display_count)
         .map(|disp| {
-            let (sid, space_type) = space_info_for_display(disp);
-            let position = spaces
+            let (sid, _space_type) = space_info_for_display(disp);
+            let found = spaces
                 .iter()
-                .position(|&(s, _, _)| s == sid)
-                .unwrap_or(0) as u32;
+                .position(|&(s, _, _, _)| s == sid);
+            let position = found.unwrap_or(0) as u32;
+            let is_fullscreen = found.map(|pos| spaces[pos].3).unwrap_or(false);
             let color = data
                 .settings
                 .custom_colors
@@ -844,7 +849,7 @@ fn build_desktop_infos(state: &AppState) -> Vec<DesktopInfo> {
                 position,
                 name: format!("Desktop {}", position + 1),
                 color,
-                is_fullscreen: space_type != 0,
+                is_fullscreen,
             }
         })
         .collect()
@@ -1127,7 +1132,7 @@ pub fn run() {
 
                         // Refresh "Hide/Show This Desktop"
                         let spaces = enumerate_spaces();
-                        let display_count = spaces.iter().map(|&(_, d, _)| d).max().map_or(1, |m| m + 1);
+                        let display_count = spaces.iter().map(|&(_, d, _, _)| d).max().map_or(1, |m| m + 1);
                         let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
                         for disp in 0..display_count {
                             let (sid, _) = space_info_for_display(disp);
@@ -1168,7 +1173,7 @@ pub fn run() {
                         }
                         "toggle_desktop" => {
                             let spaces = enumerate_spaces();
-                            let display_count = spaces.iter().map(|&(_, d, _)| d).max().map_or(1, |m| m + 1);
+                            let display_count = spaces.iter().map(|&(_, d, _, _)| d).max().map_or(1, |m| m + 1);
 
                             let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
                             for disp in 0..display_count {
@@ -1244,43 +1249,37 @@ pub fn run() {
                 let x = logical_x + logical_w - win_w - 16.0;
                 let y = logical_y + 32.0;
 
-                if i == 0 {
-                    // "main" already exists from tauri.conf.json — just set workspace visibility.
-                    // Position is handled by the frontend after monitorRef is available.
-                    if let Some(window) = app.get_webview_window("main") {
-                        window.set_visible_on_all_workspaces(true).ok();
-                        log::info!("[startup] configured main window (frontend will position)");
-                    }
-                } else {
-                    // Create additional windows for extra monitors
-                    match WebviewWindowBuilder::new(
-                        app,
-                        &label,
-                        WebviewUrl::App("index.html".into()),
-                    )
-                    .title("Context Maintainer")
-                    .inner_size(win_w, win_h)
-                    .min_inner_size(180.0, 100.0)
-                    .always_on_top(true)
-                    .resizable(true)
-                    .maximizable(false)
-                    .visible_on_all_workspaces(true)
-                    .title_bar_style(tauri::TitleBarStyle::Overlay)
-                    .hidden_title(true)
-                    .traffic_light_position(tauri::Position::Logical(
-                        tauri::LogicalPosition::new(-20.0, -20.0),
-                    ))
-                    .visible(false)
-                    .build() {
-                        Ok(window) => {
+                // Create all windows via the builder so they get the same
+                // collectionBehavior flags (including fullScreenAuxiliary).
+                match WebviewWindowBuilder::new(
+                    app,
+                    &label,
+                    WebviewUrl::App("index.html".into()),
+                )
+                .title("Context Maintainer")
+                .inner_size(win_w, win_h)
+                .min_inner_size(180.0, 100.0)
+                .always_on_top(true)
+                .resizable(true)
+                .maximizable(false)
+                .visible_on_all_workspaces(true)
+                .title_bar_style(tauri::TitleBarStyle::Overlay)
+                .hidden_title(true)
+                .traffic_light_position(tauri::Position::Logical(
+                    tauri::LogicalPosition::new(-20.0, -20.0),
+                ))
+                .visible(false)
+                .build() {
+                    Ok(window) => {
+                        if i > 0 {
                             window.set_position(tauri::Position::Logical(
                                 tauri::LogicalPosition::new(x, y),
                             )).ok();
-                            log::info!("[startup] created window '{}' at ({:.0},{:.0})", label, x, y);
                         }
-                        Err(e) => {
-                            log::error!("[startup] failed to create window '{}': {}", label, e);
-                        }
+                        log::info!("[startup] created window '{}'", label);
+                    }
+                    Err(e) => {
+                        log::error!("[startup] failed to create window '{}': {}", label, e);
                     }
                 }
             }

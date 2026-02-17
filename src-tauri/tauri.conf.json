@@ -10,26 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [
-      {
-        "label": "main",
-        "title": "Context Maintainer",
-        "width": 290,
-        "height": 220,
-        "minWidth": 180,
-        "minHeight": 30,
-        "alwaysOnTop": true,
-        "resizable": true,
-        "maximizable": false,
-        "titleBarStyle": "Overlay",
-        "hiddenTitle": true,
-        "visible": false,
-        "trafficLightPosition": {
-          "x": -20,
-          "y": -20
-        }
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": null
     }

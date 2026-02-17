@@ -8,6 +8,7 @@ export interface DesktopInfo {
   position: number;
   name: string;
   color: string;
+  is_fullscreen: boolean;
 }
 
 export interface TodoItem {
@@ -23,6 +24,7 @@ export interface DesktopSummary {
   title: string;
   color: string;
   todo_count: number;
+  is_fullscreen: boolean;
 }
 
 export interface SpaceInfo {

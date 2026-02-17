@@ -20,6 +20,7 @@ export const useDesktopStore = create<DesktopState>((set) => ({
     position: 0,
     name: "Desktop 1",
     color: "#F5E6A3",
+    is_fullscreen: false,
   },
   contextHistory: {},
   monitorNames: {},
