@@ -46,12 +46,18 @@ fn set_fullscreen_overlay(window: &tauri::WebviewWindow) {
 
     unsafe {
         let ns_window = window.ns_window().unwrap() as *const c_void;
-        let sel_set = sel_registerName(b"setCollectionBehavior:\0".as_ptr());
 
-        // canJoinAllSpaces (1 << 0) = visible on all spaces
-        // fullScreenAuxiliary (1 << 8) = can appear alongside full-screen apps
-        let behavior: u64 = (1 << 0) | (1 << 8);
-        objc_msgSend(ns_window, sel_set, behavior);
+        // Use typed function pointer for the getter to avoid ARM64 variadic ABI issues
+        let get_behavior: unsafe extern "C" fn(*const c_void, *const c_void) -> u64 =
+            std::mem::transmute(objc_msgSend as unsafe extern "C" fn(*const c_void, *const c_void, ...) -> *const c_void);
+        let sel_get = sel_registerName(b"collectionBehavior\0".as_ptr());
+        let current = get_behavior(ns_window, sel_get);
+
+        // OR in fullScreenAuxiliary (1 << 8) to preserve existing flags
+        let updated = current | (1u64 << 8);
+
+        let sel_set = sel_registerName(b"setCollectionBehavior:\0".as_ptr());
+        objc_msgSend(ns_window, sel_set, updated);
     }
 }
 
