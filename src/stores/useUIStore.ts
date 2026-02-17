@@ -40,6 +40,7 @@ interface UIState {
   snapToMonitor: (overrideAnchor?: AnchorPosition) => Promise<void>;
   toggleMinimize: () => Promise<void>;
   selectAnchor: (pos: AnchorPosition) => void;
+  markDragged: () => void;
   refreshDisplayGroups: () => Promise<void>;
 }
 
@@ -164,6 +165,13 @@ export const useUIStore = create<UIState>((set, get) => ({
     set({ anchorPos: pos });
     saveAnchor(pos);
     if (pos !== "middle-center") get().snapToMonitor(pos);
+  },
+
+  markDragged: () => {
+    if (get().anchorPos !== "middle-center") {
+      set({ anchorPos: "middle-center" });
+      saveAnchor("middle-center");
+    }
   },
 
   refreshDisplayGroups: async () => {

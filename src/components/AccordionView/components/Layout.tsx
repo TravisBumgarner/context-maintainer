@@ -49,6 +49,11 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
       {showSidebar && (
         <Box
           data-tauri-drag-region
+          onPointerDown={(e) => {
+            // Only mark as dragged if clicking the drag region itself, not child buttons
+            if ((e.target as HTMLElement).closest("button")) return;
+            useUIStore.getState().markDragged();
+          }}
           sx={{
             width: 32,
             flexShrink: 0,

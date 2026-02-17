@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useUIStore } from "../stores";
@@ -20,11 +21,14 @@ const GRID: Record<AnchorPosition, { row: number; col: number }> = {
 export default function AnchorView() {
   const { tc, ui } = useTheme().custom;
   const { anchorPos, selectAnchor, setView } = useUIStore();
+  const [hoveredPos, setHoveredPos] = useState<AnchorPosition | null>(null);
 
   const handleSelect = (pos: AnchorPosition) => {
     selectAnchor(pos);
     setView("todos");
   };
+
+  const displayName = hoveredPos ? ANCHOR_NAMES[hoveredPos] : ANCHOR_NAMES[anchorPos];
 
   return (
     <Box
@@ -75,6 +79,8 @@ export default function AnchorView() {
               key={pos}
               component="button"
               onClick={() => handleSelect(pos)}
+              onMouseEnter={() => setHoveredPos(pos)}
+              onMouseLeave={() => setHoveredPos(null)}
               sx={{
                 display: "flex",
                 justifyContent: justifySelf,
@@ -129,9 +135,9 @@ export default function AnchorView() {
         }}
       />
 
-      {/* Current position label */}
-      <Typography sx={{ fontSize: 10, color: tc(0.35), mt: "8px" }}>
-        {ANCHOR_NAMES[anchorPos]}
+      {/* Current/hovered position label */}
+      <Typography sx={{ fontSize: 10, color: hoveredPos ? tc(0.5) : tc(0.35), mt: "8px" }}>
+        {displayName}
       </Typography>
     </Box>
   );
