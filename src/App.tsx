@@ -112,18 +112,6 @@ function App() {
         if (m) {
           info(`[monitorRef] set for display ${displayIndex}: pos=(${m.position.x},${m.position.y}) size=(${m.size.width},${m.size.height}) scale=${m.scaleFactor}`);
           useUIStore.getState().setMonitorRef(m);
-
-          // On first load (loading/session-chooser), center the window on screen.
-          // Once in todos view, snap to the saved anchor position.
-          const currentView = useUIStore.getState().view;
-          if (currentView === "loading" || currentView === "session-chooser") {
-            useUIStore.getState().snapToMonitor("middle-center");
-          } else {
-            const saved = loadAnchor();
-            if (saved !== "middle-center") {
-              useUIStore.getState().snapToMonitor(saved);
-            }
-          }
         } else {
           info(`[monitorRef] no monitor at index ${displayIndex}`);
         }
@@ -147,12 +135,15 @@ function App() {
     return () => { unlisten.then((fn) => fn()); };
   }, [displayIndex]);
 
-  // ── Snap to saved anchor when entering todos view ──
+  // ── Position window based on view ──
   useEffect(() => {
-    if (view !== "todos") return;
-    const saved = loadAnchor();
-    if (saved !== "middle-center") {
-      useUIStore.getState().snapToMonitor(saved);
+    if (view === "session-chooser") {
+      useUIStore.getState().snapToMonitor("middle-center");
+    } else if (view === "todos") {
+      const saved = loadAnchor();
+      if (saved !== "middle-center") {
+        useUIStore.getState().snapToMonitor(saved);
+      }
     }
   }, [view]);
 
