@@ -46,16 +46,12 @@ fn set_fullscreen_overlay(window: &tauri::WebviewWindow) {
 
     unsafe {
         let ns_window = window.ns_window().unwrap() as *const c_void;
-
-        // Read current collectionBehavior
-        let sel_get = sel_registerName(b"collectionBehavior\0".as_ptr());
-        let current = objc_msgSend(ns_window, sel_get) as u64;
-
-        // Add fullScreenAuxiliary (1 << 8) so window can appear on full-screen Spaces
-        let updated = current | (1u64 << 8);
-
         let sel_set = sel_registerName(b"setCollectionBehavior:\0".as_ptr());
-        objc_msgSend(ns_window, sel_set, updated);
+
+        // canJoinAllSpaces (1 << 0) = visible on all spaces
+        // fullScreenAuxiliary (1 << 8) = can appear alongside full-screen apps
+        let behavior: u64 = (1 << 0) | (1 << 8);
+        objc_msgSend(ns_window, sel_set, behavior);
     }
 }
 
