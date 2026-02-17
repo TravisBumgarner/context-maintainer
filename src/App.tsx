@@ -103,29 +103,42 @@ function App() {
     return () => { unlisten.then((fn) => fn()); };
   }, [setView]);
 
-  // ── Fetch monitor info once, then snap to saved anchor ──
+  // ── Fetch monitor info and refresh on monitor changes ──
   useEffect(() => {
-    availableMonitors().then((monitors) => {
-      info(`[monitorRef] ${monitors.length} monitor(s) found, displayIndex=${displayIndex}`);
-      const m = monitors[displayIndex];
-      if (m) {
-        info(`[monitorRef] set for display ${displayIndex}: pos=(${m.position.x},${m.position.y}) size=(${m.size.width},${m.size.height}) scale=${m.scaleFactor}`);
-        useUIStore.getState().setMonitorRef(m);
+    const refreshMonitorRef = () => {
+      availableMonitors().then((monitors) => {
+        info(`[monitorRef] ${monitors.length} monitor(s) found, displayIndex=${displayIndex}`);
+        const m = monitors[displayIndex];
+        if (m) {
+          info(`[monitorRef] set for display ${displayIndex}: pos=(${m.position.x},${m.position.y}) size=(${m.size.width},${m.size.height}) scale=${m.scaleFactor}`);
+          useUIStore.getState().setMonitorRef(m);
 
-        // Snap to saved anchor now that monitorRef is available
-        const saved = loadAnchor();
-        if (saved !== "middle-center") {
-          useUIStore.getState().snapToMonitor(saved);
+          // Snap to saved anchor now that monitorRef is available
+          const saved = loadAnchor();
+          if (saved !== "middle-center") {
+            useUIStore.getState().snapToMonitor(saved);
+          }
+        } else {
+          info(`[monitorRef] no monitor at index ${displayIndex}`);
         }
-      } else {
-        info(`[monitorRef] no monitor at index ${displayIndex}`);
-      }
-      const names: Record<number, string> = {};
-      monitors.forEach((mon, i) => {
-        names[i] = friendlyMonitorName(mon.name, i);
+        const names: Record<number, string> = {};
+        monitors.forEach((mon, i) => {
+          names[i] = friendlyMonitorName(mon.name, i);
+        });
+        useDesktopStore.getState().setMonitorNames(names);
       });
-      useDesktopStore.getState().setMonitorNames(names);
+    };
+
+    // Initial fetch
+    refreshMonitorRef();
+
+    // Refresh when monitors are connected/disconnected
+    const unlisten = listen("monitors-changed", () => {
+      info("[monitorRef] monitors-changed event received, refreshing");
+      refreshMonitorRef();
     });
+
+    return () => { unlisten.then((fn) => fn()); };
   }, [displayIndex]);
 
   // ── Desktop detection (event-driven) + slow position poll ──
