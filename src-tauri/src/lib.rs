@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::tray::TrayIconBuilder;
+use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, WebviewUrl, WebviewWindowBuilder};
 use tauri::Manager;
 
@@ -1107,10 +1107,47 @@ pub fn run() {
                 &quit,
             ])?;
 
+            // Clones for the on_tray_icon_event closure to refresh labels
+            let tray_toggle_all = toggle_all.clone();
+            let tray_toggle_desktop = toggle_desktop.clone();
+            let tray_toggle_monitor = toggle_monitor.clone();
+
             TrayIconBuilder::new()
                 .icon(icon)
                 .tooltip("Context Maintainer")
                 .menu(&menu)
+                .on_tray_icon_event(move |tray, event| {
+                    if matches!(event, TrayIconEvent::Click { .. }) {
+                        let app = tray.app_handle();
+                        let windows = app.webview_windows();
+
+                        // Refresh "Hide/Show Entirely"
+                        let any_visible = windows.values().any(|w| w.is_visible().unwrap_or(false));
+                        tray_toggle_all.set_text(if any_visible { "Hide Entirely" } else { "Show Entirely" }).ok();
+
+                        // Refresh "Hide/Show This Desktop"
+                        let spaces = enumerate_spaces();
+                        let display_count = spaces.iter().map(|&(_, d, _)| d).max().map_or(1, |m| m + 1);
+                        let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
+                        for disp in 0..display_count {
+                            let (sid, _) = space_info_for_display(disp);
+                            active_space_per_display.insert(disp, sid);
+                        }
+                        let current_space = active_space_per_display.get(&0).copied().unwrap_or(0);
+                        let desktop_any_visible = windows.iter().any(|(label, w)| {
+                            let disp_idx = window_label_to_display_index(label);
+                            active_space_per_display.get(&disp_idx).copied().unwrap_or(0) == current_space
+                                && w.is_visible().unwrap_or(false)
+                        });
+                        tray_toggle_desktop.set_text(if desktop_any_visible { "Hide This Desktop" } else { "Show This Desktop" }).ok();
+
+                        // Refresh "Hide/Show This Monitor"
+                        if let Some(main_win) = app.get_webview_window("main") {
+                            let main_visible = main_win.is_visible().unwrap_or(false);
+                            tray_toggle_monitor.set_text(if main_visible { "Hide This Monitor" } else { "Show This Monitor" }).ok();
+                        }
+                    }
+                })
                 .on_menu_event(move |app, event| {
                     match event.id.as_ref() {
                         "toggle_all" => {

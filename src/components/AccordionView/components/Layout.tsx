@@ -77,7 +77,7 @@ export default function Layout({ children, timerFlashing }: LayoutProps) {
                 <Close fontSize="inherit" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Hide" arrow placement="right">
+            <Tooltip title="Hide this desktop" arrow placement="right">
               <IconButton onClick={() => currentWindow.hide()} sx={btnSx}>
                 <Remove fontSize="inherit" />
               </IconButton>
