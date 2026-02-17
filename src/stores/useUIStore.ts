@@ -15,7 +15,6 @@ import { useSettingsStore } from "./useSettingsStore";
 interface UIState {
   view: ViewType;
   collapsed: boolean;
-  offMonitor: boolean;
   anchorPos: AnchorPosition;
   displayGroups: DisplayGroup[];
   monitorRef: Monitor | null;
@@ -26,7 +25,6 @@ interface UIState {
 
   setView: (v: ViewType) => void;
   setCollapsed: (c: boolean) => void;
-  setOffMonitor: (o: boolean) => void;
   setAnchorPos: (p: AnchorPosition) => void;
   setDisplayGroups: (g: DisplayGroup[]) => void;
   setMonitorRef: (m: Monitor | null) => void;
@@ -49,7 +47,6 @@ let ignoreNextMove = false;
 export const useUIStore = create<UIState>((set, get) => ({
   view: "loading",
   collapsed: false,
-  offMonitor: false,
   anchorPos: loadAnchor(),
   displayGroups: [],
   monitorRef: null,
@@ -60,7 +57,6 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   setView: (v) => set({ view: v }),
   setCollapsed: (c) => set({ collapsed: c }),
-  setOffMonitor: (o) => set({ offMonitor: o }),
   setAnchorPos: (p) => set({ anchorPos: p }),
   setDisplayGroups: (g) => set({ displayGroups: g }),
   setMonitorRef: (m) => set({ monitorRef: m }),
@@ -91,8 +87,6 @@ export const useUIStore = create<UIState>((set, get) => ({
         get().snapToMonitor();
         return;
       }
-
-      set({ offMonitor: false });
 
       // Detect user drag — if position changed and anchor isn't already free, switch to free
       if (lastPos && (pos.x !== lastPos.x || pos.y !== lastPos.y)) {
@@ -136,7 +130,6 @@ export const useUIStore = create<UIState>((set, get) => ({
       ignoreNextMove = true;
       await currentWindow.setPosition(new PhysicalPosition(x, y));
       lastPos = { x, y };
-      set({ offMonitor: false });
     } catch {
       // ignore
     }
