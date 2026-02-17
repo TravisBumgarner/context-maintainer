@@ -36,6 +36,7 @@ function App() {
 
   const view = useUIStore((s) => s.view);
   const setView = useUIStore((s) => s.setView);
+  const monitorRef = useUIStore((s) => s.monitorRef);
   const desktopColor = useDesktopStore((s) => s.desktop.color);
   const flashing = useTimerStore((s) => {
     const t = s.timers[s.activeDesktop];
@@ -139,6 +140,8 @@ function App() {
 
   // ── Position window based on view, then reveal ──
   useEffect(() => {
+    if (!monitorRef) return;
+
     const position = async () => {
       if (view === "session-chooser") {
         await useUIStore.getState().snapToMonitor("middle-center");
@@ -150,11 +153,10 @@ function App() {
       } else {
         return;
       }
-      // Show window after positioning to avoid flash
       currentWindow.show();
     };
     position();
-  }, [view]);
+  }, [view, monitorRef]);
 
   // ── Desktop detection (event-driven) + slow position poll ──
   useEffect(() => {

@@ -1208,15 +1208,11 @@ pub fn run() {
                 let y = logical_y + 32.0;
 
                 if i == 0 {
-                    // "main" already exists from tauri.conf.json — just position it
+                    // "main" already exists from tauri.conf.json — just set workspace visibility.
+                    // Position is handled by the frontend after monitorRef is available.
                     if let Some(window) = app.get_webview_window("main") {
                         window.set_visible_on_all_workspaces(true).ok();
-                        window
-                            .set_position(tauri::Position::Logical(
-                                tauri::LogicalPosition::new(x, y),
-                            ))
-                            .ok();
-                        log::info!("[startup] positioned existing window '{}' at ({:.0},{:.0})", label, x, y);
+                        log::info!("[startup] configured main window (frontend will position)");
                     }
                 } else {
                     // Create additional windows for extra monitors
