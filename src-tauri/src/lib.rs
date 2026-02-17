@@ -34,6 +34,24 @@ fn hide_traffic_lights(window: &tauri::WebviewWindow) {
     }
 }
 
+// ── Set window level above full-screen apps ──────────────────
+#[cfg(target_os = "macos")]
+fn set_above_fullscreen(window: &tauri::WebviewWindow) {
+    #[link(name = "objc", kind = "dylib")]
+    extern "C" {
+        fn objc_msgSend(receiver: *const c_void, sel: *const c_void, ...) -> *const c_void;
+        fn sel_registerName(name: *const u8) -> *const c_void;
+    }
+
+    unsafe {
+        let ns_window = window.ns_window().unwrap() as *const c_void;
+        let sel_set_level = sel_registerName(b"setLevel:\0".as_ptr());
+        // NSScreenSaverWindowLevel (1000) floats above full-screen apps
+        let level: i64 = 1000;
+        objc_msgSend(ns_window, sel_set_level, level);
+    }
+}
+
 /// Map a window label ("main", "monitor-1", etc.) to its display index.
 fn window_label_to_display_index(label: &str) -> usize {
     if label == "main" {
@@ -1314,6 +1332,7 @@ pub fn run() {
                         );
                         for window in windows.values() {
                             hide_traffic_lights(window);
+                            set_above_fullscreen(window);
                         }
                     }
                 });
