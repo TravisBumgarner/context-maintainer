@@ -1325,13 +1325,6 @@ pub fn run() {
                 all_windows.keys().collect::<Vec<_>>()
             );
 
-            // Set collection behavior on the main thread so windows can appear
-            // over full-screen apps (NSWindow calls must happen on main thread).
-            #[cfg(target_os = "macos")]
-            for window in all_windows.values() {
-                set_fullscreen_overlay(window);
-            }
-
             // Hide traffic lights with retries so all windows (including late-initialising
             // secondary monitors) have their NSWindow buttons hidden reliably.
             #[cfg(target_os = "macos")]
