@@ -12,7 +12,7 @@ export default function HistoryView() {
 
   useEffect(() => {
     loadHistory();
-    invoke<DesktopSummary[]>("list_all_desktops").then(setDesktops).catch(() => {});
+    invoke<DesktopSummary[]>("list_all_desktops").then(setDesktops).catch(() => { });
   }, [loadHistory]);
 
   const desktopMap = new Map(desktops.map((d) => [d.space_id, d]));
@@ -26,7 +26,7 @@ export default function HistoryView() {
   }
 
   return (
-    <Box sx={{ flex: 1, overflow: "auto", px: "10px", py: "12px", m: "4px", bgcolor: "rgba(0,0,0,0.04)", borderRadius: 2 }}>
+    <Box sx={{ flex: 1, overflow: "auto", px: "10px", py: "12px", m: "4px", bgcolor: "rgba(0,0,0,0.04)", borderRadius: '0 10px 10px 0' }}>
       {items.length === 0 ? (
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
           <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.35), textAlign: "center" }}>

@@ -86,7 +86,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
                     color: tc(0.2),
                     fontSize: ui.fontSize.sm,
                     px: "2px",
-                    userSelect: "none",
                     "&:active": { cursor: "grabbing" },
                   }}
                 >

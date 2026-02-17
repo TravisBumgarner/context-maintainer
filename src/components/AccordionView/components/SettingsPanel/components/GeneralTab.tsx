@@ -1,16 +1,19 @@
-import { useEffect } from "react";
-import { Box, Switch, Typography } from "@mui/material";
+import { useState, useEffect } from "react";
+import { Box, Button, Checkbox, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
-import { useSettingsStore } from "../../../../../stores";
+import { useDesktopStore, useSettingsStore, useTodoStore } from "../../../../../stores";
 
 const PANELS = ["Tasks", "Timer", "Desktops"] as const;
 
 export function GeneralTab() {
-    const theme = useTheme();
-    const tc = theme.custom.tc;
+    const { tc, ui } = useTheme().custom;
 
-    const { timerPresets, notifySystem, notifyFlash, hiddenPanels, setTimerPresets, setNotifySystem, setNotifyFlash, setHiddenPanels } = useSettingsStore();
+    const { timerPresets, notifySystem, hiddenPanels, setTimerPresets, setNotifySystem, setHiddenPanels } = useSettingsStore();
+    const { setDesktop } = useDesktopStore();
+    const { clearAll } = useTodoStore();
+    const { refreshSpaces } = useSettingsStore();
+    const [confirmClear, setConfirmClear] = useState(false);
 
     useEffect(() => {
         invoke("save_timer_presets", { presets: timerPresets }).catch(() => { });
@@ -23,16 +26,29 @@ export function GeneralTab() {
         setHiddenPanels(next);
     };
 
+    const sectionSx = {
+        bgcolor: "rgba(0,0,0,0.04)",
+        p: "8px",
+        mb: "4px",
+    } as const;
+
+    const sectionTitleSx = {
+        fontSize: ui.fontSize.xs,
+        fontWeight: ui.weights.semibold,
+        color: tc(0.4),
+        mb: "6px",
+        textTransform: "uppercase",
+        letterSpacing: ui.letterSpacing.wide,
+    } as const;
+
     return (
         <>
-            {/* Timer presets */}
-            <Box sx={{ mb: "12px" }}>
-                <Box sx={{ display: "flex", gap: "8px", mb: "6px", justifyContent: "center" }}>
+            {/* Timer Setup */}
+            <Box sx={sectionSx}>
+                <Typography sx={sectionTitleSx}>Timer Setup</Typography>
+                <Box sx={{ display: "flex", gap: "8px", }}>
                     {timerPresets.map((p, i) => (
-                        <Box key={i} sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                            <Typography sx={{ fontSize: 10, color: tc(0.35) }}>
-                                Preset {i + 1}
-                            </Typography>
+                        <Box key={i} sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
                             <Box
                                 component="input"
                                 type="number"
@@ -43,7 +59,7 @@ export function GeneralTab() {
                                     setTimerPresets((prev) => prev.map((v, j) => (j === i ? val : v)));
                                 }}
                                 sx={{
-                                    width: 52,
+                                    width: 40,
                                     fontSize: 11,
                                     fontFamily: "inherit",
                                     color: tc(0.7),
@@ -65,77 +81,90 @@ export function GeneralTab() {
                         </Box>
                     ))}
                 </Box>
-            </Box>
-
-            {/* Notifications */}
-            <Box sx={{ mb: "12px", display: "flex", gap: "12px", alignItems: "center" }}>
                 <Box
                     sx={{
                         display: "flex",
                         alignItems: "center",
                         gap: "6px",
-                        py: "3px",
+                        mt: "8px",
                         cursor: "pointer",
                     }}
                     component="label"
                 >
-                    <Switch
+                    <Checkbox
                         size="small"
                         checked={notifySystem}
                         onChange={(e) => {
                             const val = e.target.checked;
                             setNotifySystem(val);
-                            invoke("save_notify_settings", { system: val, flash: notifyFlash }).catch(() => { });
+                            invoke("save_notify_settings", { system: val, flash: false }).catch(() => { });
                         }}
+                        sx={{ p: 0 }}
                     />
                     <Typography>System notification</Typography>
                 </Box>
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        py: "3px",
-                        cursor: "pointer",
-                    }}
-                    component="label"
-                >
-                    <Switch
-                        size="small"
-                        checked={notifyFlash}
-                        onChange={(e) => {
-                            const val = e.target.checked;
-                            setNotifyFlash(val);
-                            invoke("save_notify_settings", { system: notifySystem, flash: val }).catch(() => { });
-                        }}
-                    />
-                    <Typography>In-app flash</Typography>
+            </Box>
+
+            {/* Panels */}
+            <Box sx={sectionSx}>
+                <Typography sx={sectionTitleSx}>Panels</Typography>
+                <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                    {PANELS.map((panel) => (
+                        <Box
+                            key={panel}
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                cursor: "pointer",
+                            }}
+                            component="label"
+                        >
+                            <Checkbox
+                                size="small"
+                                checked={!hiddenPanels.includes(panel)}
+                                onChange={() => togglePanel(panel)}
+                                sx={{ p: 0 }}
+                            />
+                            <Typography>{panel}</Typography>
+                        </Box>
+                    ))}
                 </Box>
             </Box>
 
-            {/* Panel visibility */}
-            <Typography sx={{ fontSize: 11, color: tc(0.4), mb: "4px" }}>Panels</Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                {PANELS.map((panel) => (
-                    <Box
-                        key={panel}
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            py: "3px",
-                            cursor: "pointer",
-                        }}
-                        component="label"
-                    >
-                        <Switch
-                            size="small"
-                            checked={!hiddenPanels.includes(panel)}
-                            onChange={() => togglePanel(panel)}
-                        />
-                        <Typography>{panel}</Typography>
+            {/* Clear All Data */}
+            <Box sx={{ ...sectionSx, mb: 0, borderBottomRightRadius: '8px' }}>
+                {!confirmClear ? (
+                    <Button variant="contained" onClick={() => setConfirmClear(true)}>
+                        Clear All Data
+                    </Button>
+                ) : (
+                    <Box>
+                        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), mb: "6px" }}>
+                            This will delete all todos, titles, and custom colors.
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: "6px" }}>
+                            <Button
+                                variant="contained"
+                                onClick={() => {
+                                    invoke("clear_all_data")
+                                        .then(() => {
+                                            clearAll();
+                                            setDesktop((prev) => ({ ...prev, color: "#F5E6A3" }));
+                                            refreshSpaces();
+                                            setConfirmClear(false);
+                                        })
+                                        .catch(() => { });
+                                }}
+                            >
+                                Yes, clear everything
+                            </Button>
+                            <Button variant="contained" onClick={() => setConfirmClear(false)}>
+                                Cancel
+                            </Button>
+                        </Box>
                     </Box>
-                ))}
+                )}
             </Box>
         </>
     );
