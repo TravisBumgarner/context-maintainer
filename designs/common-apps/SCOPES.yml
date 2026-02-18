@@ -67,7 +67,7 @@ tasks:
       - Frontend type is available in types.ts
     depends_on: []
     effort: 1
-    status: scoped
+    status: completed
 
   - id: 3
     milestone: 1
