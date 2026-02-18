@@ -179,7 +179,13 @@ export default function CommonAppsPanel() {
                   "& .MuiAutocomplete-option": {
                     fontSize: ui.fontSize.sm,
                     color: tc(0.6),
+                    py: "2px",
+                    px: "6px",
+                    minHeight: 0,
                     "&:hover, &.Mui-focused": { bgcolor: `${tc(0.06)} !important` },
+                  },
+                  "& .MuiAutocomplete-listbox": {
+                    py: "2px",
                   },
                   "& .MuiAutocomplete-noOptions": {
                     fontSize: ui.fontSize.sm,
