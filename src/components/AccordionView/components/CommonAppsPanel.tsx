@@ -187,7 +187,7 @@ export default function CommonAppsPanel() {
                     sx={{
                       fontSize: ui.fontSize.sm,
                       color: selected ? tc(0.7) : tc(0.5),
-                      fontWeight: selected ? ui.weights.semibold : ui.weights.normal,
+                      fontWeight: selected ? ui.weights.bold : ui.weights.normal,
                     }}
                   >
                     {app.name}
