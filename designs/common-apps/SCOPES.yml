@@ -145,4 +145,4 @@ tasks:
       - commonApps state added to useSettingsStore with load/save logic
     depends_on: [1, 2]
     effort: 3
-    status: scoped
+    status: completed
