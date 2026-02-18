@@ -125,14 +125,13 @@ export default function CommonAppsPanel() {
               >
                 Common Apps
               </Typography>
-              <ButtonBase
+              <IconButton
                 onClick={() => setModalOpen(false)}
-                sx={{ px: "6px", py: "2px", fontFamily: "inherit" }}
+                size="small"
+                sx={{ p: "2px", color: tc(0.4), "&:hover": { color: tc(0.6) } }}
               >
-                <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: tc(0.4) }}>
-                  Done
-                </Typography>
-              </ButtonBase>
+                <Typography sx={{ fontSize: 11, lineHeight: 1 }}>✕</Typography>
+              </IconButton>
             </Box>
             <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35), mb: "6px" }}>
               Select apps you use frequently — a browser, text editor, terminal, etc.
