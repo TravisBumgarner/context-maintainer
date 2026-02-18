@@ -160,9 +160,10 @@ export default function TimerPanel() {
             inset: 0,
             margin: "auto",
             height: "fit-content",
-            width: "85%",
+            width: "90%",
             bgcolor: bg,
             border: `1px solid ${tc(0.2)}`,
+            borderRadius: "8px",
             p: "8px",
             "&:focus-visible": { outline: "none" },
           }}

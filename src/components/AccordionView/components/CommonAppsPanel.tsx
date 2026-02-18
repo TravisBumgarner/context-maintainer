@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Box, ButtonBase, IconButton, Link, Modal, Tooltip, Typography } from "@mui/material";
+import { Box, ButtonBase, IconButton, Link, Modal, Tab, Tabs, Tooltip, Typography } from "@mui/material";
 import { Tune } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
@@ -12,6 +12,7 @@ export default function CommonAppsPanel() {
   const [modalOpen, setModalOpen] = useState(false);
   const [installedApps, setInstalledApps] = useState<CommonApp[]>([]);
   const [search, setSearch] = useState("");
+  const [tab, setTab] = useState(0);
 
   useEffect(() => {
     loadCommonApps();
@@ -59,7 +60,7 @@ export default function CommonAppsPanel() {
         >
           <Link
             component="button"
-            onClick={() => setModalOpen(true)}
+            onClick={() => { setTab(0); setModalOpen(true); }}
             sx={{
               fontSize: ui.fontSize.sm,
               color: tc(0.5),
@@ -119,7 +120,7 @@ export default function CommonAppsPanel() {
           </Box>
           <Tooltip title="Configure apps" arrow>
             <IconButton
-              onClick={() => setModalOpen(true)}
+              onClick={() => { setTab(0); setModalOpen(true); }}
               size="small"
               sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.5) } }}
             >
@@ -135,12 +136,13 @@ export default function CommonAppsPanel() {
             position: "absolute",
             inset: 0,
             margin: "auto",
-            width: "85%",
-            height: "80%",
+            width: "90%",
+            height: "85%",
             display: "flex",
             flexDirection: "column",
             bgcolor: bg,
             border: `1px solid ${tc(0.2)}`,
+            borderRadius: "8px",
             "&:focus-visible": { outline: "none" },
           }}
         >
@@ -164,140 +166,156 @@ export default function CommonAppsPanel() {
             </IconButton>
           </Box>
 
-          {/* Top: search + app list */}
-          <Box sx={{ px: "8px", pb: "4px", flexShrink: 0 }}>
-            <Box
-              component="input"
-              type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-              sx={{
-                width: "100%",
-                fontSize: ui.fontSize.sm,
-                fontFamily: "inherit",
-                color: tc(0.7),
-                bgcolor: "transparent",
-                border: "none",
-                borderBottom: `1px solid ${tc(0.15)}`,
-                p: "3px 0",
-                outline: "none",
-                "&::placeholder": { color: tc(0.3) },
-                "&:focus": { borderColor: tc(0.3) },
-              }}
-            />
-          </Box>
-          <Box
-            sx={{
-              flex: 1,
-              overflow: "auto",
-              px: "8px",
-              "&::-webkit-scrollbar": { display: "none" },
-            }}
+          {/* Tabs */}
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+            sx={{ px: "8px", flexShrink: 0 }}
           >
-            {filtered.map((app) => {
-              const selected = isSelected(app);
-              return (
-                <Box
-                  key={app.path}
-                  onClick={() => toggleApp(app)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    py: "2px",
-                    px: "2px",
-                    cursor: "pointer",
-                    "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: ui.fontSize.sm,
-                      color: selected ? tc(0.7) : tc(0.5),
-                      fontWeight: selected ? ui.weights.bold : ui.weights.normal,
-                    }}
-                  >
-                    {app.name}
-                  </Typography>
-                  {selected && (
-                    <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.bold, color: tc(0.6) }}>
-                      ✓
-                    </Typography>
-                  )}
-                </Box>
-              );
-            })}
-          </Box>
+            <Tab label="Search" sx={{ minWidth: "unset", px: "10px" }} />
+            <Tab label="Selected" sx={{ minWidth: "unset", px: "10px" }} />
+          </Tabs>
 
-          {/* Bottom: selected apps with short names */}
-          {commonApps.length > 0 && (
-            <Box sx={{ flexShrink: 0, borderTop: `1px solid ${tc(0.1)}`, px: "8px", py: "4px" }}>
-              <Typography
+          {/* Search tab */}
+          {tab === 0 && (
+            <>
+              <Box sx={{ px: "8px", pb: "4px", flexShrink: 0 }}>
+                <Box
+                  component="input"
+                  type="text"
+                  placeholder="Search..."
+                  value={search}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                  sx={{
+                    width: "100%",
+                    fontSize: ui.fontSize.sm,
+                    fontFamily: "inherit",
+                    color: tc(0.7),
+                    bgcolor: "transparent",
+                    border: "none",
+                    borderBottom: `1px solid ${tc(0.15)}`,
+                    p: "3px 0",
+                    outline: "none",
+                    "&::placeholder": { color: tc(0.3) },
+                    "&:focus": { borderColor: tc(0.3) },
+                  }}
+                />
+              </Box>
+              <Box
                 sx={{
-                  fontSize: ui.fontSize.xs,
-                  fontWeight: ui.weights.semibold,
-                  color: tc(0.4),
-                  textTransform: "uppercase",
-                  letterSpacing: ui.letterSpacing.wide,
-                  mb: "2px",
+                  flex: 1,
+                  overflow: "auto",
+                  px: "8px",
+                  "&::-webkit-scrollbar": { display: "none" },
                 }}
               >
-                Selected
-              </Typography>
-              {commonApps.map((app) => (
-                <Box
-                  key={app.path}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    py: "2px",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: ui.fontSize.sm,
-                      color: tc(0.6),
-                      fontWeight: ui.weights.semibold,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {app.name}
-                  </Typography>
+                {filtered.map((app) => {
+                  const selected = isSelected(app);
+                  return (
+                    <Box
+                      key={app.path}
+                      onClick={() => toggleApp(app)}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        py: "2px",
+                        px: "2px",
+                        cursor: "pointer",
+                        "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: ui.fontSize.sm,
+                          color: selected ? tc(0.7) : tc(0.5),
+                          fontWeight: selected ? ui.weights.bold : ui.weights.normal,
+                        }}
+                      >
+                        {app.name}
+                      </Typography>
+                      {selected && (
+                        <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.bold, color: tc(0.6) }}>
+                          ✓
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </>
+          )}
+
+          {/* Selected tab */}
+          {tab === 1 && (
+            <Box
+              sx={{
+                flex: 1,
+                overflow: "auto",
+                px: "8px",
+                py: "4px",
+                "&::-webkit-scrollbar": { display: "none" },
+              }}
+            >
+              {commonApps.length === 0 ? (
+                <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), py: "8px" }}>
+                  No apps selected. Use the Search tab to add apps.
+                </Typography>
+              ) : (
+                commonApps.map((app) => (
                   <Box
-                    component="input"
-                    type="text"
-                    placeholder="short name"
-                    value={app.short_name || ""}
-                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      updateShortName(app.path, e.target.value);
-                    }}
+                    key={app.path}
                     sx={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: ui.fontSize.xs,
-                      fontFamily: "inherit",
-                      color: tc(0.5),
-                      bgcolor: "transparent",
-                      border: "none",
-                      borderBottom: `1px solid ${tc(0.1)}`,
-                      p: "2px 0",
-                      outline: "none",
-                      "&::placeholder": { color: tc(0.2) },
-                      "&:focus": { borderColor: tc(0.3) },
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      py: "2px",
                     }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => toggleApp(app)}
-                    sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.6) } }}
                   >
-                    <Typography sx={{ fontSize: 11, lineHeight: 1 }}>✕</Typography>
-                  </IconButton>
-                </Box>
-              ))}
+                    <Typography
+                      sx={{
+                        fontSize: ui.fontSize.sm,
+                        color: tc(0.6),
+                        fontWeight: ui.weights.semibold,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {app.name}
+                    </Typography>
+                    <Box
+                      component="input"
+                      type="text"
+                      placeholder="short name"
+                      value={app.short_name || ""}
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        updateShortName(app.path, e.target.value);
+                      }}
+                      sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        fontSize: ui.fontSize.xs,
+                        fontFamily: "inherit",
+                        color: tc(0.5),
+                        bgcolor: "transparent",
+                        border: "none",
+                        borderBottom: `1px solid ${tc(0.1)}`,
+                        p: "2px 0",
+                        outline: "none",
+                        "&::placeholder": { color: tc(0.2) },
+                        "&:focus": { borderColor: tc(0.3) },
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => toggleApp(app)}
+                      sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.6) } }}
+                    >
+                      <Typography sx={{ fontSize: 11, lineHeight: 1 }}>✕</Typography>
+                    </IconButton>
+                  </Box>
+                ))
+              )}
             </Box>
           )}
         </Box>
