@@ -35,6 +35,20 @@ On first launch, Context Maintainer will ask you to **grant Accessibility permis
 
 That's it. The app handles the rest.
 
+## Logs
+
+Production logs are written by `tauri-plugin-log` to:
+
+```
+~/Library/Logs/com.travisbumgarner.context-switching/
+```
+
+Use `Console.app` or tail the log file directly:
+
+```bash
+tail -f ~/Library/Logs/com.travisbumgarner.context-switching/*.log
+```
+
 ## Releasing
 
 See [`.github/workflows/README.md`](.github/workflows/README.md) for secrets setup and certificate generation.
