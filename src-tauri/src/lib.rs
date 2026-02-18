@@ -772,6 +772,24 @@ fn save_common_apps(state: tauri::State<'_, AppState>, apps: Vec<CommonApp>) {
 }
 
 #[tauri::command]
+fn add_common_app(state: tauri::State<'_, AppState>, app: CommonApp) {
+    let mut data = state.data.lock().unwrap();
+    if !data.settings.common_apps.iter().any(|a| a.path == app.path) {
+        data.settings.common_apps.push(app);
+        let path = state.data_path.lock().unwrap();
+        persist_data(&path, &data);
+    }
+}
+
+#[tauri::command]
+fn remove_common_app(state: tauri::State<'_, AppState>, app_path: String) {
+    let mut data = state.data.lock().unwrap();
+    data.settings.common_apps.retain(|a| a.path != app_path);
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
 fn clear_all_data(state: tauri::State<'_, AppState>) {
     let mut data = state.data.lock().unwrap();
     data.notes.clear();
@@ -1344,7 +1362,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, get_common_apps, save_common_apps, get_completed, add_completed, clear_completed])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, get_common_apps, save_common_apps, add_common_app, remove_common_app, get_completed, add_completed, clear_completed])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
