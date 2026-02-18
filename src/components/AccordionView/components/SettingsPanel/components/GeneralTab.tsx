@@ -42,7 +42,7 @@ export function GeneralTab() {
             {/* Panels */}
             <Box sx={sectionSx}>
                 <Typography sx={sectionTitleSx}>Panels</Typography>
-                <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 12px" }}>
                     {PANELS.map((panel) => (
                         <Box
                             key={panel}
