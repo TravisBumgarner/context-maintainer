@@ -317,6 +317,8 @@ fn default_notify_flash() -> bool { true }
 struct CommonApp {
     name: String,
     path: String,
+    #[serde(default)]
+    short_name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -782,6 +784,7 @@ fn list_installed_apps() -> Vec<CommonApp> {
                     apps.push(CommonApp {
                         name: name.to_string(),
                         path: path.to_string_lossy().to_string(),
+                        short_name: None,
                     });
                 }
             }

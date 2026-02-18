@@ -61,6 +61,7 @@ export interface DisplayGroup {
 export interface CommonApp {
   name: string;
   path: string;
+  short_name?: string;
 }
 
 export interface CompletedItem {
