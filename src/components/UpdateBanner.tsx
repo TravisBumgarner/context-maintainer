@@ -1,5 +1,6 @@
 import { Snackbar, Alert, Button, CircularProgress } from "@mui/material";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { error } from "@tauri-apps/plugin-log";
 import { useUIStore } from "../stores";
 
 export default function UpdateBanner() {
@@ -15,7 +16,8 @@ export default function UpdateBanner() {
         try {
             await update.downloadAndInstall();
             await relaunch();
-        } catch {
+        } catch (err) {
+            error(`Update install failed: ${err}`);
             setStatus("error");
         }
     };
