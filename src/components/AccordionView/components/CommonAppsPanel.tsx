@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Box, ButtonBase, IconButton, Link, Modal, Typography } from "@mui/material";
+import { Box, ButtonBase, IconButton, Link, Modal, Tooltip, Typography } from "@mui/material";
 import { Tune } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
@@ -111,13 +111,15 @@ export default function CommonAppsPanel() {
               </ButtonBase>
             ))}
           </Box>
-          <IconButton
-            onClick={() => setModalOpen(true)}
-            size="small"
-            sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.5) } }}
-          >
-            <Tune sx={{ fontSize: 14 }} />
-          </IconButton>
+          <Tooltip title="Configure apps" arrow>
+            <IconButton
+              onClick={() => setModalOpen(true)}
+              size="small"
+              sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.5) } }}
+            >
+              <Tune sx={{ fontSize: 14 }} />
+            </IconButton>
+          </Tooltip>
         </Box>
       )}
 

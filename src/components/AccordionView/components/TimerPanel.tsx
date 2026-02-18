@@ -142,13 +142,15 @@ export default function TimerPanel() {
           )}
         </Box>
 
-        <IconButton
-          onClick={() => setModalOpen(true)}
-          size="small"
-          sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.5) } }}
-        >
-          <Tune sx={{ fontSize: 14 }} />
-        </IconButton>
+        <Tooltip title="Timer settings" arrow>
+          <IconButton
+            onClick={() => setModalOpen(true)}
+            size="small"
+            sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.5) } }}
+          >
+            <Tune sx={{ fontSize: 14 }} />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
