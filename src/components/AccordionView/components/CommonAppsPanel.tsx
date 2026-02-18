@@ -126,9 +126,13 @@ export default function CommonAppsPanel() {
           sx={{
             position: "absolute",
             inset: 0,
+            margin: "auto",
+            width: "85%",
+            height: "80%",
             display: "flex",
             flexDirection: "column",
             bgcolor: bg,
+            border: `1px solid ${tc(0.2)}`,
             "&:focus-visible": { outline: "none" },
           }}
         >
