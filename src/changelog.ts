@@ -14,23 +14,6 @@ export const changelog: ChangelogEntry[] = [
                 items: [
                     "Full-screen app spaces now appear in the desktop strip",
                     "Notification permission request in setup flow",
-                    "Session chooser is now draggable",
-                ],
-            },
-            {
-                category: "Improved",
-                items: [
-                    "Desktop list refreshes when spaces are added or removed",
-                    "Tray menu labels stay in sync when hiding from sidebar",
-                    "Settings reorganized into sectioned layout",
-                    "Switches replaced with checkboxes in settings",
-                    "Text is no longer selectable outside of input fields",
-                ],
-            },
-            {
-                category: "Removed",
-                items: [
-                    "In-app flash notification option",
                 ],
             },
         ],
