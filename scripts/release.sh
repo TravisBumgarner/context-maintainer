@@ -82,3 +82,8 @@ gh release create "v${VERSION}" \
   "$UPDATER_SIG" \
   "$LATEST_JSON"
 echo "Draft release created!"
+
+# Remove the .app from the build directory so macOS doesn't
+# accidentally launch it instead of the /Applications copy
+rm -rf "$BUNDLE_DIR/macos/Context Maintainer.app"
+echo "Cleaned up build .app to prevent LaunchServices confusion."
