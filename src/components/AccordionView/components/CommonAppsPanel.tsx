@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Box, ButtonBase, IconButton, Link, Modal, Typography } from "@mui/material";
+import { Tune } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "../../../stores";
@@ -67,39 +68,56 @@ export default function CommonAppsPanel() {
         <Box
           sx={{
             display: "flex",
-            gap: "6px",
-            overflowX: "auto",
-            "&::-webkit-scrollbar": { display: "none" },
+            alignItems: "center",
+            width: "100%",
+            gap: "4px",
           }}
         >
-          {commonApps.map((app) => (
-            <ButtonBase
-              key={app.path}
-              onClick={() => {
-                invoke("launch_app", { path: app.path }).catch(() => {});
-              }}
-              sx={{
-                flexShrink: 0,
-                px: "12px",
-                py: "4px",
-                bgcolor: "rgba(0,0,0,0.06)",
-                fontFamily: "inherit",
-                "&:hover": { bgcolor: "rgba(0,0,0,0.1)" },
-                transition: "background-color 0.15s",
-              }}
-            >
-              <Typography
+          <Box
+            sx={{
+              display: "flex",
+              gap: "6px",
+              overflowX: "auto",
+              flex: 1,
+              "&::-webkit-scrollbar": { display: "none" },
+            }}
+          >
+            {commonApps.map((app) => (
+              <ButtonBase
+                key={app.path}
+                onClick={() => {
+                  invoke("launch_app", { path: app.path }).catch(() => {});
+                }}
                 sx={{
-                  fontSize: ui.fontSize.sm,
-                  fontWeight: ui.weights.semibold,
-                  color: tc(0.6),
-                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  px: "12px",
+                  py: "4px",
+                  bgcolor: "rgba(0,0,0,0.06)",
+                  fontFamily: "inherit",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.1)" },
+                  transition: "background-color 0.15s",
                 }}
               >
-                {app.name}
-              </Typography>
-            </ButtonBase>
-          ))}
+                <Typography
+                  sx={{
+                    fontSize: ui.fontSize.sm,
+                    fontWeight: ui.weights.semibold,
+                    color: tc(0.6),
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {app.name}
+                </Typography>
+              </ButtonBase>
+            ))}
+          </Box>
+          <IconButton
+            onClick={() => setModalOpen(true)}
+            size="small"
+            sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.5) } }}
+          >
+            <Tune sx={{ fontSize: 14 }} />
+          </IconButton>
         </Box>
       )}
 
