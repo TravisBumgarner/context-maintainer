@@ -84,7 +84,7 @@ tasks:
       - Errors are returned as a string Result, not panics
     depends_on: []
     effort: 1
-    status: scoped
+    status: completed
 
   - id: 4
     milestone: 2
