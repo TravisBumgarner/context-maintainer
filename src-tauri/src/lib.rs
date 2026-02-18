@@ -792,6 +792,15 @@ fn list_installed_apps() -> Vec<CommonApp> {
 }
 
 #[tauri::command]
+fn launch_app(path: String) -> Result<(), String> {
+    std::process::Command::new("open")
+        .arg(&path)
+        .output()
+        .map_err(|e| format!("Failed to launch app: {}", e))?;
+    Ok(())
+}
+
+#[tauri::command]
 fn add_common_app(state: tauri::State<'_, AppState>, app: CommonApp) {
     let mut data = state.data.lock().unwrap();
     if !data.settings.common_apps.iter().any(|a| a.path == app.path) {
@@ -1382,7 +1391,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, get_common_apps, save_common_apps, list_installed_apps, add_common_app, remove_common_app, get_completed, add_completed, clear_completed])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, get_common_apps, save_common_apps, list_installed_apps, launch_app, add_common_app, remove_common_app, get_completed, add_completed, clear_completed])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
