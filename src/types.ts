@@ -58,6 +58,11 @@ export interface DisplayGroup {
   desktops: DesktopSummary[];
 }
 
+export interface CommonApp {
+  name: string;
+  path: string;
+}
+
 export interface CompletedItem {
   id: string;
   text: string;

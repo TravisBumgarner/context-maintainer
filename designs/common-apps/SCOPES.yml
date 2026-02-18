@@ -1,0 +1,148 @@
+project: Common Apps Launcher
+design_file: null  # Feature scoped from user conversation
+scoping_date: 2026-02-18
+
+milestones:
+  - number: 1
+    title: "1. Backend: Persist & Launch Common Apps"
+    description: |
+      Add Rust backend support for storing a list of common apps (by bundle path),
+      scanning /Applications for installed apps, and launching apps via the opener plugin.
+    branch:
+      working: feat/common-apps-backend
+      base: main
+
+  - number: 2
+    title: "2. Frontend: Common Apps Panel & Settings UI"
+    description: |
+      Add the Common Apps row to the home view and a settings section for
+      configuring which apps appear in the list.
+    branch:
+      working: feat/common-apps-ui
+      base: feat/common-apps-backend
+
+tasks:
+  - id: 1
+    milestone: 1
+    title: Add common_apps field to Settings and persistence commands
+    description: |
+      Extend the Rust `Settings` struct with a new `common_apps: Vec<CommonApp>` field
+      where `CommonApp` has `name: String` and `path: String` (the bundle path,
+      e.g. "/Applications/Safari.app").
+
+      Add two new Tauri commands:
+      - `save_common_apps(apps: Vec<CommonApp>)` — persists the list
+      - `get_common_apps() -> Vec<CommonApp>` — reads the list
+
+      Register both in `generate_handler!`. Use `#[serde(default)]` on the
+      new field so existing data files deserialize without error.
+
+      Also add a `CommonApp` type to the frontend `types.ts`.
+    acceptance_criteria:
+      - Settings struct has `common_apps` field with serde default
+      - `save_common_apps` and `get_common_apps` commands exist and are registered
+      - Existing data files load without error (serde default handles missing field)
+      - `CommonApp` type exported from `types.ts`
+    depends_on: []
+    effort: 1
+    status: completed
+
+  - id: 2
+    milestone: 1
+    title: Add command to list installed macOS applications
+    description: |
+      Add a Tauri command `list_installed_apps() -> Vec<InstalledApp>` that scans
+      `/Applications` (non-recursive, only `.app` bundles) and returns a list of
+      `InstalledApp { name: String, path: String }`.
+
+      The name should be the app bundle's display name (file stem without `.app`).
+      Sort results alphabetically by name.
+
+      Also add an `InstalledApp` type to the frontend `types.ts` (or reuse
+      `CommonApp` if the shape is identical — use your judgment).
+    acceptance_criteria:
+      - `list_installed_apps` command returns apps from /Applications
+      - Results are sorted alphabetically
+      - Only .app bundles are included
+      - Frontend type is available in types.ts
+    depends_on: []
+    effort: 1
+    status: scoped
+
+  - id: 3
+    milestone: 1
+    title: Add command to launch an app by bundle path
+    description: |
+      Add a Tauri command `launch_app(path: String)` that opens the given .app
+      bundle. Use the existing `tauri-plugin-opener` (already a dependency) — the
+      simplest approach is `std::process::Command::new("open").arg(&path)` or
+      the opener plugin's API.
+
+      Register the command in `generate_handler!`.
+    acceptance_criteria:
+      - `launch_app` command opens the app at the given path
+      - Errors are returned as a string Result, not panics
+    depends_on: []
+    effort: 1
+    status: scoped
+
+  - id: 4
+    milestone: 2
+    title: Add Common Apps row to AccordionView home screen
+    description: |
+      Add a new `CommonAppsPanel` component rendered in `AccordionView.tsx`
+      between the Queue/Tasks row and the Timer row. It should be hideable via the
+      existing `hiddenPanels` mechanism (panel name: "Common Apps").
+
+      **When common apps are configured:**
+      Display a horizontal row of clickable app buttons (app name as label).
+      Clicking a button calls `invoke("launch_app", { path })`.
+      The row should have a fixed height (~40px), horizontal scroll if needed,
+      and follow the existing styling conventions (bgcolor rgba(0,0,0,0.04), etc.).
+
+      **When no common apps are configured:**
+      Show a single clickable text "Set Up Common Apps" that navigates to
+      the settings view (same pattern as other settings navigation in the app).
+
+      Add "Common Apps" to the `PANELS` array in `GeneralTab.tsx` so users can
+      toggle its visibility.
+    acceptance_criteria:
+      - CommonAppsPanel renders between Tasks and Timer rows
+      - Shows "Set Up Common Apps" when list is empty, navigates to settings on click
+      - Shows horizontal row of app buttons when configured
+      - Clicking an app button launches it via `launch_app` command
+      - Panel is hideable via "Common Apps" in hiddenPanels
+    depends_on: [1, 3]
+    effort: 2
+    status: scoped
+
+  - id: 5
+    milestone: 2
+    title: Add Common Apps configuration section to Settings GeneralTab
+    description: |
+      Add a new "Common Apps" section to `GeneralTab.tsx` (in the settings panel)
+      with the following:
+
+      1. **Hint text** at the top: "Add apps you use frequently — a browser, text
+         editor, terminal, etc."
+      2. **Current apps list**: Show each configured app with its name and a remove
+         button (X or trash icon). If empty, show subtle "No apps added yet" text.
+      3. **Add button** that opens an inline searchable dropdown/autocomplete:
+         - On open, calls `invoke("list_installed_apps")` to fetch available apps
+         - User types to filter by name
+         - Selecting an app adds it to the common_apps list
+         - Already-added apps should be visually indicated or excluded
+      4. **Persistence**: On any change (add/remove), call
+         `invoke("save_common_apps", { apps })` to persist.
+
+      Use MUI's `Autocomplete` component for the app search. Store common apps in
+      `useSettingsStore` with `commonApps` state and `setCommonApps` action.
+    acceptance_criteria:
+      - Settings section shows hint text explaining the feature
+      - Current apps are listed with remove buttons
+      - Add flow uses searchable autocomplete populated from list_installed_apps
+      - Changes are persisted via save_common_apps
+      - commonApps state added to useSettingsStore with load/save logic
+    depends_on: [1, 2]
+    effort: 3
+    status: scoped
