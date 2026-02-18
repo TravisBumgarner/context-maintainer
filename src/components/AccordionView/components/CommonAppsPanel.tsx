@@ -193,7 +193,7 @@ export default function CommonAppsPanel() {
                     {app.name}
                   </Typography>
                   {selected && (
-                    <Typography sx={{ fontSize: 9, color: tc(0.35) }}>
+                    <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.bold, color: tc(0.6) }}>
                       ✓
                     </Typography>
                   )}
