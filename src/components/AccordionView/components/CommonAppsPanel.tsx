@@ -112,7 +112,7 @@ export default function CommonAppsPanel() {
             overflow: "auto",
             bgcolor: bg,
             border: `1px solid ${tc(0.2)}`,
-            p: "12px",
+            p: "8px",
             "&:focus-visible": { outline: "none" },
           }}
         >
@@ -121,17 +121,17 @@ export default function CommonAppsPanel() {
               fontSize: ui.fontSize.lg,
               fontWeight: ui.weights.bold,
               color: tc(0.6),
-              mb: "4px",
+              mb: "2px",
             }}
           >
             Common Apps
           </Typography>
-          <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35), mb: "12px" }}>
+          <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35), mb: "6px" }}>
             Add apps you use frequently — a browser, text editor, terminal, etc.
           </Typography>
 
           {commonApps.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "4px", mb: "12px" }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "2px", mb: "6px" }}>
               {commonApps.map((app) => (
                 <Box
                   key={app.path}
@@ -156,7 +156,7 @@ export default function CommonAppsPanel() {
               ))}
             </Box>
           ) : (
-            <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.25), mb: "12px" }}>
+            <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.25), mb: "6px" }}>
               No apps added yet
             </Typography>
           )}
