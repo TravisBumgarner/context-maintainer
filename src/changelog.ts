@@ -6,6 +6,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.8.0",
+        date: "2026-02-18",
+        changes: [
+            {
+                category: "Added",
+                items: [
+                    "Full-screen app spaces now appear in the desktop strip",
+                    "Notification permission request in setup flow",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.7.0",
         date: "2026-02-17",
         changes: [
