@@ -115,16 +115,25 @@ export default function CommonAppsPanel() {
           }}
         >
           <Box sx={{ p: "8px", flexShrink: 0 }}>
-            <Typography
-              sx={{
-                fontSize: ui.fontSize.lg,
-                fontWeight: ui.weights.bold,
-                color: tc(0.6),
-                mb: "2px",
-              }}
-            >
-              Common Apps
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "2px" }}>
+              <Typography
+                sx={{
+                  fontSize: ui.fontSize.lg,
+                  fontWeight: ui.weights.bold,
+                  color: tc(0.6),
+                }}
+              >
+                Common Apps
+              </Typography>
+              <ButtonBase
+                onClick={() => setModalOpen(false)}
+                sx={{ px: "6px", py: "2px", fontFamily: "inherit" }}
+              >
+                <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: tc(0.4) }}>
+                  Done
+                </Typography>
+              </ButtonBase>
+            </Box>
             <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35), mb: "6px" }}>
               Select apps you use frequently — a browser, text editor, terminal, etc.
             </Typography>
