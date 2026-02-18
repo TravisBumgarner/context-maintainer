@@ -236,8 +236,9 @@ function App() {
     }
   }, [view]);
 
-  // ── Update check ────────────────────────────────────
+  // ── Update check (production only) ──────────────────
   useEffect(() => {
+    if (import.meta.env.DEV) return;
     if (view !== "todos") return;
     let cancelled = false;
 
