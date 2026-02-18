@@ -6,14 +6,12 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
-        version: "0.8.1",
+        version: "0.9.0",
         date: "2026-02-18",
         changes: [
             {
-                category: "Fixed",
-                items: [
-                    "Skip update check in dev builds",
-                ],
+                category: "Added",
+                items: ["Quick access to open common apps"],
             },
         ],
     },
