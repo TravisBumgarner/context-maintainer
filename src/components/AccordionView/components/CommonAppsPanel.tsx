@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Autocomplete, Box, ButtonBase, IconButton, Link, Modal, TextField, Typography } from "@mui/material";
+import { Box, ButtonBase, IconButton, Link, Modal, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "../../../stores";
@@ -10,30 +10,33 @@ export default function CommonAppsPanel() {
   const { commonApps, loadCommonApps, setCommonApps } = useSettingsStore();
   const [modalOpen, setModalOpen] = useState(false);
   const [installedApps, setInstalledApps] = useState<CommonApp[]>([]);
-  const [appsLoaded, setAppsLoaded] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadCommonApps();
   }, [loadCommonApps]);
 
-  const loadInstalledApps = () => {
-    if (appsLoaded) return;
-    invoke<CommonApp[]>("list_installed_apps")
-      .then((apps) => {
-        setInstalledApps(apps);
-        setAppsLoaded(true);
-      })
-      .catch(() => { });
+  useEffect(() => {
+    if (modalOpen && installedApps.length === 0) {
+      invoke<CommonApp[]>("list_installed_apps")
+        .then(setInstalledApps)
+        .catch(() => {});
+    }
+  }, [modalOpen, installedApps.length]);
+
+  const toggleApp = (app: CommonApp) => {
+    if (commonApps.some((a) => a.path === app.path)) {
+      setCommonApps(commonApps.filter((a) => a.path !== app.path));
+    } else {
+      setCommonApps([...commonApps, app]);
+    }
   };
 
-  const addApp = (app: CommonApp) => {
-    if (commonApps.some((a) => a.path === app.path)) return;
-    setCommonApps([...commonApps, app]);
-  };
+  const isSelected = (app: CommonApp) => commonApps.some((a) => a.path === app.path);
 
-  const removeApp = (path: string) => {
-    setCommonApps(commonApps.filter((a) => a.path !== path));
-  };
+  const filtered = installedApps.filter((a) =>
+    a.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <>
@@ -105,125 +108,91 @@ export default function CommonAppsPanel() {
           sx={{
             position: "absolute",
             inset: 0,
-            margin: "auto",
-            height: "fit-content",
-            width: "85%",
-            maxHeight: "70%",
-            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
             bgcolor: bg,
-            border: `1px solid ${tc(0.2)}`,
-            p: "8px",
             "&:focus-visible": { outline: "none" },
           }}
         >
-          <Typography
+          <Box sx={{ p: "8px", flexShrink: 0 }}>
+            <Typography
+              sx={{
+                fontSize: ui.fontSize.lg,
+                fontWeight: ui.weights.bold,
+                color: tc(0.6),
+                mb: "2px",
+              }}
+            >
+              Common Apps
+            </Typography>
+            <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35), mb: "6px" }}>
+              Select apps you use frequently — a browser, text editor, terminal, etc.
+            </Typography>
+            <Box
+              component="input"
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+              sx={{
+                width: "100%",
+                fontSize: ui.fontSize.sm,
+                fontFamily: "inherit",
+                color: tc(0.7),
+                bgcolor: "transparent",
+                border: "none",
+                borderBottom: `1px solid ${tc(0.15)}`,
+                p: "3px 0",
+                outline: "none",
+                "&::placeholder": { color: tc(0.3) },
+                "&:focus": { borderColor: tc(0.3) },
+              }}
+            />
+          </Box>
+
+          <Box
             sx={{
-              fontSize: ui.fontSize.lg,
-              fontWeight: ui.weights.bold,
-              color: tc(0.6),
-              mb: "2px",
+              flex: 1,
+              overflow: "auto",
+              px: "8px",
+              pb: "8px",
+              "&::-webkit-scrollbar": { display: "none" },
             }}
           >
-            Common Apps
-          </Typography>
-          <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.35), mb: "6px" }}>
-            Add apps you use frequently — a browser, text editor, terminal, etc.
-          </Typography>
-
-          {commonApps.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "2px", mb: "6px" }}>
-              {commonApps.map((app) => (
+            {filtered.map((app) => {
+              const selected = isSelected(app);
+              return (
                 <Box
                   key={app.path}
+                  onClick={() => toggleApp(app)}
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
                     py: "2px",
+                    px: "2px",
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
                   }}
                 >
-                  <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.6) }}>
+                  <Typography
+                    sx={{
+                      fontSize: ui.fontSize.sm,
+                      color: selected ? tc(0.7) : tc(0.5),
+                      fontWeight: selected ? ui.weights.semibold : ui.weights.normal,
+                    }}
+                  >
                     {app.name}
                   </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => removeApp(app.path)}
-                    sx={{ p: "2px", color: tc(0.3), "&:hover": { color: tc(0.6) } }}
-                  >
-                    <Typography sx={{ fontSize: 11, lineHeight: 1 }}>✕</Typography>
-                  </IconButton>
+                  {selected && (
+                    <Typography sx={{ fontSize: 9, color: tc(0.35) }}>
+                      ✓
+                    </Typography>
+                  )}
                 </Box>
-              ))}
-            </Box>
-          ) : (
-            <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.25), mb: "6px" }}>
-              No apps added yet
-            </Typography>
-          )}
-
-          <Autocomplete
-            options={installedApps.filter((a) => !commonApps.some((c) => c.path === a.path))}
-            getOptionLabel={(option) => option.name}
-            onOpen={loadInstalledApps}
-            onChange={(_e, value) => {
-              if (value) addApp(value);
-            }}
-            value={null}
-            blurOnSelect
-            slotProps={{
-              paper: {
-                sx: {
-                  bgcolor: bg,
-                  border: `1px solid ${tc(0.15)}`,
-                  boxShadow: "none",
-                  "& .MuiAutocomplete-option": {
-                    fontSize: ui.fontSize.sm,
-                    color: tc(0.6),
-                    py: "2px",
-                    px: "6px",
-                    minHeight: 0,
-                    "&:hover, &.Mui-focused": { bgcolor: `${tc(0.06)} !important` },
-                  },
-                  "& .MuiAutocomplete-listbox": {
-                    py: "2px",
-                  },
-                  "& .MuiAutocomplete-noOptions": {
-                    fontSize: ui.fontSize.sm,
-                    color: tc(0.35),
-                  },
-                },
-              },
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search apps..."
-                variant="standard"
-                size="small"
-                sx={{
-                  "& .MuiInput-root": {
-                    fontSize: ui.fontSize.sm,
-                    color: tc(0.7),
-                  },
-                  "& .MuiInput-root::before": {
-                    borderColor: tc(0.15),
-                  },
-                  "& .MuiInput-root:hover::before": {
-                    borderColor: `${tc(0.3)} !important`,
-                  },
-                  "& input::placeholder": {
-                    color: tc(0.3),
-                    opacity: 1,
-                  },
-                  "& .MuiSvgIcon-root": {
-                    color: tc(0.3),
-                  },
-                }}
-              />
-            )}
-            size="small"
-            sx={{ maxWidth: 250 }}
-          />
+              );
+            })}
+          </Box>
         </Box>
       </Modal>
     </>
