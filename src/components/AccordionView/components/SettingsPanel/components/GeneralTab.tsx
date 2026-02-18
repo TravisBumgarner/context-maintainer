@@ -4,7 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { useDesktopStore, useSettingsStore, useTodoStore } from "../../../../../stores";
 
-const PANELS = ["Tasks", "Timer", "Desktops"] as const;
+const PANELS = ["Tasks", "Common Apps", "Timer", "Desktops"] as const;
 
 export function GeneralTab() {
     const { tc, ui } = useTheme().custom;

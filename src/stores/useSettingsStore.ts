@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
-import type { SpaceInfo, DesktopInfo } from "../types";
+import type { SpaceInfo, DesktopInfo, CommonApp } from "../types";
 
 interface SettingsState {
   timerPresets: number[];
@@ -10,6 +10,7 @@ interface SettingsState {
   accessibilityGranted: boolean | null;
   allSpaces: SpaceInfo[];
   hiddenPanels: string[];
+  commonApps: CommonApp[];
 
   setTimerPresets: (fn: (prev: number[]) => number[]) => void;
   setNotifySystem: (v: boolean) => void;
@@ -18,6 +19,8 @@ interface SettingsState {
   setAccessibilityGranted: (v: boolean) => void;
   setAllSpaces: (s: SpaceInfo[]) => void;
   setHiddenPanels: (panels: string[]) => void;
+  setCommonApps: (apps: CommonApp[]) => void;
+  loadCommonApps: () => void;
 
   refreshSpaces: () => void;
   checkAccessibility: () => void;
@@ -32,6 +35,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   accessibilityGranted: null,
   allSpaces: [],
   hiddenPanels: [],
+  commonApps: [],
 
   setTimerPresets: (fn) => set((state) => ({ timerPresets: fn(state.timerPresets) })),
   setNotifySystem: (v) => set({ notifySystem: v }),
@@ -42,6 +46,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setHiddenPanels: (panels) => {
     set({ hiddenPanels: panels });
     invoke("save_hidden_panels", { panels }).catch(() => {});
+  },
+  setCommonApps: (apps) => {
+    set({ commonApps: apps });
+    invoke("save_common_apps", { apps }).catch(() => {});
+  },
+  loadCommonApps: () => {
+    invoke<CommonApp[]>("get_common_apps")
+      .then((apps) => set({ commonApps: apps }))
+      .catch(() => {});
   },
 
   refreshSpaces: () => {

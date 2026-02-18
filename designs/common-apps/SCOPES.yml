@@ -114,7 +114,7 @@ tasks:
       - Panel is hideable via "Common Apps" in hiddenPanels
     depends_on: [1, 3]
     effort: 2
-    status: scoped
+    status: completed
 
   - id: 5
     milestone: 2

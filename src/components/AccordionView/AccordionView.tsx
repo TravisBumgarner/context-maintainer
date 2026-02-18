@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import DesktopNamePanel from "./components/DesktopNamePanel";
 import QueuePanel from "./components/QueuePanel";
 import TimerPanel from "./components/TimerPanel";
+import CommonAppsPanel from "./components/CommonAppsPanel";
 import DesktopsPanel from "./components/DesktopsPanel";
 import { useUIStore, useDesktopStore, useSettingsStore } from "../../stores";
 
@@ -31,6 +32,13 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
       {!hiddenPanels.includes("Tasks") && (
         <Box sx={{ flex: 1, minHeight: 0, overflow: "auto", px: "8px", bgcolor: "rgba(0,0,0,0.04)" }}>
           <QueuePanel desktopId={desktop.space_id} />
+        </Box>
+      )}
+
+      {/* ── Common Apps ── */}
+      {!hiddenPanels.includes("Common Apps") && (
+        <Box sx={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', px: "8px", flexShrink: 0, bgcolor: "rgba(0,0,0,0.04)" }}>
+          <CommonAppsPanel />
         </Box>
       )}
 
