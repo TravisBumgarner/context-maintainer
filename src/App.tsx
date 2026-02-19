@@ -20,8 +20,7 @@ import SettingsView from "./components/SettingsView";
 import InfoView from "./components/InfoView";
 import HistoryView from "./components/HistoryView";
 import AnchorView from "./components/AnchorView";
-import UpdateBanner from "./components/UpdateBanner";
-import WhatsNewModal from "./components/WhatsNewModal";
+import RenderModal from "./components/Modal";
 import Layout from "./components/AccordionView/components/Layout";
 
 import { useTodoStore, useTimerStore, useUIStore, useDesktopStore, useSettingsStore } from "./stores";
@@ -269,7 +268,7 @@ function App() {
     const lastSeen = localStorage.getItem("lastSeenVersion");
     if (lastSeen !== latest.version) {
       localStorage.setItem("lastSeenVersion", latest.version);
-      useUIStore.getState().setShowWhatsNew(true);
+      useUIStore.getState().openModal("WHATS_NEW");
     }
   }, [view]);
 
@@ -293,6 +292,7 @@ function App() {
           body: update.body ?? "",
           downloadAndInstall: (onEvent) => update.downloadAndInstall(onEvent),
         });
+        useUIStore.getState().openModal("UPDATE");
       }).catch((err) => {
         error(`Update check failed: ${err}`);
       });
@@ -328,8 +328,7 @@ function App() {
         {view === "history" && <HistoryView />}
         {view === "info" && <InfoView />}
         {view === "anchor" && <AnchorView />}
-        <UpdateBanner />
-        <WhatsNewModal />
+        <RenderModal />
       </Layout>
     </ThemeProvider>
   );
