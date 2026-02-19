@@ -1,6 +1,6 @@
 [package]
 name = "context-switching"
-version = "0.9.2"
+version = "0.9.3"
 description = "macOS desktop space indicator"
 authors = ["you"]
 edition = "2021"
@@ -21,6 +21,7 @@ chrono = { version = "0.4", features = ["serde"] }
 tauri-plugin-notification = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-log = "2"
+tauri-plugin-process = "2"
 log = "0.4"
 uuid = { version = "1", features = ["v4"] }
 objc2 = "0.6"

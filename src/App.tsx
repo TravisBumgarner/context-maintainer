@@ -226,7 +226,7 @@ function App() {
 
   // ── What's New version tracking ─────────────────────
   useEffect(() => {
-    if (view !== "todos") return;
+    if (view !== "session-chooser") return;
     const latest = changelog[0];
     if (!latest) return;
     const lastSeen = localStorage.getItem("lastSeenVersion");
