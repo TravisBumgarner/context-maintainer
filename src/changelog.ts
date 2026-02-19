@@ -6,6 +6,29 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
+        version: "0.10.0",
+        date: "2026-02-19",
+        changes: [
+            {
+                category: "Added",
+                items: [
+                    "Auto-hide window after desktop switch (configurable delay in Settings > General)",
+                    "Pause/resume countdown when auto-hide is active",
+                    "New window button (+) on common apps to open a fresh instance",
+                    "Dynamic window height based on visible panels",
+                ],
+            },
+            {
+                category: "Fixed",
+                items: [
+                    "Disabled double-click window zoom on macOS",
+                    "Full-height window for session chooser, settings, history, and about views",
+                    "Dynamic bottom border radius on last visible panel",
+                ],
+            },
+        ],
+    },
+    {
         version: "0.9.3",
         date: "2026-02-19",
         changes: [

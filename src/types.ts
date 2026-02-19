@@ -51,6 +51,7 @@ export interface Settings {
   notify_system: boolean;
   notify_flash: boolean;
   hidden_panels: string[];
+  auto_hide_delay: number;
 }
 
 export interface DisplayGroup {

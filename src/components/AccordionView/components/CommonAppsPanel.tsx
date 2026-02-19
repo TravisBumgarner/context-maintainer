@@ -90,32 +90,73 @@ export default function CommonAppsPanel() {
             }}
           >
             {commonApps.map((app) => (
-              <ButtonBase
+              <Box
                 key={app.path}
-                onClick={() => {
-                  invoke("launch_app", { path: app.path }).catch(() => {});
-                }}
                 sx={{
+                  display: "flex",
+                  alignItems: "center",
                   flexShrink: 0,
-                  px: "12px",
-                  py: "4px",
                   bgcolor: "rgba(0,0,0,0.06)",
-                  fontFamily: "inherit",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.1)" },
-                  transition: "background-color 0.15s",
+                  overflow: "hidden",
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: ui.fontSize.sm,
-                    fontWeight: ui.weights.semibold,
-                    color: tc(0.6),
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {app.short_name || app.name}
-                </Typography>
-              </ButtonBase>
+                <Tooltip title={`Show ${app.name}`} arrow>
+                  <ButtonBase
+                    onClick={() => {
+                      invoke("launch_app", { path: app.path }).catch(() => {});
+                    }}
+                    sx={{
+                      px: "8px",
+                      py: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      fontFamily: "inherit",
+                      "&:hover": { bgcolor: "rgba(0,0,0,0.06)" },
+                      transition: "background-color 0.15s",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: ui.fontSize.sm,
+                        fontWeight: ui.weights.semibold,
+                        color: tc(0.6),
+                        whiteSpace: "nowrap",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {app.short_name || app.name}
+                    </Typography>
+                  </ButtonBase>
+                </Tooltip>
+                <Tooltip title={`New ${app.name} window`} arrow>
+                  <ButtonBase
+                    onClick={() => {
+                      invoke("launch_app_new", { path: app.path }).catch(() => {});
+                    }}
+                    sx={{
+                      px: "4px",
+                      py: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      fontFamily: "inherit",
+                      borderLeft: `1px solid ${tc(0.08)}`,
+                      "&:hover": { bgcolor: "rgba(0,0,0,0.06)" },
+                      transition: "background-color 0.15s",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: ui.fontSize.xs,
+                        fontWeight: ui.weights.bold,
+                        color: tc(0.35),
+                        lineHeight: 1,
+                      }}
+                    >
+                      +
+                    </Typography>
+                  </ButtonBase>
+                </Tooltip>
+              </Box>
             ))}
           </Box>
           <Tooltip title="Configure apps" arrow>

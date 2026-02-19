@@ -23,12 +23,17 @@ fn hide_traffic_lights(window: &tauri::WebviewWindow) {
         let ns_window = window.ns_window().unwrap() as *const c_void;
         let sel_button = sel_registerName(b"standardWindowButton:\0".as_ptr());
         let sel_set_hidden = sel_registerName(b"setHidden:\0".as_ptr());
+        let sel_set_enabled = sel_registerName(b"setEnabled:\0".as_ptr());
 
         // NSWindowButton: 0=close, 1=miniaturize, 2=zoom
         for button_type in 0u64..3 {
             let button: *const c_void = objc_msgSend(ns_window, sel_button, button_type);
             if !button.is_null() {
                 objc_msgSend(button, sel_set_hidden, 1 as std::ffi::c_int);
+                // Disable zoom button to prevent double-click expand
+                if button_type == 2 {
+                    objc_msgSend(button, sel_set_enabled, 0 as std::ffi::c_int);
+                }
             }
         }
     }
@@ -337,6 +342,8 @@ struct Settings {
     hidden_panels: Vec<String>,
     #[serde(default)]
     common_apps: Vec<CommonApp>,
+    #[serde(default)]
+    auto_hide_delay: u32,
 }
 
 impl Default for Settings {
@@ -350,6 +357,7 @@ impl Default for Settings {
             notify_flash: true,
             hidden_panels: Vec::new(),
             common_apps: Vec::new(),
+            auto_hide_delay: 0,
         }
     }
 }
@@ -760,6 +768,14 @@ fn save_hidden_panels(state: tauri::State<'_, AppState>, panels: Vec<String>) {
 }
 
 #[tauri::command]
+fn save_auto_hide_delay(state: tauri::State<'_, AppState>, delay: u32) {
+    let mut data = state.data.lock().unwrap();
+    data.settings.auto_hide_delay = delay;
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
 fn get_common_apps(state: tauri::State<'_, AppState>) -> Vec<CommonApp> {
     let data = state.data.lock().unwrap();
     data.settings.common_apps.clone()
@@ -800,6 +816,16 @@ fn launch_app(path: String) -> Result<(), String> {
         .arg(&path)
         .output()
         .map_err(|e| format!("Failed to launch app: {}", e))?;
+    Ok(())
+}
+
+#[tauri::command]
+fn launch_app_new(path: String) -> Result<(), String> {
+    std::process::Command::new("open")
+        .arg("-n")
+        .arg(&path)
+        .output()
+        .map_err(|e| format!("Failed to launch new app instance: {}", e))?;
     Ok(())
 }
 
@@ -1395,7 +1421,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, get_common_apps, save_common_apps, list_installed_apps, launch_app, add_common_app, remove_common_app, get_completed, add_completed, clear_completed])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, save_auto_hide_delay, get_common_apps, save_common_apps, list_installed_apps, launch_app, launch_app_new, add_common_app, remove_common_app, get_completed, add_completed, clear_completed])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
