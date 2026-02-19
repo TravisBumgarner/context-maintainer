@@ -26,7 +26,7 @@ export default function HistoryView() {
   }
 
   return (
-    <Box sx={{ flex: 1, overflow: "auto", px: "10px", py: "12px", m: "4px", bgcolor: "rgba(0,0,0,0.04)", borderRadius: '0 10px 10px 0' }}>
+    <Box sx={{ flex: 1, overflow: "auto", px: "10px", py: "12px", m: "4px", bgcolor: "rgba(0,0,0,0.04)", borderRadius: '0 10px 10px 0', userSelect: "text" }}>
       {items.length === 0 ? (
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
           <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.35), textAlign: "center" }}>
@@ -37,25 +37,13 @@ export default function HistoryView() {
         <>
           {Array.from(grouped.entries()).map(([desktopId, groupItems]) => {
             const desktop = desktopMap.get(desktopId);
-            const name = desktop?.name ?? `Desktop`;
-            const color = desktop?.color ?? tc(0.3);
+            const name = desktop?.name ?? `Desktop ${desktop?.position ?? desktopId}`;
 
             return (
               <Box key={desktopId} sx={{ mb: "12px" }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    mb: "4px",
-                    pb: "2px",
-                    borderBottom: `2px solid ${color}`,
-                  }}
-                >
-                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: color, flexShrink: 0 }} />
+                <Box sx={{ mb: "4px", pb: "2px", borderBottom: `1px solid ${tc(0.15)}` }}>
                   <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: tc(0.55) }}>
                     {name}
-                    {desktop?.title ? ` — ${desktop.title}` : ""}
                   </Typography>
                 </Box>
                 {groupItems.map((item) => (

@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Modal } from "@mui/material";
+import { Box, Typography, Button, IconButton, Modal } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { changelog } from "../changelog";
 import { useUIStore } from "../stores";
@@ -11,33 +11,45 @@ export default function WhatsNewModal() {
   const latest = changelog[0];
   if (!latest || !showWhatsNew) return null;
 
+  const close = () => setShowWhatsNew(false);
+
   return (
-    <Modal open onClose={() => setShowWhatsNew(false)}>
+    <Modal open onClose={close}>
       <Box
         sx={{
           position: "absolute",
           inset: 0,
           margin: "auto",
           height: "fit-content",
-          width: "85%",
+          width: "90%",
           maxHeight: "70%",
           overflow: "auto",
           bgcolor: bg,
           border: `1px solid ${tc(0.2)}`,
-          p: "12px",
+          borderRadius: "8px",
+          p: "8px",
           "&:focus-visible": { outline: "none" },
+          "&::-webkit-scrollbar": { display: "none" },
         }}
       >
-        <Typography
-          sx={{
-            fontSize: ui.fontSize.lg,
-            fontWeight: ui.weights.bold,
-            color: tc(0.6),
-            mb: "8px",
-          }}
-        >
-          What's New — v{latest.version}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "6px" }}>
+          <Typography
+            sx={{
+              fontSize: ui.fontSize.lg,
+              fontWeight: ui.weights.bold,
+              color: tc(0.6),
+            }}
+          >
+            What's New — v{latest.version}
+          </Typography>
+          <IconButton
+            onClick={close}
+            size="small"
+            sx={{ p: "2px", color: tc(0.4), "&:hover": { color: tc(0.6) } }}
+          >
+            <Typography sx={{ fontSize: 11, lineHeight: 1 }}>✕</Typography>
+          </IconButton>
+        </Box>
 
         {latest.changes.map((group) => (
           <Box key={group.category} sx={{ mb: "8px" }}>
@@ -68,14 +80,20 @@ export default function WhatsNewModal() {
           </Box>
         ))}
 
-        <Button
-          variant="contained"
-          size="small"
-          onClick={() => setShowWhatsNew(false)}
-          sx={{ mt: "4px" }}
-        >
-          Got it
-        </Button>
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            onClick={close}
+            sx={{
+              px: "12px",
+              py: "4px",
+              color: tc(0.7),
+              fontWeight: ui.weights.bold,
+              "&:hover": { bgcolor: "rgba(0,0,0,0.06)" },
+            }}
+          >
+            Got it
+          </Button>
+        </Box>
       </Box>
     </Modal>
   );
