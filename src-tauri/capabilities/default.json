@@ -22,6 +22,7 @@
     "core:window:allow-close",
     "core:window:allow-show",
     "updater:default",
+    "process:allow-restart",
     "log:default"
   ]
 }
