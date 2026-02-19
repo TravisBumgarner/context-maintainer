@@ -9,7 +9,7 @@ const PANELS = ["Tasks", "Common Apps", "Timer", "Desktops"] as const;
 export function GeneralTab() {
     const { tc, ui } = useTheme().custom;
 
-    const { hiddenPanels, setHiddenPanels } = useSettingsStore();
+    const { hiddenPanels, setHiddenPanels, autoHideDelay, setAutoHideDelay } = useSettingsStore();
     const { setDesktop } = useDesktopStore();
     const { clearAll } = useTodoStore();
     const { refreshSpaces } = useSettingsStore();
@@ -63,6 +63,47 @@ export function GeneralTab() {
                             <Typography>{panel}</Typography>
                         </Box>
                     ))}
+                </Box>
+            </Box>
+
+            {/* Auto-hide */}
+            <Box sx={sectionSx}>
+                <Typography sx={sectionTitleSx}>Auto-hide after desktop switch</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Box
+                        component="input"
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={String(autoHideDelay)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                            const v = Math.max(0, Math.floor(Number(raw) || 0));
+                            setAutoHideDelay(v);
+                        }}
+                        sx={{
+                            width: 36,
+                            height: 24,
+                            border: `1px solid ${tc(0.15)}`,
+                            borderRadius: "4px",
+                            bgcolor: tc(0.03),
+                            color: "inherit",
+                            fontFamily: "inherit",
+                            fontSize: ui.fontSize.sm,
+                            textAlign: "center",
+                            outline: "none",
+                            "&:focus": { borderColor: tc(0.3) },
+                            // Hide spinner arrows
+                            "&::-webkit-inner-spin-button, &::-webkit-outer-spin-button": {
+                                WebkitAppearance: "none",
+                                margin: 0,
+                            },
+                            MozAppearance: "textfield",
+                        }}
+                    />
+                    <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5) }}>
+                        sec (0 = off)
+                    </Typography>
                 </Box>
             </Box>
 

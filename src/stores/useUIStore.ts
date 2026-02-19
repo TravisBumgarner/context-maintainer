@@ -7,7 +7,7 @@ import {
 } from "@tauri-apps/api/window";
 import { info, error as logError } from "@tauri-apps/plugin-log";
 import { currentWindow, loadAnchor, saveAnchor } from "../utils";
-import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED } from "../constants";
+import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED, computeExpandedHeight } from "../constants";
 import type { AnchorPosition, ViewType, DisplayGroup } from "../types";
 import { calculateSnapPosition } from "../snapPosition";
 import { useSettingsStore } from "./useSettingsStore";
@@ -23,6 +23,8 @@ interface UIState {
   updateStatus: "idle" | "downloading" | "error";
   settingsTab: number;
   hasExistingSession: boolean;
+  autoHideCountdown: number | null;
+  autoHidePaused: boolean;
 
   setView: (v: ViewType) => void;
   setCollapsed: (c: boolean) => void;
@@ -35,12 +37,15 @@ interface UIState {
   setSettingsTab: (t: number) => void;
   setHasExistingSession: (v: boolean) => void;
   dismissUpdate: () => void;
+  setAutoHideCountdown: (v: number | null) => void;
+  setAutoHidePaused: (v: boolean) => void;
 
   checkPosition: () => Promise<void>;
   snapToMonitor: (overrideAnchor?: AnchorPosition) => Promise<void>;
   toggleMinimize: () => Promise<void>;
   selectAnchor: (pos: AnchorPosition) => void;
   markDragged: () => void;
+  resizeToFit: (hiddenPanels: string[]) => Promise<void>;
   refreshDisplayGroups: () => Promise<void>;
 }
 
@@ -58,6 +63,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   updateStatus: "idle",
   settingsTab: 0,
   hasExistingSession: false,
+  autoHideCountdown: null,
+  autoHidePaused: false,
 
   setView: (v) => set({ view: v }),
   setCollapsed: (c) => set({ collapsed: c }),
@@ -70,6 +77,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   setSettingsTab: (t) => set({ settingsTab: t }),
   setHasExistingSession: (v) => set({ hasExistingSession: v }),
   dismissUpdate: () => set({ updateAvailable: null, updateStatus: "idle" }),
+  setAutoHideCountdown: (v) => set({ autoHideCountdown: v }),
+  setAutoHidePaused: (v) => set({ autoHidePaused: v }),
 
   checkPosition: async () => {
     const m = get().monitorRef;
@@ -104,7 +113,9 @@ export const useUIStore = create<UIState>((set, get) => ({
 
       const sf = m.scaleFactor;
       const logicalHeight = size.height / sf;
-      const threshold = (WINDOW_HEIGHT_COLLAPSED + WINDOW_HEIGHT_EXPANDED) / 2;
+      const hiddenPanels = useSettingsStore.getState().hiddenPanels;
+      const expandedHeight = computeExpandedHeight(hiddenPanels);
+      const threshold = (WINDOW_HEIGHT_COLLAPSED + expandedHeight) / 2;
       set({ collapsed: logicalHeight < threshold });
     } catch (err) {
       logError(`[checkPosition] error: ${err}`);
@@ -146,8 +157,10 @@ export const useUIStore = create<UIState>((set, get) => ({
     const pos = await currentWindow.outerPosition();
     const oldSize = await currentWindow.outerSize();
 
+    const hiddenPanels = useSettingsStore.getState().hiddenPanels;
+    const expandedHeight = computeExpandedHeight(hiddenPanels);
     await currentWindow.setSize(
-      new LogicalSize(WINDOW_WIDTH, next ? WINDOW_HEIGHT_COLLAPSED : WINDOW_HEIGHT_EXPANDED)
+      new LogicalSize(WINDOW_WIDTH, next ? WINDOW_HEIGHT_COLLAPSED : expandedHeight)
     );
 
     if (monitorRef) {
@@ -171,6 +184,20 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (get().anchorPos !== "middle-center") {
       set({ anchorPos: "middle-center" });
       saveAnchor("middle-center");
+    }
+  },
+
+  resizeToFit: async (hiddenPanels) => {
+    const { collapsed, anchorPos, view } = get();
+    if (collapsed || view !== "todos") return;
+    const newHeight = computeExpandedHeight(hiddenPanels);
+    try {
+      await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, newHeight));
+      if (anchorPos !== "middle-center") {
+        await get().snapToMonitor();
+      }
+    } catch {
+      // ignore
     }
   },
 

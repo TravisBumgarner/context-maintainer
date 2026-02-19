@@ -11,6 +11,7 @@ interface SettingsState {
   allSpaces: SpaceInfo[];
   hiddenPanels: string[];
   commonApps: CommonApp[];
+  autoHideDelay: number;
 
   setTimerPresets: (fn: (prev: number[]) => number[]) => void;
   setNotifySystem: (v: boolean) => void;
@@ -20,6 +21,7 @@ interface SettingsState {
   setAllSpaces: (s: SpaceInfo[]) => void;
   setHiddenPanels: (panels: string[]) => void;
   setCommonApps: (apps: CommonApp[]) => void;
+  setAutoHideDelay: (delay: number) => void;
   loadCommonApps: () => void;
 
   refreshSpaces: () => void;
@@ -36,6 +38,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   allSpaces: [],
   hiddenPanels: [],
   commonApps: [],
+  autoHideDelay: 0,
 
   setTimerPresets: (fn) => set((state) => ({ timerPresets: fn(state.timerPresets) })),
   setNotifySystem: (v) => set({ notifySystem: v }),
@@ -46,6 +49,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setHiddenPanels: (panels) => {
     set({ hiddenPanels: panels });
     invoke("save_hidden_panels", { panels }).catch(() => {});
+    // Dynamically resize window based on visible panels
+    import("./useUIStore").then(({ useUIStore }) => {
+      useUIStore.getState().resizeToFit(panels);
+    });
+  },
+  setAutoHideDelay: (delay) => {
+    set({ autoHideDelay: delay });
+    invoke("save_auto_hide_delay", { delay }).catch(() => {});
   },
   setCommonApps: (apps) => {
     set({ commonApps: apps });

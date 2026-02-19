@@ -79,5 +79,33 @@ export const THEMES: { name: string; colors: string[] }[] = [
 export const DEFAULT_BG = "#F5E6A3";
 
 export const WINDOW_WIDTH = 290;
-export const WINDOW_HEIGHT_EXPANDED = 220;
 export const WINDOW_HEIGHT_COLLAPSED = 56;
+
+// Panel heights (logical pixels)
+export const PANEL_HEIGHT_DESKTOP_NAME = 30;
+export const PANEL_HEIGHT_TASKS = 80;
+export const PANEL_HEIGHT_COMMON_APPS = 40;
+export const PANEL_HEIGHT_TIMER = 60;
+export const PANEL_HEIGHT_DESKTOPS = 40;
+export const SIDEBAR_PADDING = 16; // 4px padding * 2 + gap overhead
+
+const PANEL_MAP: Record<string, number> = {
+  Tasks: PANEL_HEIGHT_TASKS,
+  "Common Apps": PANEL_HEIGHT_COMMON_APPS,
+  Timer: PANEL_HEIGHT_TIMER,
+  Desktops: PANEL_HEIGHT_DESKTOPS,
+};
+
+export const WINDOW_HEIGHT_MIN = 180;
+
+export function computeExpandedHeight(hiddenPanels: string[]): number {
+  let height = SIDEBAR_PADDING + PANEL_HEIGHT_DESKTOP_NAME;
+  for (const [name, h] of Object.entries(PANEL_MAP)) {
+    if (!hiddenPanels.includes(name)) {
+      height += h;
+    }
+  }
+  return Math.max(height, WINDOW_HEIGHT_MIN);
+}
+
+export const WINDOW_HEIGHT_EXPANDED = computeExpandedHeight([]);

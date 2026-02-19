@@ -1,12 +1,12 @@
 import { useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { availableMonitors } from "@tauri-apps/api/window";
+import { availableMonitors, LogicalSize } from "@tauri-apps/api/window";
 import { info, error } from "@tauri-apps/plugin-log";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { buildTheme } from "./theme";
-import { DEFAULT_BG } from "./constants";
+import { DEFAULT_BG, WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED } from "./constants";
 import { currentWindow, friendlyMonitorName, loadAnchor } from "./utils";
 import { changelog } from "./changelog";
 import type { DesktopInfo, DesktopSummary, Settings } from "./types";
@@ -61,6 +61,7 @@ function App() {
         settings.setNotifySystem(s.notify_system ?? true);
         settings.setNotifyFlash(s.notify_flash ?? true);
         settings.setHiddenPanels(s.hidden_panels ?? []);
+        settings.setAutoHideDelay(s.auto_hide_delay ?? 0);
         if (!s.setup_complete) {
           info("Showing setup view");
           setView("setup");
@@ -144,12 +145,18 @@ function App() {
 
     const position = async () => {
       if (view === "session-chooser") {
+        await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED));
         await useUIStore.getState().snapToMonitor("middle-center");
       } else if (view === "todos") {
+        const hiddenPanels = useSettingsStore.getState().hiddenPanels;
+        await useUIStore.getState().resizeToFit(hiddenPanels);
         const saved = loadAnchor();
         if (saved !== "middle-center") {
           await useUIStore.getState().snapToMonitor(saved);
         }
+      } else if (view === "settings" || view === "history" || view === "info") {
+        // Use full expanded height for overlay views
+        await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED));
       } else {
         return;
       }
@@ -163,6 +170,16 @@ function App() {
     if (view !== "todos") return;
 
     let prevId = useDesktopStore.getState().desktop.space_id;
+    let autoHideInterval: ReturnType<typeof setInterval> | null = null;
+
+    const clearAutoHide = () => {
+      if (autoHideInterval) {
+        clearInterval(autoHideInterval);
+        autoHideInterval = null;
+      }
+      useUIStore.getState().setAutoHideCountdown(null);
+      useUIStore.getState().setAutoHidePaused(false);
+    };
 
     // Initial load: fetch current desktop via IPC
     invoke<DesktopInfo>("get_desktop", { display: displayIndex })
@@ -204,6 +221,25 @@ function App() {
         prevId = info.space_id;
         useTimerStore.getState().setActiveDesktop(info.space_id);
         useTodoStore.getState().switchTo(info.space_id);
+
+        // Auto-hide countdown after desktop switch
+        clearAutoHide();
+        const delay = useSettingsStore.getState().autoHideDelay;
+        if (delay > 0) {
+          let remaining = delay;
+          useUIStore.getState().setAutoHideCountdown(remaining);
+          useUIStore.getState().setAutoHidePaused(false);
+          autoHideInterval = setInterval(() => {
+            if (useUIStore.getState().autoHidePaused) return;
+            remaining -= 1;
+            if (remaining <= 0) {
+              clearAutoHide();
+              currentWindow.hide();
+            } else {
+              useUIStore.getState().setAutoHideCountdown(remaining);
+            }
+          }, 1000);
+        }
       }
     });
 
@@ -221,6 +257,7 @@ function App() {
       unlisten.then((fn) => fn());
       unlistenMoved.then((fn) => fn());
       clearInterval(collapseId);
+      clearAutoHide();
     };
   }, [view, displayIndex]);
 
