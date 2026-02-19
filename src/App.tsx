@@ -239,7 +239,7 @@ function App() {
   // ── Update check (production only) ──────────────────
   useEffect(() => {
     if (import.meta.env.DEV) return;
-    if (view !== "todos") return;
+    if (view !== "session-chooser") return;
     let cancelled = false;
 
     info("Checking for updates...");
