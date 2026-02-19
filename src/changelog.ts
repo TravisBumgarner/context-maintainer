@@ -12,8 +12,7 @@ export const changelog: ChangelogEntry[] = [
             {
                 category: "Added",
                 items: [
-                    "Auto-hide window after desktop switch (configurable delay in Settings > General)",
-                    "Pause/resume countdown when auto-hide is active",
+                    "Auto-hide window after desktop switch",
                     "New window button (+) on common apps to open a fresh instance",
                     "Dynamic window height based on visible panels",
                 ],
@@ -22,8 +21,6 @@ export const changelog: ChangelogEntry[] = [
                 category: "Fixed",
                 items: [
                     "Disabled double-click window zoom on macOS",
-                    "Full-height window for session chooser, settings, history, and about views",
-                    "Dynamic bottom border radius on last visible panel",
                 ],
             },
         ],
