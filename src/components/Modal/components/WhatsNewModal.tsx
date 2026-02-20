@@ -12,7 +12,7 @@ export default function WhatsNewModal() {
   return (
     <DefaultModal
       title={`What's New — v${latest.version}`}
-      sx={{ maxHeight: "70%", overflow: "auto", "&::-webkit-scrollbar": { display: "none" } }}
+      sx={{ overflow: "auto", "&::-webkit-scrollbar": { display: "none" } }}
     >
       {latest.changes.map((group) => (
         <Box key={group.category} sx={{ mb: "8px" }}>
@@ -32,7 +32,7 @@ export default function WhatsNewModal() {
       ))}
 
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <AppButton onClick={closeModal} variant="primary">
+        <AppButton onClick={closeModal} variant="contained">
           Got it
         </AppButton>
       </Box>

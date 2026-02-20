@@ -93,7 +93,7 @@ export default function FeedbackModal() {
           <AppButton
             onClick={handleSubmit}
             disabled={isSubmitting || formData.message.length === 0}
-            variant="primary"
+            variant="contained"
           >
             {buttonMessage}
           </AppButton>

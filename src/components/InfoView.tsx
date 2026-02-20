@@ -34,7 +34,7 @@ export default function InfoView() {
                 </Link>
                 )
             </Typography>
-            <Typography variant="body2" sx={{ mb: "4px" }}>
+            <Typography variant="body1" sx={{ mb: "4px" }}>
                 Open Source (
                 <Link
                     component="button"
@@ -44,8 +44,8 @@ export default function InfoView() {
                 </Link>
                 )
             </Typography>
-            <Typography variant="body2" sx={{ mb: "16px" }}>
-                <Link
+            <Typography variant="body1" sx={{ mb: "16px" }}>
+                Thoughts? <Link
                     component="button"
                     onClick={() => openModal(MODAL_ID.FEEDBACK)}
                 >
