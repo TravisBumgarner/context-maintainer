@@ -7,7 +7,7 @@ import { useDesktopStore, useSettingsStore } from "../../../../../stores";
 
 export function ThemesTab() {
     const theme = useTheme();
-    const { tc, ui } = theme.custom;
+    const { tc } = theme.custom;
     const [expandedTheme, setExpandedTheme] = useState<string | null>(null);
     const [colorIndex, setColorIndex] = useState(0);
 
@@ -65,7 +65,7 @@ export function ThemesTab() {
                                 />
                             ))}
                         </Box>
-                        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), fontWeight: ui.weights.semibold, whiteSpace: "nowrap" }}>
+                        <Typography variant="subtitle2" sx={{ whiteSpace: "nowrap" }}>
                             {t.name}
                         </Typography>
                     </Box>

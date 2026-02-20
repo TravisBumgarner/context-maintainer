@@ -84,9 +84,9 @@ export const WINDOW_HEIGHT_COLLAPSED = 56;
 // Panel heights (logical pixels)
 export const PANEL_HEIGHT_DESKTOP_NAME = 30;
 export const PANEL_HEIGHT_TASKS = 80;
-export const PANEL_HEIGHT_COMMON_APPS = 40;
-export const PANEL_HEIGHT_TIMER = 60;
-export const PANEL_HEIGHT_DESKTOPS = 40;
+export const PANEL_HEIGHT_COMMON_APPS = 25;
+export const PANEL_HEIGHT_TIMER = 50;
+export const PANEL_HEIGHT_DESKTOPS = 25;
 export const SIDEBAR_PADDING = 16; // 4px padding * 2 + gap overhead
 
 const PANEL_MAP: Record<string, number> = {
@@ -108,4 +108,3 @@ export function computeExpandedHeight(hiddenPanels: string[]): number {
   return Math.max(height, WINDOW_HEIGHT_MIN);
 }
 
-export const WINDOW_HEIGHT_EXPANDED = computeExpandedHeight([]);

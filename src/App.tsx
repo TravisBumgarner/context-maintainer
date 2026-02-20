@@ -6,7 +6,7 @@ import { info, error } from "@tauri-apps/plugin-log";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { buildTheme } from "./theme";
-import { DEFAULT_BG, WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED } from "./constants";
+import { DEFAULT_BG, WINDOW_WIDTH, computeExpandedHeight } from "./constants";
 import { currentWindow, friendlyMonitorName, loadAnchor } from "./utils";
 import { changelog } from "./changelog";
 import type { DesktopInfo, DesktopSummary, Settings } from "./types";
@@ -20,8 +20,7 @@ import SettingsView from "./components/SettingsView";
 import InfoView from "./components/InfoView";
 import HistoryView from "./components/HistoryView";
 import AnchorView from "./components/AnchorView";
-import UpdateBanner from "./components/UpdateBanner";
-import WhatsNewModal from "./components/WhatsNewModal";
+import RenderModal from "./components/Modal";
 import Layout from "./components/AccordionView/components/Layout";
 
 import { useTodoStore, useTimerStore, useUIStore, useDesktopStore, useSettingsStore } from "./stores";
@@ -145,7 +144,8 @@ function App() {
 
     const position = async () => {
       if (view === "session-chooser") {
-        await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED));
+        const hp = useSettingsStore.getState().hiddenPanels;
+        await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, computeExpandedHeight(hp)));
         await useUIStore.getState().snapToMonitor("middle-center");
       } else if (view === "todos") {
         const hiddenPanels = useSettingsStore.getState().hiddenPanels;
@@ -154,9 +154,10 @@ function App() {
         if (saved !== "middle-center") {
           await useUIStore.getState().snapToMonitor(saved);
         }
-      } else if (view === "settings" || view === "history" || view === "info") {
-        // Use full expanded height for overlay views
-        await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED));
+      } else if (view === "settings" || view === "history" || view === "info" || view === "anchor") {
+        const hiddenPanels = useSettingsStore.getState().hiddenPanels;
+        const height = computeExpandedHeight(hiddenPanels);
+        await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, height));
       } else {
         return;
       }
@@ -269,7 +270,7 @@ function App() {
     const lastSeen = localStorage.getItem("lastSeenVersion");
     if (lastSeen !== latest.version) {
       localStorage.setItem("lastSeenVersion", latest.version);
-      useUIStore.getState().setShowWhatsNew(true);
+      useUIStore.getState().openModal("WHATS_NEW");
     }
   }, [view]);
 
@@ -293,6 +294,7 @@ function App() {
           body: update.body ?? "",
           downloadAndInstall: (onEvent) => update.downloadAndInstall(onEvent),
         });
+        useUIStore.getState().openModal("UPDATE");
       }).catch((err) => {
         error(`Update check failed: ${err}`);
       });
@@ -328,8 +330,7 @@ function App() {
         {view === "history" && <HistoryView />}
         {view === "info" && <InfoView />}
         {view === "anchor" && <AnchorView />}
-        <UpdateBanner />
-        <WhatsNewModal />
+        <RenderModal />
       </Layout>
     </ThemeProvider>
   );

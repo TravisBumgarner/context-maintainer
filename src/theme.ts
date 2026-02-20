@@ -1,6 +1,9 @@
 import { createTheme, type Theme } from "@mui/material/styles";
 import { detectColorMode } from "./utils";
 
+export const BG_OVERLAY_LIGHT = "rgba(0,0,0,0.04)";
+export const BG_OVERLAY = "rgba(0,0,0,0.06)";
+
 // Focus UI constants — dense, monospace, sharp edges
 const ui = {
   fontFamily: '"SF Mono", "Fira Code", "Cascadia Code", monospace',
@@ -64,6 +67,21 @@ export function buildTheme(bgColor: string): Theme {
     shape: { borderRadius: 0 },
     typography: {
       fontFamily: ui.fontFamily,
+      fontSize: ui.fontSize.sm,
+      // Default variant — most common text style
+      body1: { fontSize: ui.fontSize.sm, color: textColor(0.5) },
+      // Secondary / muted text
+      body2: { fontSize: ui.fontSize.sm, color: textColor(0.4) },
+      // Tiny meta text
+      caption: { fontSize: ui.fontSize.xs, color: textColor(0.3) },
+      // Modal / section headings
+      h6: { fontSize: ui.fontSize.lg, fontWeight: ui.weights.bold, color: textColor(0.6) },
+      // Emphasized labels
+      subtitle1: { fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: textColor(0.6) },
+      // Softer labels
+      subtitle2: { fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: textColor(0.5) },
+      // Disabled / placeholder text
+      overline: { fontSize: ui.fontSize.sm, color: textColor(0.35), textTransform: "none", letterSpacing: "normal" },
     },
     components: {
       MuiCssBaseline: {
@@ -83,8 +101,17 @@ export function buildTheme(bgColor: string): Theme {
         },
       },
       MuiTypography: {
-        styleOverrides: {
-          root: { fontSize: ui.fontSize.md, color: textColor(0.55) },
+        defaultProps: {
+          variant: "body1",
+          variantMapping: {
+            h6: "span",
+            subtitle1: "span",
+            subtitle2: "span",
+            body1: "p",
+            body2: "p",
+            caption: "span",
+            overline: "span",
+          },
         },
       },
       MuiButton: {
@@ -113,6 +140,7 @@ export function buildTheme(bgColor: string): Theme {
               color: textColorInverse(),
               backgroundColor: textColor(0.45),
               "&:hover": { backgroundColor: textColor(0.6) },
+              "&.Mui-disabled": { color: textColor(0.2), backgroundColor: textColor(0.15) },
             },
           },
         ],
@@ -120,8 +148,11 @@ export function buildTheme(bgColor: string): Theme {
       MuiLink: {
         styleOverrides: {
           root: {
+            fontSize: "inherit",
             color: "inherit",
             textDecorationColor: "inherit",
+            verticalAlign: "baseline",
+            "&:hover": { color: textColor(0.7) },
           },
         },
       },
@@ -136,7 +167,12 @@ export function buildTheme(bgColor: string): Theme {
       },
       MuiInputBase: {
         styleOverrides: {
-          root: { fontSize: ui.fontSize.md, fontFamily: "inherit", color: textColor(0.7) },
+          root: {
+            fontSize: ui.fontSize.md,
+            fontFamily: "inherit",
+            color: textColor(0.7),
+            "& input::placeholder": { color: textColor(0.35), opacity: 1 },
+          },
         },
       },
       MuiAccordion: {

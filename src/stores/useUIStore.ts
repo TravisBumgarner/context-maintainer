@@ -7,7 +7,7 @@ import {
 } from "@tauri-apps/api/window";
 import { info, error as logError } from "@tauri-apps/plugin-log";
 import { currentWindow, loadAnchor, saveAnchor } from "../utils";
-import { WINDOW_WIDTH, WINDOW_HEIGHT_EXPANDED, WINDOW_HEIGHT_COLLAPSED, computeExpandedHeight } from "../constants";
+import { WINDOW_WIDTH, WINDOW_HEIGHT_COLLAPSED, computeExpandedHeight } from "../constants";
 import type { AnchorPosition, ViewType, DisplayGroup } from "../types";
 import { calculateSnapPosition } from "../snapPosition";
 import { useSettingsStore } from "./useSettingsStore";
@@ -18,7 +18,7 @@ interface UIState {
   anchorPos: AnchorPosition;
   displayGroups: DisplayGroup[];
   monitorRef: Monitor | null;
-  showWhatsNew: boolean;
+  activeModal: string | null;
   updateAvailable: { version: string; body: string; downloadAndInstall: (onEvent?: (event: any) => void) => Promise<void> } | null;
   updateStatus: "idle" | "downloading" | "error";
   settingsTab: number;
@@ -31,7 +31,8 @@ interface UIState {
   setAnchorPos: (p: AnchorPosition) => void;
   setDisplayGroups: (g: DisplayGroup[]) => void;
   setMonitorRef: (m: Monitor | null) => void;
-  setShowWhatsNew: (v: boolean) => void;
+  openModal: (id: string) => void;
+  closeModal: () => void;
   setUpdateAvailable: (u: UIState["updateAvailable"]) => void;
   setUpdateStatus: (s: UIState["updateStatus"]) => void;
   setSettingsTab: (t: number) => void;
@@ -58,7 +59,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   anchorPos: loadAnchor(),
   displayGroups: [],
   monitorRef: null,
-  showWhatsNew: false,
+  activeModal: null,
   updateAvailable: null,
   updateStatus: "idle",
   settingsTab: 0,
@@ -71,7 +72,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   setAnchorPos: (p) => set({ anchorPos: p }),
   setDisplayGroups: (g) => set({ displayGroups: g }),
   setMonitorRef: (m) => set({ monitorRef: m }),
-  setShowWhatsNew: (v) => set({ showWhatsNew: v }),
+  openModal: (id) => set({ activeModal: id }),
+  closeModal: () => set({ activeModal: null }),
   setUpdateAvailable: (u) => set({ updateAvailable: u }),
   setUpdateStatus: (s) => set({ updateStatus: s }),
   setSettingsTab: (t) => set({ settingsTab: t }),

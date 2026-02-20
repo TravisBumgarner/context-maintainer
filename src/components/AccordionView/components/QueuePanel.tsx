@@ -1,9 +1,9 @@
-import { Box, IconButton, InputBase, Typography } from "@mui/material";
-import { Add } from "@mui/icons-material";
+import { Box, InputBase, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Reorder } from "framer-motion";
 import TodoItem from "./TodoItem";
 import { useTodoStore, EMPTY_TODOS } from "../../../stores";
+import { AppIconButton } from "../../shared";
 
 interface QueuePanelProps {
   desktopId: number;
@@ -23,13 +23,11 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
   const active = todos.filter((t) => !t.done);
 
   return (
-    <>
+    <Box sx={{ height: '100%', width: '100%' }}>
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          px: `${ui.spacing.itemPx}px`,
-          py: `${ui.spacing.itemPy}px`,
           gap: `${ui.spacing.gap}px`,
         }}
       >
@@ -42,14 +40,13 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
             flex: 1,
             minWidth: 0,
             p: 0,
-            border: `1px solid ${tc(0.2)}`,
             px: "6px",
             "& input": { p: "3px 0" },
-            "& input::placeholder": { color: tc(0.35) },
             "&.Mui-focused": { borderColor: tc(0.45) },
           }}
         />
-        <IconButton
+        <AppIconButton
+          icon="add"
           onClick={() => addTodo(desktopId)}
           disabled={!newText.trim()}
           sx={{
@@ -57,9 +54,7 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
             fontSize: ui.fontSize.lg,
             color: newText.trim() ? tc(0.45) : tc(0.15),
           }}
-        >
-          <Add fontSize="inherit" />
-        </IconButton>
+        />
       </Box>
 
       <Reorder.Group
@@ -84,7 +79,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
                     flexShrink: 0,
                     cursor: "grab",
                     color: tc(0.2),
-                    fontSize: ui.fontSize.sm,
                     px: "2px",
                     "&:active": { cursor: "grabbing" },
                   }}
@@ -100,6 +94,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
         ))}
       </Reorder.Group>
 
-    </>
+    </Box>
   );
 }

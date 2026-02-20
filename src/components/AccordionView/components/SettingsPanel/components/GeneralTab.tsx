@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { Box, Button, Checkbox, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, Checkbox, Typography } from "@mui/material";
 import { invoke } from "@tauri-apps/api/core";
 import { useDesktopStore, useSettingsStore, useTodoStore } from "../../../../../stores";
+import { BG_OVERLAY_LIGHT } from "../../../../../theme";
+import { SectionTitle, NumericInput, AppButton } from "../../../../shared";
 
 const PANELS = ["Tasks", "Common Apps", "Timer", "Desktops"] as const;
 
 export function GeneralTab() {
-    const { tc, ui } = useTheme().custom;
-
     const { hiddenPanels, setHiddenPanels, autoHideDelay, setAutoHideDelay } = useSettingsStore();
     const { setDesktop } = useDesktopStore();
     const { clearAll } = useTodoStore();
@@ -23,25 +22,16 @@ export function GeneralTab() {
     };
 
     const sectionSx = {
-        bgcolor: "rgba(0,0,0,0.04)",
+        bgcolor: BG_OVERLAY_LIGHT,
         p: "8px",
         mb: "4px",
-    } as const;
-
-    const sectionTitleSx = {
-        fontSize: ui.fontSize.xs,
-        fontWeight: ui.weights.semibold,
-        color: tc(0.4),
-        mb: "6px",
-        textTransform: "uppercase",
-        letterSpacing: ui.letterSpacing.wide,
     } as const;
 
     return (
         <>
             {/* Panels */}
-            <Box sx={sectionSx}>
-                <Typography sx={sectionTitleSx}>Panels</Typography>
+            <Box sx={{ ...sectionSx, flex: 1 }}>
+                <SectionTitle>Panels</SectionTitle>
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 12px" }}>
                     {PANELS.map((panel) => (
                         <Box
@@ -67,59 +57,33 @@ export function GeneralTab() {
             </Box>
 
             {/* Auto-hide */}
-            <Box sx={sectionSx}>
-                <Typography sx={sectionTitleSx}>Auto-hide after desktop switch</Typography>
+            <Box sx={{ ...sectionSx, flex: 1 }}>
+                <SectionTitle>Auto-hide after desktop switch</SectionTitle>
                 <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Box
-                        component="input"
-                        type="number"
+                    <NumericInput
+                        value={autoHideDelay}
                         min={0}
-                        step={1}
-                        value={String(autoHideDelay)}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            const raw = e.target.value.replace(/^0+(?=\d)/, "");
-                            const v = Math.max(0, Math.floor(Number(raw) || 0));
-                            setAutoHideDelay(v);
-                        }}
-                        sx={{
-                            width: 36,
-                            height: 24,
-                            border: `1px solid ${tc(0.15)}`,
-                            borderRadius: "4px",
-                            bgcolor: tc(0.03),
-                            color: "inherit",
-                            fontFamily: "inherit",
-                            fontSize: ui.fontSize.sm,
-                            textAlign: "center",
-                            outline: "none",
-                            "&:focus": { borderColor: tc(0.3) },
-                            // Hide spinner arrows
-                            "&::-webkit-inner-spin-button, &::-webkit-outer-spin-button": {
-                                WebkitAppearance: "none",
-                                margin: 0,
-                            },
-                            MozAppearance: "textfield",
-                        }}
+                        onChange={setAutoHideDelay}
                     />
-                    <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5) }}>
+                    <Typography>
                         sec (0 = off)
                     </Typography>
                 </Box>
             </Box>
 
             {/* Clear All Data */}
-            <Box sx={{ ...sectionSx, mb: 0, borderBottomRightRadius: '8px' }}>
+            <Box sx={{ ...sectionSx, flex: 1, mb: 0, borderBottomRightRadius: '8px' }}>
                 {!confirmClear ? (
-                    <Button variant="contained" onClick={() => setConfirmClear(true)}>
+                    <AppButton variant="contained" onClick={() => setConfirmClear(true)}>
                         Clear All Data
-                    </Button>
+                    </AppButton>
                 ) : (
                     <Box>
-                        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), mb: "6px" }}>
+                        <Typography sx={{ mb: "6px" }}>
                             This will delete all todos, titles, and custom colors.
                         </Typography>
                         <Box sx={{ display: "flex", gap: "6px" }}>
-                            <Button
+                            <AppButton
                                 variant="contained"
                                 onClick={() => {
                                     invoke("clear_all_data")
@@ -133,10 +97,10 @@ export function GeneralTab() {
                                 }}
                             >
                                 Yes, clear everything
-                            </Button>
-                            <Button variant="contained" onClick={() => setConfirmClear(false)}>
+                            </AppButton>
+                            <AppButton variant="contained" onClick={() => setConfirmClear(false)}>
                                 Cancel
-                            </Button>
+                            </AppButton>
                         </Box>
                     </Box>
                 )}

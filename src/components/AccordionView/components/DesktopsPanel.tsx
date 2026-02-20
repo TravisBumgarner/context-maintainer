@@ -70,9 +70,8 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
             }}
             sx={{
               fontSize: ui.fontSize.sm,
-              color: tc(0.5),
               fontWeight: ui.weights.semibold,
-              "&:hover": { color: tc(0.7) },
+              color: tc(0.5),
             }}
           >
             Grant accessibility to use desktop switcher
@@ -101,7 +100,7 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
                 sx={{
                   flexShrink: 0,
                   px: "12px",
-                  py: "4px",
+                  py: "2px",
                   border: isActive ? `1px solid rgba(0,0,0,0.15)` : "1px solid transparent",
                   display: "flex",
                   alignItems: "center",
@@ -114,7 +113,6 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
               >
                 <Typography
                   sx={{
-                    fontSize: ui.fontSize.sm,
                     fontWeight: ui.weights.semibold,
                     color: cardFg,
                     whiteSpace: "nowrap",
@@ -127,7 +125,7 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
           })}
         </Box>
       ) : displayGroups.length === 0 ? (
-        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.25), px: "6px" }}>
+        <Typography sx={{ color: tc(0.25), px: "6px" }}>
           No desktops found
         </Typography>
       ) : null}
