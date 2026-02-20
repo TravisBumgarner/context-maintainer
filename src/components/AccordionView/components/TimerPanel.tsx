@@ -70,7 +70,7 @@ export default function TimerPanel() {
   };
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", width: "100%", px: "8px" }}>
+    <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
         {/* Row 1: time + action buttons */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
@@ -78,9 +78,9 @@ export default function TimerPanel() {
             {active ? (
               <Typography sx={timeSx}>{formatCountdown(remaining)}</Typography>
             ) : (
-              [{value: hours, set: setHours, max: 99, label: "HH"},
-               {value: minutes, set: setMinutes, max: 59, label: "MM"},
-               {value: seconds, set: setSeconds, max: 59, label: "SS"},
+              [{ value: hours, set: setHours, max: 99, label: "HH" },
+              { value: minutes, set: setMinutes, max: 59, label: "MM" },
+              { value: seconds, set: setSeconds, max: 59, label: "SS" },
               ].map((field, i) => (
                 <Box key={field.label} sx={{ display: "flex", alignItems: "center" }}>
                   {i > 0 && (
@@ -117,7 +117,7 @@ export default function TimerPanel() {
 
         {/* Row 2: presets */}
         {!active && (
-          <Box sx={{ display: "flex", justifyContent: "center", gap: "6px", mt: "4px" }}>
+          <Box sx={{ display: "flex", justifyContent: "center", gap: "6px", }}>
             {timerPresets.map((p, i) => (
               <AppButton
                 key={i}

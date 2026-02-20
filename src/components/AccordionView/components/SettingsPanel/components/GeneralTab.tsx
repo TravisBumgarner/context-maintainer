@@ -30,7 +30,7 @@ export function GeneralTab() {
     return (
         <>
             {/* Panels */}
-            <Box sx={sectionSx}>
+            <Box sx={{ ...sectionSx, flex: 1 }}>
                 <SectionTitle>Panels</SectionTitle>
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 12px" }}>
                     {PANELS.map((panel) => (
@@ -57,7 +57,7 @@ export function GeneralTab() {
             </Box>
 
             {/* Auto-hide */}
-            <Box sx={sectionSx}>
+            <Box sx={{ ...sectionSx, flex: 1 }}>
                 <SectionTitle>Auto-hide after desktop switch</SectionTitle>
                 <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <NumericInput
@@ -72,7 +72,7 @@ export function GeneralTab() {
             </Box>
 
             {/* Clear All Data */}
-            <Box sx={{ ...sectionSx, mb: 0, borderBottomRightRadius: '8px' }}>
+            <Box sx={{ ...sectionSx, flex: 1, mb: 0, borderBottomRightRadius: '8px' }}>
                 {!confirmClear ? (
                     <AppButton variant="contained" onClick={() => setConfirmClear(true)}>
                         Clear All Data

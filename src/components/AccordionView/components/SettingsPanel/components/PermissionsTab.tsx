@@ -24,7 +24,7 @@ export function PermissionsTab() {
     return (
         <>
             {/* Accessibility */}
-            <Box sx={sectionSx}>
+            <Box sx={{ ...sectionSx, flex: 1 }}>
                 <SectionTitle>Accessibility</SectionTitle>
                 {accessibilityGranted ? (
                     <Typography variant="subtitle2">
@@ -50,7 +50,7 @@ export function PermissionsTab() {
             </Box>
 
             {/* Notifications */}
-            <Box sx={sectionSx}>
+            <Box sx={{ ...sectionSx, flex: 1 }}>
                 <SectionTitle>Notifications</SectionTitle>
                 {notificationGranted ? (
                     <Typography variant="subtitle2">
@@ -76,7 +76,7 @@ export function PermissionsTab() {
             </Box>
 
             {/* Setup */}
-            <Box sx={{ ...sectionSx, borderBottomRightRadius: '8px' }}>
+            <Box sx={{ ...sectionSx, flex: 1, mb: 0, borderBottomRightRadius: '8px' }}>
                 <SectionTitle>Setup</SectionTitle>
                 <AppButton
                     variant="contained"

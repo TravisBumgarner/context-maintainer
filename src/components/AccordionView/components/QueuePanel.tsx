@@ -23,13 +23,11 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
   const active = todos.filter((t) => !t.done);
 
   return (
-    <>
+    <Box sx={{ height: '100%', width: '100%' }}>
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          px: `${ui.spacing.itemPx}px`,
-          py: `${ui.spacing.itemPy}px`,
           gap: `${ui.spacing.gap}px`,
         }}
       >
@@ -42,7 +40,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
             flex: 1,
             minWidth: 0,
             p: 0,
-            border: `1px solid ${tc(0.2)}`,
             px: "6px",
             "& input": { p: "3px 0" },
             "&.Mui-focused": { borderColor: tc(0.45) },
@@ -97,6 +94,6 @@ export default function QueuePanel({ desktopId }: QueuePanelProps) {
         ))}
       </Reorder.Group>
 
-    </>
+    </Box>
   );
 }

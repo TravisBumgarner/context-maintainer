@@ -16,7 +16,7 @@ export default function DesktopNamePanel({ desktopId }: DesktopNamePanelProps) {
       onChange={(e) => updateTitle(e.target.value, desktopId)}
       sx={{
         width: "100%",
-        px: "14px",
+        px: "8px",
         "& input": { p: "3px 0" },
       }}
     />

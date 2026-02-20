@@ -100,7 +100,7 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
                 sx={{
                   flexShrink: 0,
                   px: "12px",
-                  py: "4px",
+                  py: "2px",
                   border: isActive ? `1px solid rgba(0,0,0,0.15)` : "1px solid transparent",
                   display: "flex",
                   alignItems: "center",

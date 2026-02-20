@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Box, Typography } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 import DesktopNamePanel from "./components/DesktopNamePanel";
 import QueuePanel from "./components/QueuePanel";
@@ -10,6 +11,31 @@ import { useUIStore, useDesktopStore, useSettingsStore } from "../../stores";
 import { PANEL_HEIGHT_DESKTOP_NAME, PANEL_HEIGHT_TASKS, PANEL_HEIGHT_COMMON_APPS, PANEL_HEIGHT_TIMER, PANEL_HEIGHT_DESKTOPS } from "../../constants";
 import { BG_OVERLAY_LIGHT } from "../../theme";
 import { AppIconButton } from "../shared";
+
+interface PanelBoxProps {
+  height: number;
+  isLast: boolean;
+  children: React.ReactNode;
+  sx?: SxProps<Theme>;
+}
+
+function PanelBox({ height, isLast, children, sx }: PanelBoxProps) {
+  return (
+    <Box sx={{
+      height,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      padding: '4px',
+      bgcolor: BG_OVERLAY_LIGHT,
+      ...(isLast && { borderBottomRightRadius: 8 }),
+      ...sx as object,
+    }}>
+      {children}
+    </Box>
+  );
+}
 
 interface AccordionViewProps {
   displayIndex: number;
@@ -66,32 +92,28 @@ export default function AccordionView({ displayIndex }: AccordionViewProps) {
         <DesktopNamePanel desktopId={desktop.space_id} />
       </Box>
 
-      {/* ── Queue ── */}
       {!hiddenPanels.includes("Tasks") && (
-        <Box sx={{ height: PANEL_HEIGHT_TASKS, minHeight: 0, overflow: "auto", px: "8px", bgcolor: BG_OVERLAY_LIGHT, ...(isLast("Tasks") && { borderBottomRightRadius: 8 }) }}>
+        <PanelBox height={PANEL_HEIGHT_TASKS} isLast={isLast("Tasks")} sx={{ flex: 1, minHeight: 0, overflow: "auto", flexShrink: "unset" }}>
           <QueuePanel desktopId={desktop.space_id} />
-        </Box>
+        </PanelBox>
       )}
 
-      {/* ── Common Apps ── */}
       {!hiddenPanels.includes("Common Apps") && (
-        <Box sx={{ height: PANEL_HEIGHT_COMMON_APPS, display: 'flex', alignItems: 'center', justifyContent: 'center', px: "8px", flexShrink: 0, bgcolor: BG_OVERLAY_LIGHT, ...(isLast("Common Apps") && { borderBottomRightRadius: 8 }) }}>
+        <PanelBox height={PANEL_HEIGHT_COMMON_APPS} isLast={isLast("Common Apps")}>
           <CommonAppsPanel />
-        </Box>
+        </PanelBox>
       )}
 
-      {/* ── Timer ── */}
       {!hiddenPanels.includes("Timer") && (
-        <Box sx={{ height: PANEL_HEIGHT_TIMER, display: "flex", flexShrink: 0, alignItems: "center", justifyContent: "center", bgcolor: BG_OVERLAY_LIGHT, ...(isLast("Timer") && { borderBottomRightRadius: 8 }) }}>
+        <PanelBox height={PANEL_HEIGHT_TIMER} isLast={isLast("Timer")}>
           <TimerPanel />
-        </Box>
+        </PanelBox>
       )}
 
-      {/* ── Desktops ── */}
       {!hiddenPanels.includes("Desktops") && (
-        <Box sx={{ height: PANEL_HEIGHT_DESKTOPS, display: 'flex', alignItems: 'center', justifyContent: 'center', px: "8px", flexShrink: 0, bgcolor: BG_OVERLAY_LIGHT, ...(isLast("Desktops") && { borderBottomRightRadius: 8 }) }}>
+        <PanelBox height={PANEL_HEIGHT_DESKTOPS} isLast={isLast("Desktops")}>
           <DesktopsPanel displayIndex={displayIndex} />
-        </Box>
+        </PanelBox>
       )}
     </Box>
   );

@@ -1,4 +1,4 @@
-import { Tabs, Tab } from "@mui/material";
+import { Box, Tabs, Tab } from "@mui/material";
 import { ThemesTab } from "./components/ThemesTab";
 import { PermissionsTab } from "./components/PermissionsTab";
 import { GeneralTab } from "./components/GeneralTab";
@@ -10,11 +10,11 @@ export default function SettingsPanel() {
     const setSettingsTab = useUIStore((s) => s.setSettingsTab);
 
     return (
-        <>
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
             <Tabs
                 value={settingsTab}
                 onChange={(_, v) => setSettingsTab(v)}
-                sx={{ mb: "4px", bgcolor: BG_OVERLAY_LIGHT, borderTopRightRadius: '8px' }}
+                sx={{ mb: "4px", bgcolor: BG_OVERLAY_LIGHT, borderTopRightRadius: '8px', flexShrink: 0 }}
             >
                 {["General", "Themes", "Permissions"].map((label) => (
                     <Tab
@@ -28,11 +28,13 @@ export default function SettingsPanel() {
                 ))}
             </Tabs>
 
-            {settingsTab === 0 && <GeneralTab />}
+            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                {settingsTab === 0 && <GeneralTab />}
 
-            {settingsTab === 1 && <ThemesTab />}
+                {settingsTab === 1 && <ThemesTab />}
 
-            {settingsTab === 2 && <PermissionsTab />}
-        </>
+                {settingsTab === 2 && <PermissionsTab />}
+            </Box>
+        </Box>
     );
 }
