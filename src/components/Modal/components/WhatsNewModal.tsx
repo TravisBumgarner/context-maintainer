@@ -1,11 +1,10 @@
-import { Box, Button, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, Typography } from "@mui/material";
 import { changelog } from "../../../changelog";
 import { useUIStore } from "../../../stores";
 import DefaultModal from "./DefaultModal";
+import { AppButton } from "../../shared";
 
 export default function WhatsNewModal() {
-  const { tc, ui } = useTheme().custom;
   const closeModal = useUIStore((s) => s.closeModal);
   const latest = changelog[0];
   if (!latest) return null;
@@ -17,13 +16,14 @@ export default function WhatsNewModal() {
     >
       {latest.changes.map((group) => (
         <Box key={group.category} sx={{ mb: "8px" }}>
-          <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: tc(0.45), mb: "2px" }}>
+          <Typography variant="subtitle2" sx={{ mb: "2px" }}>
             {group.category}
           </Typography>
           {group.items.map((item, i) => (
             <Typography
               key={i}
-              sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), pl: "8px", lineHeight: 1.5, "&::before": { content: '"· "' } }}
+              variant="body2"
+              sx={{ pl: "8px", lineHeight: 1.5, "&::before": { content: '"· "' } }}
             >
               {item}
             </Typography>
@@ -32,12 +32,9 @@ export default function WhatsNewModal() {
       ))}
 
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button
-          onClick={closeModal}
-          sx={{ px: "12px", py: "4px", color: tc(0.7), fontWeight: ui.weights.bold, "&:hover": { bgcolor: "rgba(0,0,0,0.06)" } }}
-        >
+        <AppButton onClick={closeModal} variant="primary">
           Got it
-        </Button>
+        </AppButton>
       </Box>
     </DefaultModal>
   );

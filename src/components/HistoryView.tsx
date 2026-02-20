@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { useHistoryStore } from "../stores";
 import type { DesktopSummary } from "../types";
+import { BG_OVERLAY_LIGHT } from "../theme";
+import { AppButton } from "./shared";
 
 export default function HistoryView() {
-  const { tc, ui } = useTheme().custom;
+  const tc = useTheme().custom.tc;
   const { items, loadHistory, clearHistory } = useHistoryStore();
   const [desktops, setDesktops] = useState<DesktopSummary[]>([]);
 
@@ -26,10 +28,10 @@ export default function HistoryView() {
   }
 
   return (
-    <Box sx={{ flex: 1, overflow: "auto", px: "10px", py: "12px", m: "4px", bgcolor: "rgba(0,0,0,0.04)", borderRadius: '0 10px 10px 0', userSelect: "text" }}>
+    <Box sx={{ flex: 1, overflow: "auto", px: "10px", py: "12px", m: "4px", bgcolor: BG_OVERLAY_LIGHT, borderRadius: '0 10px 10px 0', userSelect: "text" }}>
       {items.length === 0 ? (
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-          <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.35), textAlign: "center" }}>
+          <Typography variant="overline" sx={{ textAlign: "center" }}>
             No completed tasks yet
           </Typography>
         </Box>
@@ -42,7 +44,7 @@ export default function HistoryView() {
             return (
               <Box key={desktopId} sx={{ mb: "12px" }}>
                 <Box sx={{ mb: "4px", pb: "2px", borderBottom: `1px solid ${tc(0.15)}` }}>
-                  <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: tc(0.55) }}>
+                  <Typography variant="subtitle2">
                     {name}
                   </Typography>
                 </Box>
@@ -57,10 +59,10 @@ export default function HistoryView() {
                       py: "2px",
                     }}
                   >
-                    <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), textDecoration: "line-through" }}>
+                    <Typography sx={{ textDecoration: "line-through" }}>
                       {item.text}
                     </Typography>
-                    <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.25), flexShrink: 0, ml: "8px" }}>
+                    <Typography variant="caption" sx={{ color: tc(0.25), flexShrink: 0, ml: "8px" }}>
                       {new Date(item.completed_at).toLocaleDateString()}
                     </Typography>
                   </Box>
@@ -68,19 +70,13 @@ export default function HistoryView() {
               </Box>
             );
           })}
-          <Button
+          <AppButton
             onClick={clearHistory}
-            size="small"
-            sx={{
-              mt: "8px",
-              fontSize: ui.fontSize.xs,
-              color: tc(0.35),
-              textTransform: "none",
-              "&:hover": { color: tc(0.6) },
-            }}
+            sx={{ mt: "8px" }}
+            variant="contained"
           >
             Clear History
-          </Button>
+          </AppButton>
         </>
       )}
     </Box>

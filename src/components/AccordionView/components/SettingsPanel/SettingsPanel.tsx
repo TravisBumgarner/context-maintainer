@@ -3,6 +3,7 @@ import { ThemesTab } from "./components/ThemesTab";
 import { PermissionsTab } from "./components/PermissionsTab";
 import { GeneralTab } from "./components/GeneralTab";
 import { useUIStore } from "../../../../stores";
+import { BG_OVERLAY_LIGHT } from "../../../../theme";
 
 export default function SettingsPanel() {
     const settingsTab = useUIStore((s) => s.settingsTab);
@@ -13,7 +14,7 @@ export default function SettingsPanel() {
             <Tabs
                 value={settingsTab}
                 onChange={(_, v) => setSettingsTab(v)}
-                sx={{ mb: "4px", bgcolor: "rgba(0,0,0,0.04)", borderTopRightRadius: '8px' }}
+                sx={{ mb: "4px", bgcolor: BG_OVERLAY_LIGHT, borderTopRightRadius: '8px' }}
             >
                 {["General", "Themes", "Permissions"].map((label) => (
                     <Tab

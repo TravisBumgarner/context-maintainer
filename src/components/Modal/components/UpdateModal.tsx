@@ -1,12 +1,13 @@
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { error } from "@tauri-apps/plugin-log";
 import { useUIStore } from "../../../stores";
 import DefaultModal from "./DefaultModal";
+import { AppButton } from "../../shared";
 
 export default function UpdateModal() {
-  const { tc, ui } = useTheme().custom;
+  const { tc } = useTheme().custom;
   const update = useUIStore((s) => s.updateAvailable);
   const status = useUIStore((s) => s.updateStatus);
   const setStatus = useUIStore((s) => s.setUpdateStatus);
@@ -33,7 +34,7 @@ export default function UpdateModal() {
 
   return (
     <DefaultModal title="Update Available">
-      <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), mb: "8px" }}>
+      <Typography sx={{ mb: "8px" }}>
         {status === "downloading"
           ? "Updating..."
           : status === "error"
@@ -45,26 +46,17 @@ export default function UpdateModal() {
         {status === "downloading" ? (
           <CircularProgress size={20} sx={{ color: tc(0.4) }} />
         ) : status === "error" ? (
-          <Button
-            onClick={handleDismiss}
-            sx={{ px: "12px", py: "4px", color: tc(0.6), "&:hover": { bgcolor: "rgba(0,0,0,0.06)" } }}
-          >
+          <AppButton onClick={handleDismiss}>
             Dismiss
-          </Button>
+          </AppButton>
         ) : (
           <>
-            <Button
-              onClick={handleDismiss}
-              sx={{ px: "12px", py: "4px", color: tc(0.4), "&:hover": { bgcolor: "rgba(0,0,0,0.06)" } }}
-            >
+            <AppButton onClick={handleDismiss}>
               Later
-            </Button>
-            <Button
-              onClick={handleUpdate}
-              sx={{ px: "12px", py: "4px", color: tc(0.7), fontWeight: ui.weights.bold, "&:hover": { bgcolor: "rgba(0,0,0,0.06)" } }}
-            >
+            </AppButton>
+            <AppButton onClick={handleUpdate} variant="primary">
               Update
-            </Button>
+            </AppButton>
           </>
         )}
       </Box>

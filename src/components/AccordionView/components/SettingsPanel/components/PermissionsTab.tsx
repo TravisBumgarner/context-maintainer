@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
-import { Box, Button, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, Typography } from "@mui/material";
 import { invoke } from "@tauri-apps/api/core";
 import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { useSettingsStore, useUIStore } from "../../../../../stores";
+import { BG_OVERLAY_LIGHT } from "../../../../../theme";
+import { SectionTitle, AppButton } from "../../../../shared";
 
 export function PermissionsTab() {
-    const { tc, ui } = useTheme().custom;
-
     const { accessibilityGranted, setAccessibilityGranted } = useSettingsStore();
     const { setView } = useUIStore();
     const [notificationGranted, setNotificationGranted] = useState(false);
@@ -17,35 +16,26 @@ export function PermissionsTab() {
     }, []);
 
     const sectionSx = {
-        bgcolor: "rgba(0,0,0,0.04)",
+        bgcolor: BG_OVERLAY_LIGHT,
         p: "8px",
         mb: "4px",
-    } as const;
-
-    const sectionTitleSx = {
-        fontSize: ui.fontSize.xs,
-        fontWeight: ui.weights.semibold,
-        color: tc(0.4),
-        mb: "6px",
-        textTransform: "uppercase",
-        letterSpacing: ui.letterSpacing.wide,
     } as const;
 
     return (
         <>
             {/* Accessibility */}
             <Box sx={sectionSx}>
-                <Typography sx={sectionTitleSx}>Accessibility</Typography>
+                <SectionTitle>Accessibility</SectionTitle>
                 {accessibilityGranted ? (
-                    <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), fontWeight: ui.weights.semibold }}>
+                    <Typography variant="subtitle2">
                         Granted
                     </Typography>
                 ) : (
                     <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.35) }}>
+                        <Typography variant="overline">
                             Not granted
                         </Typography>
-                        <Button
+                        <AppButton
                             variant="contained"
                             onClick={() => {
                                 invoke<boolean>("request_accessibility")
@@ -54,24 +44,24 @@ export function PermissionsTab() {
                             }}
                         >
                             Grant Access
-                        </Button>
+                        </AppButton>
                     </Box>
                 )}
             </Box>
 
             {/* Notifications */}
             <Box sx={sectionSx}>
-                <Typography sx={sectionTitleSx}>Notifications</Typography>
+                <SectionTitle>Notifications</SectionTitle>
                 {notificationGranted ? (
-                    <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.5), fontWeight: ui.weights.semibold }}>
+                    <Typography variant="subtitle2">
                         Granted
                     </Typography>
                 ) : (
                     <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.35) }}>
+                        <Typography variant="overline">
                             Not granted
                         </Typography>
-                        <Button
+                        <AppButton
                             variant="contained"
                             onClick={() => {
                                 requestPermission()
@@ -80,20 +70,20 @@ export function PermissionsTab() {
                             }}
                         >
                             Grant Access
-                        </Button>
+                        </AppButton>
                     </Box>
                 )}
             </Box>
 
             {/* Setup */}
             <Box sx={{ ...sectionSx, borderBottomRightRadius: '8px' }}>
-                <Typography sx={sectionTitleSx}>Setup</Typography>
-                <Button
+                <SectionTitle>Setup</SectionTitle>
+                <AppButton
                     variant="contained"
                     onClick={() => setView("setup")}
                 >
                     Show Setup Again
-                </Button>
+                </AppButton>
             </Box >
         </>
     );

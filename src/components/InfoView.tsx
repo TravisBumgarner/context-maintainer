@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Box, Button, Collapse, Link, Typography } from "@mui/material";
+import { Box, Collapse, Link, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { changelog } from "../changelog";
 import { useUIStore } from "../stores";
 import { MODAL_ID } from "./Modal/Modal.consts";
+import { BG_OVERLAY_LIGHT } from "../theme";
 
 export default function InfoView() {
     const { tc, ui } = useTheme().custom;
@@ -19,37 +20,34 @@ export default function InfoView() {
                 px: "10px",
                 py: "12px",
                 m: "4px",
-                bgcolor: "rgba(0,0,0,0.04)",
+                bgcolor: BG_OVERLAY_LIGHT,
                 borderRadius: '0 10px 10px 0'
             }}
         >
-            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), mb: "4px" }}>
+            <Typography variant="body2" sx={{ mb: "4px" }}>
                 Built by Travis Bumgarner (
                 <Link
                     component="button"
                     onClick={() => openUrl("https://www.linkedin.com/in/travisbumgarner")}
-                    sx={{ fontSize: "inherit", color: tc(0.4), "&:hover": { color: tc(0.6) }, verticalAlign: "baseline" }}
                 >
                     hiring?
                 </Link>
                 )
             </Typography>
-            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), mb: "4px" }}>
+            <Typography variant="body2" sx={{ mb: "4px" }}>
                 Open Source (
                 <Link
                     component="button"
                     onClick={() => openUrl("https://github.com/TravisBumgarner/context-maintainer")}
-                    sx={{ fontSize: "inherit", color: tc(0.4), "&:hover": { color: tc(0.6) }, verticalAlign: "baseline" }}
                 >
                     GitHub
                 </Link>
                 )
             </Typography>
-            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), mb: "16px" }}>
+            <Typography variant="body2" sx={{ mb: "16px" }}>
                 <Link
                     component="button"
                     onClick={() => openModal(MODAL_ID.FEEDBACK)}
-                    sx={{ fontSize: "inherit", color: tc(0.4), "&:hover": { color: tc(0.6) }, verticalAlign: "baseline" }}
                 >
                     Send Feedback
                 </Link>
@@ -75,13 +73,13 @@ export default function InfoView() {
                                 textAlign: "left",
                             }}
                         >
-                            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.3) }}>
+                            <Typography sx={{ color: tc(0.3) }}>
                                 {isOpen ? "▾" : "▸"}
                             </Typography>
-                            <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.semibold, color: tc(0.5) }}>
+                            <Typography variant="subtitle2">
                                 v{entry.version}
                             </Typography>
-                            <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.3) }}>
+                            <Typography variant="caption">
                                 {entry.date}
                             </Typography>
                         </Box>

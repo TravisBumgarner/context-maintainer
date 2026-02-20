@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { Box, ButtonBase, IconButton, Link, Tooltip, Typography } from "@mui/material";
-import { Tune } from "@mui/icons-material";
+import { Box, ButtonBase, Link, Tooltip, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore, useUIStore } from "../../../stores";
 import { MODAL_ID } from "../../Modal/Modal.consts";
+import { BG_OVERLAY, BG_OVERLAY_LIGHT } from "../../../theme";
+import { AppIconButton } from "../../shared";
 
 export default function CommonAppsPanel() {
   const { tc, ui } = useTheme().custom;
@@ -30,9 +31,8 @@ export default function CommonAppsPanel() {
         onClick={() => openModal(MODAL_ID.COMMON_APPS)}
         sx={{
           fontSize: ui.fontSize.sm,
-          color: tc(0.5),
           fontWeight: ui.weights.semibold,
-          "&:hover": { color: tc(0.7) },
+          color: tc(0.5),
         }}
       >
         Configure Common Apps
@@ -63,7 +63,7 @@ export default function CommonAppsPanel() {
               display: "flex",
               alignItems: "center",
               flexShrink: 0,
-              bgcolor: "rgba(0,0,0,0.06)",
+              bgcolor: BG_OVERLAY,
               overflow: "hidden",
             }}
           >
@@ -78,19 +78,11 @@ export default function CommonAppsPanel() {
                   display: "flex",
                   alignItems: "center",
                   fontFamily: "inherit",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.06)" },
+                  "&:hover": { bgcolor: BG_OVERLAY },
                   transition: "background-color 0.15s",
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: ui.fontSize.sm,
-                    fontWeight: ui.weights.semibold,
-                    color: tc(0.6),
-                    whiteSpace: "nowrap",
-                    lineHeight: 1,
-                  }}
-                >
+                <Typography variant="subtitle1" sx={{ whiteSpace: "nowrap", lineHeight: 1 }}>
                   {app.short_name || app.name}
                 </Typography>
               </ButtonBase>
@@ -107,18 +99,11 @@ export default function CommonAppsPanel() {
                   alignItems: "center",
                   fontFamily: "inherit",
                   borderLeft: `1px solid ${tc(0.08)}`,
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.06)" },
+                  "&:hover": { bgcolor: BG_OVERLAY },
                   transition: "background-color 0.15s",
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: ui.fontSize.xs,
-                    fontWeight: ui.weights.bold,
-                    color: tc(0.35),
-                    lineHeight: 1,
-                  }}
-                >
+                <Typography sx={{ fontSize: ui.fontSize.xs, fontWeight: ui.weights.bold, color: tc(0.35), lineHeight: 1 }}>
                   +
                 </Typography>
               </ButtonBase>
@@ -127,13 +112,7 @@ export default function CommonAppsPanel() {
         ))}
       </Box>
       <Tooltip title="Configure apps" arrow>
-        <IconButton
-          onClick={() => openModal(MODAL_ID.COMMON_APPS)}
-          size="small"
-          sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.5) } }}
-        >
-          <Tune sx={{ fontSize: 14 }} />
-        </IconButton>
+        <AppIconButton icon="tune" onClick={() => openModal(MODAL_ID.COMMON_APPS)} sx={{ flexShrink: 0, fontSize: 14 }} />
       </Tooltip>
     </Box>
   );

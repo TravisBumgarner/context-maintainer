@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Box, IconButton, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Tab, Tabs, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "../../../stores";
 import type { CommonApp } from "../../../types";
 import DefaultModal from "./DefaultModal";
+import { BG_OVERLAY_LIGHT } from "../../../theme";
+import { AppInput, AppIconButton } from "../../shared";
 
 export default function CommonAppsModal() {
   const { tc, ui } = useTheme().custom;
@@ -17,7 +19,7 @@ export default function CommonAppsModal() {
     if (installedApps.length === 0) {
       invoke<CommonApp[]>("list_installed_apps")
         .then(setInstalledApps)
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [installedApps.length]);
 
@@ -42,7 +44,7 @@ export default function CommonAppsModal() {
   );
 
   return (
-    <DefaultModal title="Common Apps" sx={{ height: "85%" }}>
+    <DefaultModal title="Common Apps">
       <Tabs
         value={tab}
         onChange={(_, v) => setTab(v)}
@@ -55,25 +57,11 @@ export default function CommonAppsModal() {
       {tab === 0 && (
         <>
           <Box sx={{ pb: "4px", flexShrink: 0 }}>
-            <Box
-              component="input"
+            <AppInput
               type="text"
               placeholder="Search..."
               value={search}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-              sx={{
-                width: "100%",
-                fontSize: ui.fontSize.sm,
-                fontFamily: "inherit",
-                color: tc(0.7),
-                bgcolor: "transparent",
-                border: "none",
-                borderBottom: `1px solid ${tc(0.15)}`,
-                p: "3px 0",
-                outline: "none",
-                "&::placeholder": { color: tc(0.3) },
-                "&:focus": { borderColor: tc(0.3) },
-              }}
             />
           </Box>
           <Box
@@ -96,20 +84,16 @@ export default function CommonAppsModal() {
                     py: "2px",
                     px: "2px",
                     cursor: "pointer",
-                    "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+                    "&:hover": { bgcolor: BG_OVERLAY_LIGHT },
                   }}
                 >
                   <Typography
-                    sx={{
-                      fontSize: ui.fontSize.sm,
-                      color: selected ? tc(0.7) : tc(0.5),
-                      fontWeight: selected ? ui.weights.bold : ui.weights.normal,
-                    }}
+                    sx={selected ? { color: tc(0.7), fontWeight: ui.weights.bold } : undefined}
                   >
                     {app.name}
                   </Typography>
                   {selected && (
-                    <Typography sx={{ fontSize: ui.fontSize.sm, fontWeight: ui.weights.bold, color: tc(0.6) }}>
+                    <Typography sx={{ fontWeight: ui.weights.bold, color: tc(0.6) }}>
                       ✓
                     </Typography>
                   )}
@@ -130,7 +114,7 @@ export default function CommonAppsModal() {
           }}
         >
           {commonApps.length === 0 ? (
-            <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), py: "8px" }}>
+            <Typography variant="body2" sx={{ py: "8px" }}>
               No apps selected. Use the Search tab to add apps.
             </Typography>
           ) : (
@@ -144,47 +128,29 @@ export default function CommonAppsModal() {
                   py: "2px",
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: ui.fontSize.sm,
-                    color: tc(0.6),
-                    fontWeight: ui.weights.semibold,
-                    flexShrink: 0,
-                  }}
-                >
+                <Typography variant="subtitle1" sx={{ flexShrink: 0 }}>
                   {app.name}
                 </Typography>
-                <Box
-                  component="input"
+                <AppInput
                   type="text"
                   placeholder="short name"
                   value={app.short_name || ""}
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     updateShortName(app.path, e.target.value);
                   }}
                   sx={{
                     flex: 1,
+                    width: "auto",
                     minWidth: 0,
                     fontSize: ui.fontSize.xs,
-                    fontFamily: "inherit",
-                    color: tc(0.5),
-                    bgcolor: "transparent",
-                    border: "none",
-                    borderBottom: `1px solid ${tc(0.1)}`,
                     p: "2px 0",
-                    outline: "none",
-                    "&::placeholder": { color: tc(0.2) },
-                    "&:focus": { borderColor: tc(0.3) },
                   }}
                 />
-                <IconButton
-                  size="small"
+                <AppIconButton
+                  icon="close"
                   onClick={() => toggleApp(app)}
-                  sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.6) } }}
-                >
-                  <Typography sx={{ fontSize: 11, lineHeight: 1 }}>✕</Typography>
-                </IconButton>
+                  sx={{ flexShrink: 0, fontSize: 11 }}
+                />
               </Box>
             ))
           )}

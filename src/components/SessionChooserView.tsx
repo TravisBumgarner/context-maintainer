@@ -1,10 +1,11 @@
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
 import Layout from "./AccordionView/components/Layout";
 import { useUIStore, useTodoStore, useDesktopStore, useSettingsStore } from "../stores";
 import type { SpaceInfo, ContextHistory } from "../types";
+import { AppButton } from "./shared";
 
 export default function SessionChooserView() {
   const theme = useTheme();
@@ -21,11 +22,7 @@ export default function SessionChooserView() {
     width: "100%",
     px: "14px",
     py: "7px",
-    color: theme.custom.tcInv(),
-    bgcolor: tc(0.45),
     textAlign: "center",
-    "&:hover": { bgcolor: tc(0.6) },
-    "&.Mui-disabled": { color: tc(0.2), bgcolor: tc(0.15) },
   } as const;
 
   return (
@@ -57,17 +54,12 @@ export default function SessionChooserView() {
         >
           Context Maintainer
         </Typography>
-        <Typography
-          sx={{
-            color: tc(0.4),
-            mb: 2,
-            textAlign: "center",
-          }}
-        >
+        <Typography variant="body2" sx={{ mb: 2, textAlign: "center" }}>
           {hasExistingSession ? "You have an existing session." : "Start a new session to get going."}
         </Typography>
         <Stack spacing={1} sx={{ width: "100%", maxWidth: 180 }}>
-          <Button
+          <AppButton
+            variant="contained"
             sx={btnSx}
             disabled={!hasExistingSession}
             onClick={() => {
@@ -76,8 +68,9 @@ export default function SessionChooserView() {
             }}
           >
             Continue Session
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
+            variant="contained"
             sx={btnSx}
             onClick={() => {
               invoke("start_new_session")
@@ -90,8 +83,9 @@ export default function SessionChooserView() {
             }}
           >
             New Session
-          </Button>
-          <Button
+          </AppButton>
+          <AppButton
+            variant="contained"
             sx={btnSx}
             disabled={!hasExistingSession}
             onClick={() => {
@@ -109,7 +103,7 @@ export default function SessionChooserView() {
             }}
           >
             Pick from History
-          </Button>
+          </AppButton>
         </Stack>
       </Box>
     </Layout>

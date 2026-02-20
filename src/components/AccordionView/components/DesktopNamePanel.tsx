@@ -1,5 +1,4 @@
 import { InputBase } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import { useTodoStore } from "../../../stores";
 
 interface DesktopNamePanelProps {
@@ -7,7 +6,6 @@ interface DesktopNamePanelProps {
 }
 
 export default function DesktopNamePanel({ desktopId }: DesktopNamePanelProps) {
-  const { tc } = useTheme().custom;
   const title = useTodoStore((s) => s.allTitles[s.activeDesktopId] ?? "");
   const updateTitle = useTodoStore((s) => s.updateTitle);
 
@@ -20,7 +18,6 @@ export default function DesktopNamePanel({ desktopId }: DesktopNamePanelProps) {
         width: "100%",
         px: "14px",
         "& input": { p: "3px 0" },
-        "& input::placeholder": { color: tc(0.35) },
       }}
     />
   );

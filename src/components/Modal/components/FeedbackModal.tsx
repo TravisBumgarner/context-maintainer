@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useUIStore } from "../../../stores";
 import DefaultModal from "./DefaultModal";
+import { AppInput, AppButton } from "../../shared";
 
 const MAX_CHARS = 800;
 
@@ -55,27 +56,13 @@ export default function FeedbackModal() {
     }
   }, [success, failure]);
 
-  const inputSx = {
-    width: "100%",
-    fontSize: ui.fontSize.sm,
-    fontFamily: "inherit",
-    color: tc(0.7),
-    bgcolor: "transparent",
-    border: "none",
-    borderBottom: `1px solid ${tc(0.15)}`,
-    p: "3px 0",
-    outline: "none",
-    "&::placeholder": { color: tc(0.3) },
-    "&:focus": { borderColor: tc(0.3) },
-  } as const;
-
   return (
     <DefaultModal title="Send Feedback" closeCallback={isSubmitting ? undefined : undefined}>
       <Box sx={{ display: "flex", flexDirection: "column", gap: "6px", overflow: "visible" }}>
-        <Box component="input" type="text" name="name" placeholder="Name (optional)" value={formData.name} onChange={handleChange} sx={inputSx} />
-        <Box component="input" type="email" name="email" placeholder="Email (optional)" value={formData.email} onChange={handleChange} sx={inputSx} />
+        <AppInput type="text" name="name" placeholder="Name (optional)" value={formData.name} onChange={handleChange} />
+        <AppInput type="email" name="email" placeholder="Email (optional)" value={formData.email} onChange={handleChange} />
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Typography sx={{ fontSize: ui.fontSize.xs, color: tc(0.3) }}>
+          <Typography variant="caption">
             {formData.message.length}/{MAX_CHARS}
           </Typography>
         </Box>
@@ -103,18 +90,13 @@ export default function FeedbackModal() {
           }}
         />
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: "6px" }}>
-          <Button
+          <AppButton
             onClick={handleSubmit}
             disabled={isSubmitting || formData.message.length === 0}
-            sx={{
-              px: "12px", py: "4px",
-              color: tc(0.7), fontWeight: ui.weights.bold,
-              "&:hover": { bgcolor: "rgba(0,0,0,0.06)" },
-              "&:disabled": { color: tc(0.3) },
-            }}
+            variant="primary"
           >
             {buttonMessage}
-          </Button>
+          </AppButton>
         </Box>
       </Box>
     </DefaultModal>

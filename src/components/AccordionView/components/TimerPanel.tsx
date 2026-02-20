@@ -1,10 +1,10 @@
-import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
-import { PlayArrow, Pause, Replay, Tune } from "@mui/icons-material";
+import { Box, Tooltip, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useShallow } from "zustand/react/shallow";
 import { formatPreset, formatCountdown } from "../../../utils";
 import { useTimerStore, useSettingsStore, useUIStore } from "../../../stores";
 import { MODAL_ID } from "../../Modal/Modal.consts";
+import { AppIconButton, AppButton } from "../../shared";
 
 export default function TimerPanel() {
   const { tc, ui } = useTheme().custom;
@@ -59,7 +59,6 @@ export default function TimerPanel() {
     fontSize: 18,
     color: tc(0.45),
     "&:hover": { color: tc(0.7) },
-    "&:disabled": { opacity: 0.3 },
   };
 
   const timeSx = {
@@ -106,13 +105,13 @@ export default function TimerPanel() {
 
           <Box sx={{ display: "flex", alignItems: "center", ml: "6px" }}>
             {active && running ? (
-              <Tooltip title="Pause" arrow><IconButton onClick={pauseTimer} sx={iconBtnSx}><Pause fontSize="inherit" /></IconButton></Tooltip>
+              <Tooltip title="Pause" arrow><AppIconButton icon="pause" onClick={pauseTimer} sx={iconBtnSx} /></Tooltip>
             ) : active && paused ? (
-              <Tooltip title="Resume" arrow><IconButton onClick={() => resumeTimer(notifySystem, false)} sx={iconBtnSx}><PlayArrow fontSize="inherit" /></IconButton></Tooltip>
+              <Tooltip title="Resume" arrow><AppIconButton icon="play" onClick={() => resumeTimer(notifySystem, false)} sx={iconBtnSx} /></Tooltip>
             ) : (
-              <Tooltip title="Start" arrow><span><IconButton onClick={() => startTimer(notifySystem, false)} disabled={!hasTime} sx={iconBtnSx}><PlayArrow fontSize="inherit" /></IconButton></span></Tooltip>
+              <Tooltip title="Start" arrow><span><AppIconButton icon="play" onClick={() => startTimer(notifySystem, false)} disabled={!hasTime} sx={iconBtnSx} /></span></Tooltip>
             )}
-            <Tooltip title="Reset" arrow><span><IconButton onClick={resetTimer} disabled={!active} sx={iconBtnSx}><Replay fontSize="inherit" /></IconButton></span></Tooltip>
+            <Tooltip title="Reset" arrow><span><AppIconButton icon="replay" onClick={resetTimer} disabled={!active} sx={iconBtnSx} /></span></Tooltip>
           </Box>
         </Box>
 
@@ -120,30 +119,20 @@ export default function TimerPanel() {
         {!active && (
           <Box sx={{ display: "flex", justifyContent: "center", gap: "6px", mt: "4px" }}>
             {timerPresets.map((p, i) => (
-              <Button
+              <AppButton
                 key={i}
                 onClick={() => populateFromPreset(p)}
-                sx={{
-                  px: "8px",
-                  py: "2px",
-                  "&:hover": { color: tc(0.7) },
-                }}
+                sx={{ px: "8px", py: "2px" }}
               >
                 {formatPreset(p)}
-              </Button>
+              </AppButton>
             ))}
           </Box>
         )}
       </Box>
 
       <Tooltip title="Timer settings" arrow>
-        <IconButton
-          onClick={() => openModal(MODAL_ID.TIMER_SETTINGS)}
-          size="small"
-          sx={{ p: "2px", flexShrink: 0, color: tc(0.3), "&:hover": { color: tc(0.5) } }}
-        >
-          <Tune sx={{ fontSize: 14 }} />
-        </IconButton>
+        <AppIconButton icon="tune" onClick={() => openModal(MODAL_ID.TIMER_SETTINGS)} sx={{ flexShrink: 0, fontSize: 14 }} />
       </Tooltip>
     </Box>
   );

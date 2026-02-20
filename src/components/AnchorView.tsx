@@ -4,6 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import { useUIStore } from "../stores";
 import { ANCHOR_POSITIONS, ANCHOR_NAMES } from "../constants";
 import type { AnchorPosition } from "../types";
+import { BG_OVERLAY_LIGHT } from "../theme";
 
 /** Map anchor positions to grid placement inside the monitor preview */
 const GRID: Record<AnchorPosition, { row: number; col: number }> = {
@@ -19,7 +20,7 @@ const GRID: Record<AnchorPosition, { row: number; col: number }> = {
 };
 
 export default function AnchorView() {
-  const { tc, ui } = useTheme().custom;
+  const { tc } = useTheme().custom;
   const { anchorPos, selectAnchor, setView } = useUIStore();
   const [hoveredPos, setHoveredPos] = useState<AnchorPosition | null>(null);
 
@@ -40,11 +41,11 @@ export default function AnchorView() {
         alignItems: "center",
         justifyContent: "center",
         m: "4px",
-        bgcolor: "rgba(0,0,0,0.04)",
+        bgcolor: BG_OVERLAY_LIGHT,
         borderRadius: 2,
       }}
     >
-      <Typography sx={{ fontSize: ui.fontSize.sm, color: tc(0.4), mb: "12px" }}>
+      <Typography variant="body2" sx={{ mb: "12px" }}>
         Anchor Position
       </Typography>
 

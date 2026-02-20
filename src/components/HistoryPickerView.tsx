@@ -1,10 +1,11 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import Layout from "./AccordionView/components/Layout";
 import { formatRelativeTime } from "../utils";
 import { useUIStore, useDesktopStore, useSettingsStore, useTodoStore } from "../stores";
 import type { ContextHistory } from "../types";
+import { AppButton } from "./shared";
 
 export default function HistoryPickerView() {
   const theme = useTheme();
@@ -19,18 +20,16 @@ export default function HistoryPickerView() {
   return (
     <Layout>
       <Box sx={{ p: "10px 14px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column" }}>
-        <Button
+        <AppButton
           onClick={() => setView("session-chooser")}
           sx={{
-            color: tc(0.4),
             p: "2px 0",
             mb: "6px",
             justifyContent: "flex-start",
-            "&:hover": { color: tc(0.65) },
           }}
         >
           &larr; Back
-        </Button>
+        </AppButton>
 
         <Typography sx={{ fontSize: 13, fontWeight: 700, color: tc(0.55), mb: "10px" }}>
           Saved Contexts
@@ -109,7 +108,7 @@ export default function HistoryPickerView() {
                       >
                         {ctx.title || "Untitled"}
                       </Typography>
-                      <Typography sx={{ fontSize: 9, color: tc(0.35), mt: "1px" }}>
+                      <Typography variant="overline" sx={{ mt: "1px" }}>
                         {todoCount} task{todoCount !== 1 ? "s" : ""} &middot; {relative}
                       </Typography>
                     </Box>
@@ -129,7 +128,8 @@ export default function HistoryPickerView() {
             justifyContent: "center",
           }}
         >
-          <Button
+          <AppButton
+            variant="contained"
             onClick={() => setView("todos")}
             sx={{
               display: "block",
@@ -137,14 +137,11 @@ export default function HistoryPickerView() {
               maxWidth: 180,
               px: "14px",
               py: "7px",
-              color: theme.custom.tcInv(),
-              bgcolor: tc(0.45),
               textAlign: "center",
-              "&:hover": { bgcolor: tc(0.6) },
             }}
           >
             Done
-          </Button>
+          </AppButton>
         </Box>
       </Box>
     </Layout>

@@ -1,5 +1,6 @@
-import { Box, Checkbox, InputBase, IconButton } from "@mui/material";
+import { Box, Checkbox, InputBase } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { AppIconButton } from "../../shared";
 import type { TodoItem as TodoItemType } from "../../../types";
 
 interface TodoItemProps {
@@ -61,7 +62,8 @@ export default function TodoItem({
           "& input::placeholder": { color: tc(0.25) },
         }}
       />
-      <IconButton
+      <AppIconButton
+        icon="close"
         className="delete-btn"
         onClick={() => onDelete()}
         sx={{
@@ -74,9 +76,7 @@ export default function TodoItem({
           transition: "opacity 0.15s",
           "&:hover": { color: tc(0.5) },
         }}
-      >
-        ✕
-      </IconButton>
+      />
     </Box>
   );
 }
