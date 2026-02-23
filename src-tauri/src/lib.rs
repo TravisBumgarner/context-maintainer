@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, WebviewUrl, WebviewWindowBuilder};
 use tauri::Manager;
 
@@ -1266,36 +1266,46 @@ pub fn run() {
                 .icon(icon)
                 .tooltip("Context Maintainer")
                 .menu(&menu)
+                .show_menu_on_left_click(false)
                 .on_tray_icon_event(move |tray, event| {
-                    if matches!(event, TrayIconEvent::Click { .. }) {
-                        let app = tray.app_handle();
-                        let windows = app.webview_windows();
-
-                        // Refresh "Hide/Show Entirely"
-                        let any_visible = windows.values().any(|w| w.is_visible().unwrap_or(false));
-                        tray_toggle_all.set_text(if any_visible { "Hide Entirely" } else { "Show Entirely" }).ok();
-
-                        // Refresh "Hide/Show This Desktop"
-                        let spaces = enumerate_spaces();
-                        let display_count = spaces.iter().map(|&(_, d, _, _)| d).max().map_or(1, |m| m + 1);
-                        let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
-                        for disp in 0..display_count {
-                            let (sid, _) = space_info_for_display(disp);
-                            active_space_per_display.insert(disp, sid);
+                    match event {
+                        TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } => {
+                            // Left click: show all windows on current desktop
+                            let app = tray.app_handle();
+                            for window in app.webview_windows().values() {
+                                window.show().ok();
+                                window.set_focus().ok();
+                            }
                         }
-                        let current_space = active_space_per_display.get(&0).copied().unwrap_or(0);
-                        let desktop_any_visible = windows.iter().any(|(label, w)| {
-                            let disp_idx = window_label_to_display_index(label);
-                            active_space_per_display.get(&disp_idx).copied().unwrap_or(0) == current_space
-                                && w.is_visible().unwrap_or(false)
-                        });
-                        tray_toggle_desktop.set_text(if desktop_any_visible { "Hide This Desktop" } else { "Show This Desktop" }).ok();
+                        TrayIconEvent::Click { button: MouseButton::Right, .. } => {
+                            // Right click: refresh menu labels before the menu shows
+                            let app = tray.app_handle();
+                            let windows = app.webview_windows();
 
-                        // Refresh "Hide/Show This Monitor"
-                        if let Some(main_win) = app.get_webview_window("main") {
-                            let main_visible = main_win.is_visible().unwrap_or(false);
-                            tray_toggle_monitor.set_text(if main_visible { "Hide This Monitor" } else { "Show This Monitor" }).ok();
+                            let any_visible = windows.values().any(|w| w.is_visible().unwrap_or(false));
+                            tray_toggle_all.set_text(if any_visible { "Hide Entirely" } else { "Show Entirely" }).ok();
+
+                            let spaces = enumerate_spaces();
+                            let display_count = spaces.iter().map(|&(_, d, _, _)| d).max().map_or(1, |m| m + 1);
+                            let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
+                            for disp in 0..display_count {
+                                let (sid, _) = space_info_for_display(disp);
+                                active_space_per_display.insert(disp, sid);
+                            }
+                            let current_space = active_space_per_display.get(&0).copied().unwrap_or(0);
+                            let desktop_any_visible = windows.iter().any(|(label, w)| {
+                                let disp_idx = window_label_to_display_index(label);
+                                active_space_per_display.get(&disp_idx).copied().unwrap_or(0) == current_space
+                                    && w.is_visible().unwrap_or(false)
+                            });
+                            tray_toggle_desktop.set_text(if desktop_any_visible { "Hide This Desktop" } else { "Show This Desktop" }).ok();
+
+                            if let Some(main_win) = app.get_webview_window("main") {
+                                let main_visible = main_win.is_visible().unwrap_or(false);
+                                tray_toggle_monitor.set_text(if main_visible { "Hide This Monitor" } else { "Show This Monitor" }).ok();
+                            }
                         }
+                        _ => {}
                     }
                 })
                 .on_menu_event(move |app, event| {
