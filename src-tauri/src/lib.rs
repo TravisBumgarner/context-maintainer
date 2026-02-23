@@ -820,7 +820,7 @@ fn launch_app(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn launch_app_new(path: String) -> Result<(), String> {
+fn launch_app_new(path: String, monitor_x: i32, monitor_y: i32) -> Result<(), String> {
     // Extract app name from path (e.g. "/Applications/Safari.app" -> "Safari")
     let app_name = std::path::Path::new(&path)
         .file_stem()
@@ -829,7 +829,6 @@ fn launch_app_new(path: String) -> Result<(), String> {
         .to_string();
 
     if app_name.is_empty() {
-        // Fallback to open -n if we can't determine the app name
         std::process::Command::new("open")
             .arg("-n")
             .arg(&path)
@@ -838,12 +837,23 @@ fn launch_app_new(path: String) -> Result<(), String> {
         return Ok(());
     }
 
-    // Use AppleScript to activate on current desktop and send Cmd+N for a new window
+    // Activate the app on the current desktop, send Cmd+N for a new window,
+    // then move the frontmost window to the target monitor
     let script = format!(
-        r#"tell application "{}" to activate
+        r#"tell application "{app}" to activate
 delay 0.3
-tell application "System Events" to keystroke "n" using command down"#,
-        app_name
+tell application "System Events" to keystroke "n" using command down
+delay 0.3
+tell application "System Events"
+    tell process "{app}"
+        try
+            set position of front window to {{{x}, {y}}}
+        end try
+    end tell
+end tell"#,
+        app = app_name,
+        x = monitor_x,
+        y = monitor_y,
     );
 
     let result = std::process::Command::new("osascript")
@@ -854,7 +864,6 @@ tell application "System Events" to keystroke "n" using command down"#,
     match result {
         Ok(output) if output.status.success() => Ok(()),
         _ => {
-            // Fallback to open -n if AppleScript fails
             std::process::Command::new("open")
                 .arg("-n")
                 .arg(&path)
