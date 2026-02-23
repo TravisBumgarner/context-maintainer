@@ -90,7 +90,12 @@ export default function CommonAppsPanel() {
             <Tooltip title={`New ${app.name} window`} arrow>
               <ButtonBase
                 onClick={() => {
-                  invoke("launch_app_new", { path: app.path }).catch(() => {});
+                  const m = useUIStore.getState().monitorRef;
+                  invoke("launch_app_new", {
+                    path: app.path,
+                    monitorX: m ? Math.round(m.position.x) : 0,
+                    monitorY: m ? Math.round(m.position.y) : 0,
+                  }).catch(() => {});
                 }}
                 sx={{
                   px: "4px",

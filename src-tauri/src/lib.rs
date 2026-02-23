@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, WebviewUrl, WebviewWindowBuilder};
 use tauri::Manager;
 
@@ -820,13 +820,58 @@ fn launch_app(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn launch_app_new(path: String) -> Result<(), String> {
-    std::process::Command::new("open")
-        .arg("-n")
-        .arg(&path)
-        .output()
-        .map_err(|e| format!("Failed to launch new app instance: {}", e))?;
-    Ok(())
+fn launch_app_new(path: String, monitor_x: i32, monitor_y: i32) -> Result<(), String> {
+    // Extract app name from path (e.g. "/Applications/Safari.app" -> "Safari")
+    let app_name = std::path::Path::new(&path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_string();
+
+    if app_name.is_empty() {
+        std::process::Command::new("open")
+            .arg("-n")
+            .arg(&path)
+            .output()
+            .map_err(|e| format!("Failed to launch new app instance: {}", e))?;
+        return Ok(());
+    }
+
+    // Activate the app on the current desktop, send Cmd+N for a new window,
+    // then move the frontmost window to the target monitor
+    let script = format!(
+        r#"tell application "{app}" to activate
+delay 0.3
+tell application "System Events" to keystroke "n" using command down
+delay 0.3
+tell application "System Events"
+    tell process "{app}"
+        try
+            set position of front window to {{{x}, {y}}}
+        end try
+    end tell
+end tell"#,
+        app = app_name,
+        x = monitor_x,
+        y = monitor_y,
+    );
+
+    let result = std::process::Command::new("osascript")
+        .arg("-e")
+        .arg(&script)
+        .output();
+
+    match result {
+        Ok(output) if output.status.success() => Ok(()),
+        _ => {
+            std::process::Command::new("open")
+                .arg("-n")
+                .arg(&path)
+                .output()
+                .map_err(|e| format!("Failed to launch new app instance: {}", e))?;
+            Ok(())
+        }
+    }
 }
 
 #[tauri::command]
@@ -1221,36 +1266,46 @@ pub fn run() {
                 .icon(icon)
                 .tooltip("Context Maintainer")
                 .menu(&menu)
+                .show_menu_on_left_click(false)
                 .on_tray_icon_event(move |tray, event| {
-                    if matches!(event, TrayIconEvent::Click { .. }) {
-                        let app = tray.app_handle();
-                        let windows = app.webview_windows();
-
-                        // Refresh "Hide/Show Entirely"
-                        let any_visible = windows.values().any(|w| w.is_visible().unwrap_or(false));
-                        tray_toggle_all.set_text(if any_visible { "Hide Entirely" } else { "Show Entirely" }).ok();
-
-                        // Refresh "Hide/Show This Desktop"
-                        let spaces = enumerate_spaces();
-                        let display_count = spaces.iter().map(|&(_, d, _, _)| d).max().map_or(1, |m| m + 1);
-                        let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
-                        for disp in 0..display_count {
-                            let (sid, _) = space_info_for_display(disp);
-                            active_space_per_display.insert(disp, sid);
+                    match event {
+                        TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } => {
+                            // Left click: show all windows on current desktop
+                            let app = tray.app_handle();
+                            for window in app.webview_windows().values() {
+                                window.show().ok();
+                                window.set_focus().ok();
+                            }
                         }
-                        let current_space = active_space_per_display.get(&0).copied().unwrap_or(0);
-                        let desktop_any_visible = windows.iter().any(|(label, w)| {
-                            let disp_idx = window_label_to_display_index(label);
-                            active_space_per_display.get(&disp_idx).copied().unwrap_or(0) == current_space
-                                && w.is_visible().unwrap_or(false)
-                        });
-                        tray_toggle_desktop.set_text(if desktop_any_visible { "Hide This Desktop" } else { "Show This Desktop" }).ok();
+                        TrayIconEvent::Click { button: MouseButton::Right, .. } => {
+                            // Right click: refresh menu labels before the menu shows
+                            let app = tray.app_handle();
+                            let windows = app.webview_windows();
 
-                        // Refresh "Hide/Show This Monitor"
-                        if let Some(main_win) = app.get_webview_window("main") {
-                            let main_visible = main_win.is_visible().unwrap_or(false);
-                            tray_toggle_monitor.set_text(if main_visible { "Hide This Monitor" } else { "Show This Monitor" }).ok();
+                            let any_visible = windows.values().any(|w| w.is_visible().unwrap_or(false));
+                            tray_toggle_all.set_text(if any_visible { "Hide Entirely" } else { "Show Entirely" }).ok();
+
+                            let spaces = enumerate_spaces();
+                            let display_count = spaces.iter().map(|&(_, d, _, _)| d).max().map_or(1, |m| m + 1);
+                            let mut active_space_per_display: HashMap<usize, i64> = HashMap::new();
+                            for disp in 0..display_count {
+                                let (sid, _) = space_info_for_display(disp);
+                                active_space_per_display.insert(disp, sid);
+                            }
+                            let current_space = active_space_per_display.get(&0).copied().unwrap_or(0);
+                            let desktop_any_visible = windows.iter().any(|(label, w)| {
+                                let disp_idx = window_label_to_display_index(label);
+                                active_space_per_display.get(&disp_idx).copied().unwrap_or(0) == current_space
+                                    && w.is_visible().unwrap_or(false)
+                            });
+                            tray_toggle_desktop.set_text(if desktop_any_visible { "Hide This Desktop" } else { "Show This Desktop" }).ok();
+
+                            if let Some(main_win) = app.get_webview_window("main") {
+                                let main_visible = main_win.is_visible().unwrap_or(false);
+                                tray_toggle_monitor.set_text(if main_visible { "Hide This Monitor" } else { "Show This Monitor" }).ok();
+                            }
                         }
+                        _ => {}
                     }
                 })
                 .on_menu_event(move |app, event| {
