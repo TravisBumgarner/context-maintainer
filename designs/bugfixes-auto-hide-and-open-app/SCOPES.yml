@@ -1,0 +1,101 @@
+project: Auto-Hide & Open App Bugfixes
+design_file: null  # Scoped from user-reported bugs
+scoping_date: 2026-02-23
+
+milestones:
+  - number: 1
+    title: "1. Auto-Hide Desktop Reappear Fix"
+    description: >
+      Fix the auto-hide feature so the window reappears when switching desktops.
+      Currently, after the auto-hide timer fires and hides the window, switching
+      to a new desktop does not show the window again.
+    branch:
+      working: fix-auto-hide-reappear-on-desktop-switch
+      base: main
+
+  - number: 2
+    title: "2. Open New Window Fix"
+    description: >
+      Fix the "Open new X window" feature so it reliably opens a new window
+      on the current desktop instead of switching to an already-open instance
+      on another desktop.
+    branch:
+      working: fix-open-new-window-behavior
+      base: main
+
+tasks:
+  - id: 1
+    milestone: 1
+    title: Show window on desktop switch after auto-hide
+    description: |
+      ## Bug
+      When auto-hide fires (`currentWindow.hide()` at App.tsx:238), the window
+      disappears. On subsequent desktop switches the `desktop-changed` listener
+      (App.tsx:200-244) detects the new space and starts a new countdown, but
+      the window is never shown again — `currentWindow.show()` is only called
+      in the view-positioning effect (App.tsx:164) which doesn't re-trigger on
+      desktop changes.
+
+      ## Fix
+      In the `desktop-changed` listener, after confirming the space actually
+      changed (`info.space_id !== prevId`), call `currentWindow.show()` before
+      starting the auto-hide countdown. This ensures the window reappears on
+      every desktop switch, then the countdown begins as configured.
+
+      The key change is in App.tsx inside the `desktop-changed` handler, roughly
+      after line 224 and before the auto-hide countdown block (line 227):
+
+      ```ts
+      // Show window on desktop switch (it may have been hidden by auto-hide)
+      currentWindow.show();
+      ```
+    acceptance_criteria:
+      - Window reappears when switching to any desktop after auto-hide has fired
+      - Auto-hide countdown restarts normally after the window is shown
+      - No change in behavior when auto-hide is disabled (delay = 0)
+    depends_on: []
+    effort: 1
+    status: testing
+
+  - id: 2
+    milestone: 2
+    title: Use AppleScript for "open new window" to target current desktop
+    description: |
+      ## Bug
+      `launch_app_new` in lib.rs:822-830 uses `open -n <path>` which asks macOS
+      to open a new instance. In practice many apps are single-instance and
+      macOS just activates the existing window — often on a different desktop —
+      making it appear like the feature "switches desktops and points at an
+      already-open app."
+
+      ## Fix
+      Replace the `open -n` approach with AppleScript that:
+      1. Tells the app to open a new document/window (if it supports it)
+      2. Falls back to `open -n` for apps that don't respond to AppleScript
+      3. Activates the app so the new window appears on the current desktop
+
+      A reasonable approach:
+
+      ```applescript
+      tell application "AppName"
+          activate
+          tell application "System Events"
+              keystroke "n" using command down
+          end tell
+      end tell
+      ```
+
+      The app name can be derived from the `.app` bundle path (strip directory
+      and `.app` extension). The `activate` call brings the app to the current
+      desktop, and `Cmd+N` is the standard macOS shortcut for "New Window" /
+      "New Document."
+
+      Update the Rust `launch_app_new` command to run this AppleScript via
+      `osascript` instead of `open -n`.
+    acceptance_criteria:
+      - "New window" button opens a new window on the current desktop for standard apps (Finder, Safari, Chrome, Terminal, etc.)
+      - The app is brought to the foreground on the current desktop, not switched to a different desktop
+      - If the app doesn't support Cmd+N, the existing `open -n` behavior is used as fallback
+    depends_on: []
+    effort: 2
+    status: scoped
