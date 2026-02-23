@@ -182,6 +182,26 @@ function App() {
       useUIStore.getState().setAutoHidePaused(false);
     };
 
+    const startAutoHide = () => {
+      clearAutoHide();
+      const delay = useSettingsStore.getState().autoHideDelay;
+      if (delay > 0) {
+        let remaining = delay;
+        useUIStore.getState().setAutoHideCountdown(remaining);
+        useUIStore.getState().setAutoHidePaused(false);
+        autoHideInterval = setInterval(() => {
+          if (useUIStore.getState().autoHidePaused) return;
+          remaining -= 1;
+          if (remaining <= 0) {
+            clearAutoHide();
+            currentWindow.hide();
+          } else {
+            useUIStore.getState().setAutoHideCountdown(remaining);
+          }
+        }, 1000);
+      }
+    };
+
     // Initial load: fetch current desktop via IPC
     invoke<DesktopInfo>("get_desktop", { display: displayIndex })
       .then((info) => {
@@ -189,6 +209,7 @@ function App() {
         prevId = info.space_id;
         useTimerStore.getState().setActiveDesktop(info.space_id);
         useTodoStore.getState().switchTo(info.space_id);
+        startAutoHide();
       })
       .catch(() => {
         // CGS API unavailable — fall back to whatever was in state
@@ -227,23 +248,7 @@ function App() {
         currentWindow.show();
 
         // Auto-hide countdown after desktop switch
-        clearAutoHide();
-        const delay = useSettingsStore.getState().autoHideDelay;
-        if (delay > 0) {
-          let remaining = delay;
-          useUIStore.getState().setAutoHideCountdown(remaining);
-          useUIStore.getState().setAutoHidePaused(false);
-          autoHideInterval = setInterval(() => {
-            if (useUIStore.getState().autoHidePaused) return;
-            remaining -= 1;
-            if (remaining <= 0) {
-              clearAutoHide();
-              currentWindow.hide();
-            } else {
-              useUIStore.getState().setAutoHideCountdown(remaining);
-            }
-          }, 1000);
-        }
+        startAutoHide();
       }
     });
 
