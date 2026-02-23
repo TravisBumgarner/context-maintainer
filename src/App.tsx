@@ -223,6 +223,9 @@ function App() {
         useTimerStore.getState().setActiveDesktop(info.space_id);
         useTodoStore.getState().switchTo(info.space_id);
 
+        // Show window on desktop switch (it may have been hidden by auto-hide)
+        currentWindow.show();
+
         // Auto-hide countdown after desktop switch
         clearAutoHide();
         const delay = useSettingsStore.getState().autoHideDelay;

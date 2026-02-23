@@ -55,7 +55,7 @@ tasks:
       - No change in behavior when auto-hide is disabled (delay = 0)
     depends_on: []
     effort: 1
-    status: testing
+    status: implementing
 
   - id: 2
     milestone: 2
