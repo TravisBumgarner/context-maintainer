@@ -98,4 +98,4 @@ tasks:
       - If the app doesn't support Cmd+N, the existing `open -n` behavior is used as fallback
     depends_on: []
     effort: 2
-    status: scoped
+    status: completed

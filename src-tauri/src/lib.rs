@@ -821,12 +821,48 @@ fn launch_app(path: String) -> Result<(), String> {
 
 #[tauri::command]
 fn launch_app_new(path: String) -> Result<(), String> {
-    std::process::Command::new("open")
-        .arg("-n")
-        .arg(&path)
-        .output()
-        .map_err(|e| format!("Failed to launch new app instance: {}", e))?;
-    Ok(())
+    // Extract app name from path (e.g. "/Applications/Safari.app" -> "Safari")
+    let app_name = std::path::Path::new(&path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_string();
+
+    if app_name.is_empty() {
+        // Fallback to open -n if we can't determine the app name
+        std::process::Command::new("open")
+            .arg("-n")
+            .arg(&path)
+            .output()
+            .map_err(|e| format!("Failed to launch new app instance: {}", e))?;
+        return Ok(());
+    }
+
+    // Use AppleScript to activate on current desktop and send Cmd+N for a new window
+    let script = format!(
+        r#"tell application "{}" to activate
+delay 0.3
+tell application "System Events" to keystroke "n" using command down"#,
+        app_name
+    );
+
+    let result = std::process::Command::new("osascript")
+        .arg("-e")
+        .arg(&script)
+        .output();
+
+    match result {
+        Ok(output) if output.status.success() => Ok(()),
+        _ => {
+            // Fallback to open -n if AppleScript fails
+            std::process::Command::new("open")
+                .arg("-n")
+                .arg(&path)
+                .output()
+                .map_err(|e| format!("Failed to launch new app instance: {}", e))?;
+            Ok(())
+        }
+    }
 }
 
 #[tauri::command]
