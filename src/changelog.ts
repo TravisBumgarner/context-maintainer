@@ -6,7 +6,27 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
     {
-        version: "0.12.0",
+        version: "0.11.1",
+        date: "2026-02-23",
+        changes: [
+            {
+                category: "Fixed",
+                items: [
+                    "Auto-hide now starts on initial load, not just on desktop switch",
+                    "Window reappears on desktop switch after auto-hide",
+                    "Open new window targets the correct monitor",
+                ],
+            },
+            {
+                category: "Improved",
+                items: [
+                    "Left-click tray icon shows app, right-click opens menu",
+                ],
+            },
+        ],
+    },
+    {
+        version: "0.11.0",
         date: "2026-02-20",
         changes: [
             {
