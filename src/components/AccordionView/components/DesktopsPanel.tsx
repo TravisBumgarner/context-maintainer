@@ -20,34 +20,25 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
 
   // Scroll active desktop to center when it changes
   useEffect(() => {
-    // Double rAF ensures React has flushed the DOM update before we query
+    // Double rAF: first waits for React commit, second waits for browser paint
+    let id2 = 0;
     const id = requestAnimationFrame(() => {
-      const id2 = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => {
         const container = scrollRef.current;
         if (!container) return;
         const activeEl = container.querySelector("[data-active='true']") as HTMLElement | null;
         if (activeEl) {
-          const scrollLeft = activeEl.offsetLeft - container.offsetWidth / 2 + activeEl.offsetWidth / 2;
-          container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+          activeEl.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
         }
       });
-      innerIdRef.current = id2;
     });
-    const innerIdRef = { current: 0 };
-    return () => {
-      cancelAnimationFrame(id);
-      cancelAnimationFrame(innerIdRef.current);
-    };
+    return () => { cancelAnimationFrame(id); cancelAnimationFrame(id2); };
   }, [desktop.space_id, desktops]);
 
   const handleClick = useCallback((spaceId: number, el: HTMLElement) => {
     if (!accessibilityGranted) return;
     switchDesktop(displayIndex, spaceId);
-    const container = scrollRef.current;
-    if (container) {
-      const scrollLeft = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2;
-      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
-    }
+    el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
   }, [displayIndex, switchDesktop, accessibilityGranted]);
 
   return (
@@ -118,7 +109,7 @@ export default function DesktopsPanel({ displayIndex }: DesktopsPanelProps) {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {d.title || d.position + 1}
+                  {d.title || `Desktop ${d.position + 1}`}
                 </Typography>
               </ButtonBase>
             );

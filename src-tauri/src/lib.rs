@@ -386,6 +386,11 @@ struct PersistData {
 struct AppState {
     data: Mutex<PersistData>,
     data_path: Mutex<String>,
+    app_handle: tauri::AppHandle,
+}
+
+fn emit_settings_changed(state: &AppState) {
+    let _ = state.app_handle.emit("settings-changed", ());
 }
 
 fn load_data(path: &str) -> PersistData {
@@ -683,6 +688,8 @@ fn complete_setup(state: tauri::State<'_, AppState>) {
     data.settings.setup_complete = true;
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -691,6 +698,8 @@ fn save_color(state: tauri::State<'_, AppState>, desktop: i64, color: String) {
     data.settings.custom_colors.insert(desktop, color);
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[derive(Serialize, Clone)]
@@ -731,6 +740,8 @@ fn save_desktop_count(state: tauri::State<'_, AppState>, count: u32) {
     data.settings.desktop_count = count;
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -745,6 +756,8 @@ fn apply_theme(state: tauri::State<'_, AppState>, colors: Vec<String>) {
     }
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -753,6 +766,8 @@ fn save_timer_presets(state: tauri::State<'_, AppState>, presets: Vec<u32>) {
     data.settings.timer_presets = presets;
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -762,6 +777,8 @@ fn save_notify_settings(state: tauri::State<'_, AppState>, system: bool, flash: 
     data.settings.notify_flash = flash;
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -770,6 +787,8 @@ fn save_hidden_panels(state: tauri::State<'_, AppState>, panels: Vec<String>) {
     data.settings.hidden_panels = panels;
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -778,6 +797,8 @@ fn save_auto_hide_delay(state: tauri::State<'_, AppState>, delay: u32) {
     data.settings.auto_hide_delay = delay;
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -792,6 +813,8 @@ fn save_common_apps(state: tauri::State<'_, AppState>, apps: Vec<CommonApp>) {
     data.settings.common_apps = apps;
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -806,6 +829,8 @@ fn save_dismissed_tips(state: tauri::State<'_, AppState>, tips: Vec<String>) {
     data.settings.dismissed_tips = tips;
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -921,6 +946,8 @@ fn add_common_app(state: tauri::State<'_, AppState>, app: CommonApp) {
         data.settings.common_apps.push(app);
         let path = state.data_path.lock().unwrap();
         persist_data(&path, &data);
+        drop(path); drop(data);
+        emit_settings_changed(&state);
     }
 }
 
@@ -930,6 +957,8 @@ fn remove_common_app(state: tauri::State<'_, AppState>, app_path: String) {
     data.settings.common_apps.retain(|a| a.path != app_path);
     let path = state.data_path.lock().unwrap();
     persist_data(&path, &data);
+    drop(path); drop(data);
+    emit_settings_changed(&state);
 }
 
 #[tauri::command]
@@ -1273,6 +1302,7 @@ pub fn run() {
             app.manage(AppState {
                 data: Mutex::new(data),
                 data_path: Mutex::new(data_path_str),
+                app_handle: app.handle().clone(),
             });
 
             // Hide from Dock — pure menu-bar app
