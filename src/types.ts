@@ -63,6 +63,7 @@ export interface CommonApp {
   name: string;
   path: string;
   short_name?: string;
+  launch_args?: string;
 }
 
 export interface CompletedItem {

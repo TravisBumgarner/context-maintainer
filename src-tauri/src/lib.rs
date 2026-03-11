@@ -324,6 +324,8 @@ struct CommonApp {
     path: String,
     #[serde(default)]
     short_name: Option<String>,
+    #[serde(default)]
+    launch_args: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -344,6 +346,8 @@ struct Settings {
     common_apps: Vec<CommonApp>,
     #[serde(default)]
     auto_hide_delay: u32,
+    #[serde(default)]
+    dismissed_tips: Vec<String>,
 }
 
 impl Default for Settings {
@@ -358,6 +362,7 @@ impl Default for Settings {
             hidden_panels: Vec::new(),
             common_apps: Vec::new(),
             auto_hide_delay: 0,
+            dismissed_tips: Vec::new(),
         }
     }
 }
@@ -790,6 +795,20 @@ fn save_common_apps(state: tauri::State<'_, AppState>, apps: Vec<CommonApp>) {
 }
 
 #[tauri::command]
+fn get_dismissed_tips(state: tauri::State<'_, AppState>) -> Vec<String> {
+    let data = state.data.lock().unwrap();
+    data.settings.dismissed_tips.clone()
+}
+
+#[tauri::command]
+fn save_dismissed_tips(state: tauri::State<'_, AppState>, tips: Vec<String>) {
+    let mut data = state.data.lock().unwrap();
+    data.settings.dismissed_tips = tips;
+    let path = state.data_path.lock().unwrap();
+    persist_data(&path, &data);
+}
+
+#[tauri::command]
 fn list_installed_apps() -> Vec<CommonApp> {
     let mut apps = Vec::new();
     if let Ok(entries) = fs::read_dir("/Applications") {
@@ -801,6 +820,7 @@ fn list_installed_apps() -> Vec<CommonApp> {
                         name: name.to_string(),
                         path: path.to_string_lossy().to_string(),
                         short_name: None,
+                        launch_args: None,
                     });
                 }
             }
@@ -808,6 +828,26 @@ fn list_installed_apps() -> Vec<CommonApp> {
     }
     apps.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     apps
+}
+
+#[tauri::command]
+fn open_new_app_instance(path: String, launch_args: Option<String>) -> Result<(), String> {
+    if let Some(args) = launch_args {
+        // Custom launch args: run as a shell command so users can use any CLI tool
+        // e.g. "code --new-window" or "open -a Chrome --args --new-window"
+        std::process::Command::new("sh")
+            .arg("-c")
+            .arg(&args)
+            .output()
+            .map_err(|e| format!("Failed to run custom launch command: {}", e))?;
+    } else {
+        std::process::Command::new("open")
+            .arg("-n")
+            .arg(&path)
+            .output()
+            .map_err(|e| format!("Failed to open new app instance: {}", e))?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -1476,7 +1516,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, save_auto_hide_delay, get_common_apps, save_common_apps, list_installed_apps, launch_app, launch_app_new, add_common_app, remove_common_app, get_completed, add_completed, clear_completed])
+        .invoke_handler(tauri::generate_handler![get_desktop, get_todos, save_todos, get_title, save_title, list_all_desktops, list_desktops_grouped, switch_desktop, get_settings, complete_setup, save_color, list_all_spaces, check_accessibility, request_accessibility, save_desktop_count, apply_theme, clear_all_data, start_new_session, get_context_history, restore_context, save_timer_presets, save_notify_settings, save_hidden_panels, save_auto_hide_delay, get_common_apps, save_common_apps, get_dismissed_tips, save_dismissed_tips, list_installed_apps, launch_app, launch_app_new, open_new_app_instance, add_common_app, remove_common_app, get_completed, add_completed, clear_completed])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
