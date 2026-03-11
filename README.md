@@ -1,61 +1,22 @@
-# Context Maintainer
+# Context ~~Switcher~~ Maintainer
 
-**Per-desktop todo lists for macOS.** A tiny, always-on-top floating window that tracks which virtual desktop you're on and gives each one its own task list, timer, and color.
+**For the person with 5 desktops and no idea what's on any of them.**
 
-![App overview showing multiple desktops with todos](readme-resources/hero.png)
 
----
+Each macOS desktop gets its own todo list, timer, and theme. Switch desktops and your context switches with you.
 
-## How it works
-
-Context Maintainer sits in the corner of your screen and automatically detects when you move between macOS desktops (Mission Control spaces). Each desktop gets its own todo list, title, and color — so your tasks stay tied to the context they belong to.
-
-- **Desktop 1** — "Email" — Reply to Sarah, File expense report
-- **Desktop 2** — "Development" — Fix auth bug, Review PR #42
-- **Desktop 3** — "Design" — Update mockups, Export assets
-
-Switch desktops and your tasks follow.
-
----
+![App overview](readme-resources/hero.png)
 
 ## Features
 
-### The Main View
-
-Everything you need for your current desktop, nothing you don't. Todos, timers, a desktop switcher, and app shortcuts — all without leaving your workspace.
-
-![Main app view showing all panels](readme-resources/main-view.png)
-
-- **Per-desktop todos** — Each space gets its own task list. Name it, fill it, check things off. When you switch desktops, your tasks switch with you.
-- **Desktop switcher** — Color-coded buttons for every desktop. See where you are, jump where you need to go.
-- **Per-desktop timers** — Pomodoro, meeting countdown, whatever. Each desktop tracks its own timer independently.
-- **Common apps launcher** — One click to open a new VS Code window, a fresh Chrome tab, or whatever you reach for on every desktop.
-
-### Themes & Customization
-
-Pick a palette and the whole app follows — background, text, borders. 14 built-in themes from subtle to bold.
-
-![Theme selection and settings](readme-resources/settings.png)
-
-### Multi-Monitor Support
-
-One window per monitor, each aware of its own desktops. Monitors come and go — Context Maintainer keeps up. Change a setting anywhere and every window gets it.
-
-### More
-
-- **Window anchoring** — Lock to any corner, edge, or center of the screen
-- **Collapsible** — Shrink to a single-line title bar when you need the space back
-- **Auto-hide** — Set a delay and the window disappears after you land on a desktop
-- **Session management** — Wipe the slate clean for a new project, or restore a previous session from history
-- **Task history** — Every completed task is logged with the desktop it came from
-
----
-
-## Setup
-
-On first launch, Context Maintainer will ask you to **grant Accessibility permission** — needed to detect desktop switches and switch between desktops.
-
-That's it. The app handles the rest.
+- **Todos** — Per-desktop tasks that follow you as you switch
+- **Timers** — A countdown tied to each desktop
+- **Desktop switcher** — See all your spaces, jump between them instantly
+- **Common apps** — One-click access to the apps you use everywhere
+- **Themes** — 14 palettes that style the entire app
+- **Multi-monitor** — One window per display, settings sync everywhere
+- **Auto-hide** — Shows on switch, disappears when you're focused
+- **Session management** — Save your context, restore it later
 
 ---
 
