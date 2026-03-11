@@ -4,7 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore, useUIStore } from "../../../stores";
 import { MODAL_ID } from "../../Modal/Modal.consts";
-import { BG_OVERLAY, BG_OVERLAY_LIGHT } from "../../../theme";
+import { BG_OVERLAY } from "../../../theme";
 import { AppIconButton } from "../../shared";
 
 export default function CommonAppsPanel() {
@@ -57,63 +57,28 @@ export default function CommonAppsPanel() {
         }}
       >
         {commonApps.map((app) => (
-          <Box
-            key={app.path}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              flexShrink: 0,
-              bgcolor: BG_OVERLAY,
-              overflow: "hidden",
-            }}
-          >
-            <Tooltip title={`Show ${app.name}`} arrow>
-              <ButtonBase
-                onClick={() => {
-                  invoke("launch_app", { path: app.path }).catch(() => {});
-                }}
-                sx={{
-                  px: "8px",
-                  py: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  fontFamily: "inherit",
-                  "&:hover": { bgcolor: BG_OVERLAY },
-                  transition: "background-color 0.15s",
-                }}
-              >
-                <Typography variant="subtitle1" sx={{ whiteSpace: "nowrap", lineHeight: 1 }}>
-                  {app.short_name || app.name}
-                </Typography>
-              </ButtonBase>
-            </Tooltip>
-            <Tooltip title={`New ${app.name} window`} arrow>
-              <ButtonBase
-                onClick={() => {
-                  const m = useUIStore.getState().monitorRef;
-                  invoke("launch_app_new", {
-                    path: app.path,
-                    monitorX: m ? Math.round(m.position.x) : 0,
-                    monitorY: m ? Math.round(m.position.y) : 0,
-                  }).catch(() => {});
-                }}
-                sx={{
-                  px: "4px",
-                  py: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  fontFamily: "inherit",
-                  borderLeft: `1px solid ${tc(0.08)}`,
-                  "&:hover": { bgcolor: BG_OVERLAY },
-                  transition: "background-color 0.15s",
-                }}
-              >
-                <Typography sx={{ fontSize: ui.fontSize.xs, fontWeight: ui.weights.bold, color: tc(0.35), lineHeight: 1 }}>
-                  +
-                </Typography>
-              </ButtonBase>
-            </Tooltip>
-          </Box>
+          <Tooltip key={app.path} title={`Open new ${app.name} instance`} arrow>
+            <ButtonBase
+              onClick={() => {
+                invoke("open_new_app_instance", { path: app.path, launchArgs: app.launch_args || null }).catch(() => {});
+              }}
+              sx={{
+                px: "8px",
+                py: "4px",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                fontFamily: "inherit",
+                bgcolor: BG_OVERLAY,
+                "&:hover": { bgcolor: BG_OVERLAY },
+                transition: "background-color 0.15s",
+              }}
+            >
+              <Typography variant="subtitle1" sx={{ whiteSpace: "nowrap", lineHeight: 1 }}>
+                {app.short_name || app.name}
+              </Typography>
+            </ButtonBase>
+          </Tooltip>
         ))}
       </Box>
       <Tooltip title="Configure apps" arrow>

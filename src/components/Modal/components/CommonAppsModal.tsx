@@ -6,11 +6,14 @@ import { useSettingsStore } from "../../../stores";
 import type { CommonApp } from "../../../types";
 import DefaultModal from "./DefaultModal";
 import { BG_OVERLAY_LIGHT } from "../../../theme";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { AppInput, AppIconButton } from "../../shared";
+
+const LAUNCH_ARGS_TIP = "common_apps_launch_args";
 
 export default function CommonAppsModal() {
   const { tc, ui } = useTheme().custom;
-  const { commonApps, setCommonApps } = useSettingsStore();
+  const { commonApps, setCommonApps, dismissedTips, dismissTip, loadDismissedTips } = useSettingsStore();
   const [installedApps, setInstalledApps] = useState<CommonApp[]>([]);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState(0);
@@ -22,6 +25,10 @@ export default function CommonAppsModal() {
         .catch(() => { });
     }
   }, [installedApps.length]);
+
+  useEffect(() => {
+    loadDismissedTips();
+  }, [loadDismissedTips]);
 
   const toggleApp = (app: CommonApp) => {
     if (commonApps.some((a) => a.path === app.path)) {
@@ -37,11 +44,19 @@ export default function CommonAppsModal() {
     ));
   };
 
+  const updateLaunchArgs = (path: string, launchArgs: string) => {
+    setCommonApps(commonApps.map((a) =>
+      a.path === path ? { ...a, launch_args: launchArgs || undefined } : a
+    ));
+  };
+
   const isSelected = (app: CommonApp) => commonApps.some((a) => a.path === app.path);
 
   const filtered = installedApps.filter((a) =>
     a.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const showTip = !dismissedTips.includes(LAUNCH_ARGS_TIP);
 
   return (
     <DefaultModal title="Common Apps">
@@ -113,6 +128,35 @@ export default function CommonAppsModal() {
             "&::-webkit-scrollbar": { display: "none" },
           }}
         >
+          {showTip && commonApps.length > 0 && (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "6px",
+                p: "6px",
+                mb: "6px",
+                bgcolor: BG_OVERLAY_LIGHT,
+                borderRadius: "4px",
+              }}
+            >
+              <Typography variant="body2" sx={{ flex: 1, fontSize: ui.fontSize.xs, color: tc(0.6), lineHeight: 1.3 }}>
+                Not all apps support new instances. Use the "custom command" field to override the default behavior.{" "}
+                <Typography
+                  component="span"
+                  onClick={() => openUrl("https://github.com/TravisBumgarner/context-maintainer?tab=readme-ov-file#common-apps---custom-commands")}
+                  sx={{ fontSize: "inherit", color: tc(0.8), cursor: "pointer", textDecoration: "underline" }}
+                >
+                  See known commands
+                </Typography>
+              </Typography>
+              <AppIconButton
+                icon="close"
+                onClick={() => dismissTip(LAUNCH_ARGS_TIP)}
+                sx={{ flexShrink: 0, fontSize: 10, mt: "-2px" }}
+              />
+            </Box>
+          )}
           {commonApps.length === 0 ? (
             <Typography variant="body2" sx={{ py: "8px" }}>
               No apps selected. Use the Search tab to add apps.
@@ -123,33 +167,49 @@ export default function CommonAppsModal() {
                 key={app.path}
                 sx={{
                   display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  py: "2px",
+                  flexDirection: "column",
+                  gap: "2px",
+                  py: "4px",
+                  "&:not(:last-child)": { mb: "4px" },
                 }}
               >
-                <Typography variant="subtitle1" sx={{ flexShrink: 0 }}>
-                  {app.name}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Typography variant="subtitle1" sx={{ flexShrink: 0 }}>
+                    {app.name}
+                  </Typography>
+                  <AppInput
+                    type="text"
+                    placeholder="short name"
+                    value={app.short_name || ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      updateShortName(app.path, e.target.value);
+                    }}
+                    sx={{
+                      flex: 1,
+                      width: "auto",
+                      minWidth: 0,
+                      fontSize: ui.fontSize.xs,
+                      p: "2px 0",
+                    }}
+                  />
+                  <AppIconButton
+                    icon="close"
+                    onClick={() => toggleApp(app)}
+                    sx={{ flexShrink: 0, fontSize: 11 }}
+                  />
+                </Box>
                 <AppInput
                   type="text"
-                  placeholder="short name"
-                  value={app.short_name || ""}
+                  placeholder="custom command"
+                  value={app.launch_args || ""}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    updateShortName(app.path, e.target.value);
+                    updateLaunchArgs(app.path, e.target.value);
                   }}
                   sx={{
-                    flex: 1,
-                    width: "auto",
-                    minWidth: 0,
+                    width: "100%",
                     fontSize: ui.fontSize.xs,
                     p: "2px 0",
                   }}
-                />
-                <AppIconButton
-                  icon="close"
-                  onClick={() => toggleApp(app)}
-                  sx={{ flexShrink: 0, fontSize: 11 }}
                 />
               </Box>
             ))

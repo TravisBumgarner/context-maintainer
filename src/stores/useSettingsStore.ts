@@ -12,6 +12,7 @@ interface SettingsState {
   hiddenPanels: string[];
   commonApps: CommonApp[];
   autoHideDelay: number;
+  dismissedTips: string[];
 
   setTimerPresets: (fn: (prev: number[]) => number[]) => void;
   setNotifySystem: (v: boolean) => void;
@@ -23,6 +24,8 @@ interface SettingsState {
   setCommonApps: (apps: CommonApp[]) => void;
   setAutoHideDelay: (delay: number) => void;
   loadCommonApps: () => void;
+  dismissTip: (tip: string) => void;
+  loadDismissedTips: () => void;
 
   refreshSpaces: () => void;
   checkAccessibility: () => void;
@@ -39,6 +42,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   hiddenPanels: [],
   commonApps: [],
   autoHideDelay: 0,
+  dismissedTips: [],
 
   setTimerPresets: (fn) => set((state) => ({ timerPresets: fn(state.timerPresets) })),
   setNotifySystem: (v) => set({ notifySystem: v }),
@@ -65,6 +69,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   loadCommonApps: () => {
     invoke<CommonApp[]>("get_common_apps")
       .then((apps) => set({ commonApps: apps }))
+      .catch(() => {});
+  },
+  dismissTip: (tip) => {
+    const tips = [...get().dismissedTips, tip];
+    set({ dismissedTips: tips });
+    invoke("save_dismissed_tips", { tips }).catch(() => {});
+  },
+  loadDismissedTips: () => {
+    invoke<string[]>("get_dismissed_tips")
+      .then((tips) => set({ dismissedTips: tips }))
       .catch(() => {});
   },
 

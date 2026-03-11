@@ -35,6 +35,29 @@ On first launch, Context Maintainer will ask you to **grant Accessibility permis
 
 That's it. The app handles the rest.
 
+## Common Apps - Custom Commands
+
+Not all apps support opening a new instance with `open -n`. You can set a custom command per app in the Common Apps settings. Below are known working commands:
+
+| App | Custom Command | Notes |
+| --- | --- | --- |
+| Figma | — | Not supported |
+| Firefox | — | Default behavior works |
+| Google Chrome | `osascript -e 'tell application "Google Chrome" to make new window'` | |
+| iTerm2 | — | Default behavior works |
+| Linear | — | Default behavior works |
+| Microsoft Edge | — | Default behavior works |
+| Notion | — | Not supported |
+| Obsidian | — | Not supported |
+| Postico | — | Default behavior works |
+| Postman | — | Not supported |
+| Safari | — | Default behavior works |
+| Slack | — | Not supported |
+| VS Code | `code --new-window` | Requires CLI tool installed |
+| WhatsApp | — | Not supported |
+
+If you discover a working command for another app, feel free to open a PR to add it here.
+
 ## Logs
 
 Production logs are written by `tauri-plugin-log` to:
