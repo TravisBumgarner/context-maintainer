@@ -70,6 +70,7 @@ export interface CompletedItem {
   id: string;
   text: string;
   desktop_id: number;
+  desktop_name?: string;
   completed_at: string;
 }
 

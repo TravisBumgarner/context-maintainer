@@ -38,8 +38,11 @@ export default function HistoryView() {
       ) : (
         <>
           {Array.from(grouped.entries()).map(([desktopId, groupItems]) => {
+            // Use stored desktop_name from first item (captured at completion time)
+            // Fall back to current desktop info for older items without desktop_name
+            const storedName = groupItems[0]?.desktop_name;
             const desktop = desktopMap.get(desktopId);
-            const name = desktop?.name ?? `Desktop ${desktop?.position ?? desktopId}`;
+            const name = storedName ?? desktop?.name ?? `Desktop ${desktop?.position ?? desktopId}`;
 
             return (
               <Box key={desktopId} sx={{ mb: "12px" }}>

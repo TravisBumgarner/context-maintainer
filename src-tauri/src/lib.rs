@@ -311,6 +311,8 @@ struct CompletedItem {
     id: String,
     text: String,
     desktop_id: i64,
+    #[serde(default)]
+    desktop_name: Option<String>,
     completed_at: String,
 }
 
@@ -1008,12 +1010,13 @@ fn get_completed(state: tauri::State<'_, AppState>) -> Vec<CompletedItem> {
 }
 
 #[tauri::command]
-fn add_completed(state: tauri::State<'_, AppState>, text: String, desktop_id: i64) {
+fn add_completed(state: tauri::State<'_, AppState>, text: String, desktop_id: i64, desktop_name: Option<String>) {
     let mut data = state.data.lock().unwrap();
     let item = CompletedItem {
         id: uuid::Uuid::new_v4().to_string(),
         text,
         desktop_id,
+        desktop_name,
         completed_at: chrono::Utc::now().to_rfc3339(),
     };
     data.completed.push(item);
