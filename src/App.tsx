@@ -88,9 +88,15 @@ function App() {
   useEffect(() => {
     const unlisten = listen("settings-changed", () => {
       useSettingsStore.getState().loadSettings();
+      // Re-fetch current desktop to pick up color changes
+      invoke<DesktopInfo>("get_desktop", { display: displayIndex })
+        .then((info) => {
+          useDesktopStore.getState().setDesktop(() => info);
+        })
+        .catch(() => {});
     });
     return () => { unlisten.then((fn) => fn()); };
-  }, []);
+  }, [displayIndex]);
 
   // ── Cross-window session action sync ─────────────────
   useEffect(() => {

@@ -101,6 +101,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       .catch(() => {});
     get().loadCommonApps();
     get().loadDismissedTips();
+    get().refreshSpaces();
+    import("./useUIStore").then(({ useUIStore }) => {
+      useUIStore.getState().refreshDisplayGroups();
+    });
   },
 
   refreshSpaces: () => {
