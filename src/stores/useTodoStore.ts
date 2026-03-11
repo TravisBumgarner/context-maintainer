@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import type { TodoItem } from "../types";
 import { useHistoryStore } from "./useHistoryStore";
+import { useDesktopStore } from "./useDesktopStore";
 import { useUIStore } from "./useUIStore";
 
 export const EMPTY_TODOS: TodoItem[] = [];
@@ -128,7 +129,10 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     set((state) => ({
       allTodos: { ...state.allTodos, [desktopId]: updated },
     }));
-    useHistoryStore.getState().addCompleted(item.text, desktopId);
+    const title = get().allTitles[desktopId];
+    const position = useDesktopStore.getState().desktop.position;
+    const desktopName = title || `Desktop ${position + 1}`;
+    useHistoryStore.getState().addCompleted(item.text, desktopId, desktopName);
 
     const timer = get().saveTimer;
     if (timer) clearTimeout(timer);

@@ -1,39 +1,24 @@
 # Context ~~Switcher~~ Maintainer
 
-**Per-desktop todo lists for macOS.** A tiny, always-on-top floating window that tracks which virtual desktop you're on and gives each one its own task list.
+**For the person with 5 desktops and no idea what's on any of them.**
 
-Stop losing track of what you were doing when you switch spaces.
 
----
+Each macOS desktop gets its own todo list, timer, and theme. Switch desktops and your context switches with you.
 
-## How it works
-
-Context Maintainer sits in the corner of your screen and automatically detects when you move between macOS desktops (Mission Control spaces). Each desktop gets its own todo list, title, and color — so your tasks stay tied to the context they belong to.
-
-- **Desktop 1** — "Email" — Reply to Sarah, File expense report
-- **Desktop 2** — "Development" — Fix auth bug, Review PR #42
-- **Desktop 3** — "Design" — Update mockups, Export assets
-
-Switch desktops and your tasks follow.
+![App overview](readme-resources/hero.png)
 
 ## Features
 
-- **Automatic desktop detection** — Knows which space you're on without any manual switching
-- **Per-desktop todos** — Each virtual desktop has its own independent task list
-- **Custom titles** — Name each desktop to match what you use it for
-- **Color themes** — 10 built-in palettes (Pastel, Ocean, Sunset, Forest, Candy, Mono, Neon, Earth, Berry, Retro) or pick individual colors per desktop
-- **Drag-and-drop reordering** — Prioritize tasks with a quick drag
-- **Window anchoring** — Pin the window to any of 9 screen positions
-- **Collapsible** — Minimize down to just the desktop title when you need more screen space
-- **Multi-monitor support** — Separate windows per display, each tracking their own spaces
-- **Desktop overview** — See all desktops and their task counts at a glance, jump to any one
-- **Lightweight** — Native macOS app built with Tauri and Rust, minimal resource usage
+- **Todos** — Per-desktop tasks that follow you as you switch
+- **Timers** — A countdown tied to each desktop
+- **Desktop switcher** — See all your spaces, jump between them instantly
+- **Common apps** — One-click access to the apps you use everywhere
+- **Themes** — 14 palettes that style the entire app
+- **Multi-monitor** — One window per display, settings sync everywhere
+- **Auto-hide** — Shows on switch, disappears when you're focused
+- **Session management** — Save your context, restore it later
 
-## Setup
-
-On first launch, Context Maintainer will ask you to **grant Accessibility permission** — needed to detect desktop switches and switch between desktops.
-
-That's it. The app handles the rest.
+---
 
 ## Common Apps - Custom Commands
 
@@ -58,6 +43,12 @@ Not all apps support opening a new instance with `open -n`. You can set a custom
 
 If you discover a working command for another app, feel free to open a PR to add it here.
 
+---
+
+## Tech
+
+Built with [Tauri 2](https://tauri.app/), React, and Rust. Uses macOS CoreGraphics APIs for reliable virtual desktop detection without polling AppleScript.
+
 ## Logs
 
 Production logs are written by `tauri-plugin-log` to:
@@ -65,8 +56,6 @@ Production logs are written by `tauri-plugin-log` to:
 ```
 ~/Library/Logs/com.travisbumgarner.context-switching/
 ```
-
-Use `Console.app` or tail the log file directly:
 
 ```bash
 tail -f ~/Library/Logs/com.travisbumgarner.context-switching/*.log
@@ -83,10 +72,6 @@ See [`.github/workflows/README.md`](.github/workflows/README.md) for secrets set
 5. Review the draft release, then publish it
 
 Once published, running copies of the app will detect the update on next launch.
-
-## Tech
-
-Built with [Tauri 2](https://tauri.app/), React, and Rust. Uses macOS CoreGraphics APIs for reliable virtual desktop detection without polling AppleScript.
 
 ## License
 

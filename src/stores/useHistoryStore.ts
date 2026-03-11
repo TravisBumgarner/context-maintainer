@@ -5,7 +5,7 @@ import type { CompletedItem } from "../types";
 interface HistoryState {
   items: CompletedItem[];
   loadHistory: () => Promise<void>;
-  addCompleted: (text: string, desktopId: number) => Promise<void>;
+  addCompleted: (text: string, desktopId: number, desktopName: string) => Promise<void>;
   clearHistory: () => Promise<void>;
 }
 
@@ -21,8 +21,8 @@ export const useHistoryStore = create<HistoryState>((set) => ({
     }
   },
 
-  addCompleted: async (text, desktopId) => {
-    await invoke("add_completed", { text, desktopId });
+  addCompleted: async (text, desktopId, desktopName) => {
+    await invoke("add_completed", { text, desktopId, desktopName });
   },
 
   clearHistory: async () => {
