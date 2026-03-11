@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
-import type { SpaceInfo, DesktopInfo, CommonApp } from "../types";
+import type { SpaceInfo, DesktopInfo, CommonApp, Settings } from "../types";
 
 interface SettingsState {
   timerPresets: number[];
@@ -26,6 +26,7 @@ interface SettingsState {
   loadCommonApps: () => void;
   dismissTip: (tip: string) => void;
   loadDismissedTips: () => void;
+  loadSettings: () => void;
 
   refreshSpaces: () => void;
   checkAccessibility: () => void;
@@ -80,6 +81,26 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     invoke<string[]>("get_dismissed_tips")
       .then((tips) => set({ dismissedTips: tips }))
       .catch(() => {});
+  },
+  loadSettings: () => {
+    invoke<Settings>("get_settings")
+      .then((s) => {
+        set({
+          desktopCount: s.desktop_count,
+          timerPresets: s.timer_presets ?? [60, 300, 600],
+          notifySystem: s.notify_system ?? true,
+          notifyFlash: s.notify_flash ?? true,
+          hiddenPanels: s.hidden_panels ?? [],
+          autoHideDelay: s.auto_hide_delay ?? 0,
+        });
+        // Resize window based on potentially changed hidden panels
+        import("./useUIStore").then(({ useUIStore }) => {
+          useUIStore.getState().resizeToFit(s.hidden_panels ?? []);
+        });
+      })
+      .catch(() => {});
+    get().loadCommonApps();
+    get().loadDismissedTips();
   },
 
   refreshSpaces: () => {

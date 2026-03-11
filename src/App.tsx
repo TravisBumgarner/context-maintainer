@@ -84,6 +84,14 @@ function App() {
       });
   }, [setView]);
 
+  // ── Cross-window settings sync ───────────────────────
+  useEffect(() => {
+    const unlisten = listen("settings-changed", () => {
+      useSettingsStore.getState().loadSettings();
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, []);
+
   // ── Cross-window session action sync ─────────────────
   useEffect(() => {
     const unlisten = listen<{ action: string }>("session-action", (event) => {
@@ -204,7 +212,8 @@ function App() {
 
     // Initial load: fetch current desktop via IPC
     invoke<DesktopInfo>("get_desktop", { display: displayIndex })
-      .then((info) => {
+      .then(async (info) => {
+        await useUIStore.getState().refreshDisplayGroups();
         useDesktopStore.getState().setDesktop(() => info);
         prevId = info.space_id;
         useTimerStore.getState().setActiveDesktop(info.space_id);
