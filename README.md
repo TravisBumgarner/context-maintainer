@@ -5,7 +5,7 @@
 
 Each macOS desktop gets its own todo list, timer, and theme. Switch desktops and your context switches with you.
 
-[Download for macOS (Apple Silicon)](https://github.com/TravisBumgarner/context-maintainer/releases/latest/download/Context.Maintainer_aarch64.dmg)
+[Download the latest release](https://github.com/TravisBumgarner/context-maintainer/releases/latest)
 
 ![App overview](readme-resources/hero.png)
 

@@ -44,13 +44,9 @@ TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" \
   npm run tauri build
 
 BUNDLE_DIR="src-tauri/target/release/bundle"
-DMG_ORIGINAL="$BUNDLE_DIR/dmg/Context Maintainer_${VERSION}_aarch64.dmg"
-DMG="$BUNDLE_DIR/dmg/Context.Maintainer_aarch64.dmg"
+DMG="$BUNDLE_DIR/dmg/Context Maintainer_${VERSION}_aarch64.dmg"
 UPDATER="$BUNDLE_DIR/macos/Context Maintainer.app.tar.gz"
 UPDATER_SIG="${UPDATER}.sig"
-
-# Copy to stable filename so the download URL doesn't change between releases
-cp "$DMG_ORIGINAL" "$DMG"
 
 echo ""
 echo "Build complete!"
