@@ -5,6 +5,8 @@
 
 Each macOS desktop gets its own todo list, timer, and theme. Switch desktops and your context switches with you.
 
+[Download the latest release](https://github.com/TravisBumgarner/context-maintainer/releases/latest)
+
 ![App overview](readme-resources/hero.png)
 
 ## Features
